@@ -1,0 +1,14 @@
+[discord]
+# You can get your bot token by going here https://discordapp.com/developers/applications
+# Ensure that you have registered your application as a bot user, as you need your TOKEN not your Client ID
+bot_token = "bot user token goes here"
+
+[database]
+hostname = "192.168.1.1"
+port = 9001
+user = "test"
+pass = "testpass"
+
+[du-bot]
+default_now_playing = "InDev"
+command_prefix = "~"
