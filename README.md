@@ -15,6 +15,10 @@ Launching this bot in docker is fairly straightforward.
 
 ```git clone https://github.com/yamamushi/du-discordbot && cd du-discordbot```
 
+2) Configure your configuration file as necessary.
+
+```cp du-bot.conf.example du-bot.conf && vi du-bot.conf```
+
 2) Create the docker container named du-discordbot
 
 ```docker build -t du-discordbot .```
@@ -27,3 +31,16 @@ Launching this bot in docker is fairly straightforward.
 
 ```docker stop du-discordbot```
 
+
+
+## Features
+
+- [X] Embedded Database
+- [X] Docker Support
+- [ ] Internal Permissions System
+- [ ] RSS Subscriptions
+- [ ] Currency System
+- [ ] More Games!
+- [ ] Reminders / Notifications
+- [ ] Dual Universe Wiki Integration
+- [ ] Dual Universe Resource Guide

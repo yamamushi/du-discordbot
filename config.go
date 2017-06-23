@@ -13,13 +13,11 @@ type mainConfig struct {
 
 type discordConfig struct {
 	Token 	string 	`toml:"bot_token"`
+	AdminID	string	`toml:"admin_id"`
 }
 
 type databaseConfig struct {
-	Server  string  `toml:"hostname"`
-	Port   	int 	`toml:"port"`
-	User 	string 	`toml:"user"`
-	Pass 	string 	`toml:"password"`
+	DBFile  string  `toml:"filename"`
 }
 
 type dubotConfig struct {

@@ -11,6 +11,7 @@ ADD du-bot.conf /go
 # either manually or with a tool like "godep".)
 RUN go get github.com/bwmarrin/discordgo
 RUN go get github.com/BurntSushi/toml
+RUN go get github.com/asdine/storm
 RUN go install github.com/yamamushi/du-discordbot
 
 # Run the outyet command by default when the container starts.
