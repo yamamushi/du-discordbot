@@ -14,7 +14,7 @@ type DBHandler struct {
 
 }
 
-func (db *DBHandler) Configure() error {
+func (db *DBHandler) FirstTimeSetup() error {
 
 	var user User
 
@@ -28,15 +28,15 @@ func (db *DBHandler) Configure() error {
 			fmt.Println("error saving owner")
 			return err
 		}
+		if(user.Owner){
+			fmt.Println("Database has been configured")
+			err = db.DB.One("ID", db.conf.DiscordConfig.AdminID, &user)
+			fmt.Println("Owner ID: " + user.ID)
+			return nil
+		}
 	}
 
-	err = db.DB.One("ID", db.conf.DiscordConfig.AdminID, &user)
-
-	fmt.Println(user.ID)
-	if(user.Owner){
-		fmt.Println("Owner has been configured")
-	}
-	return err
+	return nil
 }
 
 

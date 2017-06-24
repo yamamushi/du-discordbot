@@ -52,55 +52,70 @@ func (h *RSSHandler) menu(s *discordgo.Session, m *discordgo.MessageCreate) {
 				return
 			}
 
-			if command[1] == "add" && len(command) > 2 {
-				s.ChannelMessageSend(m.ChannelID, "Adding RSS Feed: " + command[2] + "Confirm? (Y/N)")
-				message := m.Author.ID + " " + m.ChannelID + command[2]
-				h.callback.Watch(m.Author.ID, m.ChannelID, h.ConfirmRSS, message, s, m)
+			if command[1] == "add" && len(command) == 2 {
+				s.ChannelMessageSend(m.ChannelID, "Please supply a feed URL: ")
+				message := ""
+				h.callback.Watch( h.GetRSS, GetUUID(), message, s, m)
 				return
 			}
 
-			if command[1] == "add" && len(command) < 3 {
-				s.ChannelMessageSend(m.ChannelID, "Insufficient arguments supplied")
+			if command[1] == "add" && len(command) > 2 {
+				s.ChannelMessageSend(m.ChannelID, "Add RSS Feed: " + command[2] + " Confirm? (Y/N)")
+				message := command[2]
+				h.callback.Watch( h.ConfirmRSS, GetUUID(), message, s, m)
+				return
 			}
+
 		}
 	}
 }
 
 
-// This function ended up being unnecessary, just too sleepy to realize it at the time
-/*
-func (h *RSSHandler) AddRSS(command string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
-	commandlist := strings.Fields(command)
+func (h *RSSHandler) GetRSS(command string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
-	if len(commandlist) < 3 {
-		s.ChannelMessageSend(m.ChannelID, "Invalid command received")
+	// In this handler we don't do anything with the command string, instead we grab the response from m.Content
+
+	// We do this to avoid having duplicate commands overrunning each other
+	cp := h.conf.DUBotConfig.CP
+	if strings.HasPrefix(m.Content, cp){
+		s.ChannelMessageSend(m.ChannelID, "RSS Command Cancelled")
 		return
 	}
 
-	s.ChannelMessageSend(m.ChannelID, "Adding: " + commandlist[2] + "Confirm? (Y/N)")
+	// A poor way of checking the validity of the RSS url for now
+	if m.Content == "" {
+		s.ChannelMessageSend(m.ChannelID, "Invalid Command Received")
+		return
+	}
 
-	message := m.Author.ID + " " + m.ChannelID
-	h.callback.Watch(commandlist[0], commandlist[1], h.ConfirmRSS, message ,s, m)
+	s.ChannelMessageSend(m.ChannelID, "Adding: " + m.Content + " Confirm? (Y/N)")
+
+	h.callback.Watch( h.ConfirmRSS, GetUUID(), m.Content, s, m)
 
 }
-*/
+
 
 
 func (h *RSSHandler) ConfirmRSS(command string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
-	commandlist := strings.Fields(command)
-
-	if len(commandlist) < 2 {
-		s.ChannelMessageSend(m.ChannelID, "Invalid command received")
+	cp := h.conf.DUBotConfig.CP
+	if strings.HasPrefix(m.Content, cp){
+		s.ChannelMessageSend(m.ChannelID, "RSS Command Cancelled")
 		return
 	}
 
 	if m.Content == "Y" || m.Content == "y" {
-		s.ChannelMessageSend(m.ChannelID, "Selection Confirmed")
+		s.ChannelMessageSend(m.ChannelID, "Selection Confirmed: " + command )
+		h.AddRSS(command)
 		return
 	}
 
 	s.ChannelMessageSend(m.ChannelID, "RSS Add Cancelled")
+}
 
+
+func (h *RSSHandler) AddRSS(url string) error {
+	fmt.Println("Adding RSS Feed: " + url)
+	return nil
 }

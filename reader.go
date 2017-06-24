@@ -34,5 +34,9 @@ func (r *MessageReader) read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		s.ChannelMessageSend(m.ChannelID, "Ping!")
 	}
 
+	if m.Content == cp + "help" {
+		s.ChannelMessageSend(m.ChannelID, "http://imgfave.com/collection/307305/Reaction-GIFs-no")
+	}
+
 }
 

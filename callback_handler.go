@@ -5,8 +5,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"container/list"
 	"reflect"
-	//"runtime"
-	//"runtime"
 )
 
 type CallbackHandler struct {
@@ -20,6 +18,7 @@ type WatchUser struct {
 
 	User string
 	ChannelID string
+	MessageID string
 	Handler func(string, *discordgo.Session, *discordgo.MessageCreate)
 	Args string
 }
@@ -33,26 +32,28 @@ func (c *CallbackHandler) AddHandler(h interface{}) {
 }
 
 
-func (c *CallbackHandler) Watch(User string, ChannelID string, Handler func(string, *discordgo.Session, *discordgo.MessageCreate),
-	Args string, s *discordgo.Session, m *discordgo.MessageCreate) {
+func (c *CallbackHandler) Watch(Handler func(string, *discordgo.Session, *discordgo.MessageCreate),
+	MessageID string, Args string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
-	item := WatchUser{User: User, ChannelID: ChannelID, Handler: Handler, Args: Args}
-	c.WatchList.PushFront(item)
+	item := WatchUser{User: m.Author.ID, ChannelID: m.ChannelID, MessageID: MessageID, Handler: Handler, Args: Args}
+	c.WatchList.PushBack(item)
 
 }
 
 
-func (c *CallbackHandler) UnWatch(User string, ChannelID string) {
+func (c *CallbackHandler) UnWatch(User string, ChannelID string, MessageID string) {
 
 	// Clear user element by iterating
 	var next *list.Element
 	for e := c.WatchList.Front(); e != nil; e = next {
+		next = e.Next()
 
 		r := reflect.ValueOf(e.Value)
 		r_user := reflect.Indirect(r).FieldByName("User")
 		r_channel := reflect.Indirect(r).FieldByName("ChannelID")
+		r_messageid := reflect.Indirect(r).FieldByName("MessageID")
 
-		if r_user.String() == User && r_channel.String() == ChannelID {
+		if r_user.String() == User && r_channel.String() == ChannelID && r_messageid.String() == MessageID {
 			c.WatchList.Remove(e)
 		}
 	}
@@ -69,7 +70,6 @@ func (c *CallbackHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate)
 		r_channelid := reflect.Indirect(r).FieldByName("ChannelID")
 
 		if m.Author.ID == r_user.String() && m.ChannelID == r_channelid.String() {
-			//c.dg.ChannelMessageSend(m.ChannelID, "Callback Success")
 
 			// We get the handler interface from our "Handler" field
 			handler := reflect.Indirect(r).FieldByName("Handler")
@@ -87,9 +87,11 @@ func (c *CallbackHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate)
 			rargs[1] = reflect.ValueOf(s)
 			rargs[2] = reflect.ValueOf(m)
 
+
 			handler.Call(rargs)
 
-			c.UnWatch(m.Author.ID, m.ChannelID)
+			messageid := reflect.Indirect(r).FieldByName("MessageID").String()
+			c.UnWatch(m.Author.ID, m.ChannelID, messageid)
 		}
 	}
 }
