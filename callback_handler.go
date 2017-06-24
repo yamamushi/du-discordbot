@@ -33,12 +33,14 @@ func (c *CallbackHandler) AddHandler(h interface{}) {
 
 }
 
+
 func (c *CallbackHandler) Watch(User string, ChannelID string) {
 
 	item := WatchUser{User: User, ChannelID: ChannelID}
 	c.WatchList.PushFront(item)
 
 }
+
 
 func (c *CallbackHandler) UnWatch(User string, ChannelID string) {
 
@@ -71,5 +73,4 @@ func (c *CallbackHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate)
 		}
 
 	}
-
 }
