@@ -10,7 +10,6 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/asdine/storm"
-	"gopkg.in/oleiade/lane.v1"
 
 )
 
@@ -41,6 +40,8 @@ func main() {
 		return
 	}
 
+
+
 	// Create or open our embedded database
 	db, err := storm.Open(conf.DBConfig.DBFile)
 	if err != nil {
@@ -48,6 +49,7 @@ func main() {
 		return
 	}
 	defer db.Close()
+
 
 
 	// Run a quick first time db configuration to verify that it is working properly
@@ -58,6 +60,8 @@ func main() {
 		return
 	}
 
+
+
 	// Create a new Discord session using the provided bot token.
 	dg, err := discordgo.New("Bot " + conf.DiscordConfig.Token)
 	if err != nil {
@@ -66,20 +70,21 @@ func main() {
 	}
 	defer dg.Close()
 
+
+
 	// Create a callback Handler and add it to our Handler Queue
-	callback_queue := lane.NewQueue()
-	callback_handler := CallbackHandler{Queue: callback_queue, dg: dg}
+	callback_handler := CallbackHandler{dg: dg}
 	dg.AddHandler(callback_handler.Read)
+
+
 
 	// Now we create and add our message handlers
 	// Register the reader func as a callback for MessageCreate events.
-
 	reader := MessageReader{db: &dbhandler, conf: &conf}
 	dg.AddHandler(reader.read)
 
-	rss := RSSHandler{db: &dbhandler, conf: &conf, callback: &callback_handler}
+	rss := RSSHandler{db: &dbhandler, conf: &conf, callback: &callback_handler, dg: dg}
 	dg.AddHandler(rss.menu)
-
 
 
 
@@ -92,12 +97,16 @@ func main() {
 	}
 
 
+
+
 	// Update our default playing status
 	err = dg.UpdateStatus(0, conf.DUBotConfig.Playing)
 	if err != nil {
 		fmt.Println("error updating now playing,", err)
 		return
 	}
+
+
 
 
 	// Wait here until CTRL-C or other term signal is received.
