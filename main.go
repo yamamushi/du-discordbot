@@ -10,6 +10,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/asdine/storm"
+	"gopkg.in/oleiade/lane.v1"
 
 )
 
@@ -65,13 +66,21 @@ func main() {
 	}
 	defer dg.Close()
 
+	// Create a callback Handler and add it to our Handler Queue
+	callback_queue := lane.NewQueue()
+	callback_handler := CallbackHandler{Queue: callback_queue, dg: dg}
+	dg.AddHandler(callback_handler.Read)
+
 	// Now we create and add our message handlers
 	// Register the reader func as a callback for MessageCreate events.
+
 	reader := MessageReader{db: &dbhandler, conf: &conf}
 	dg.AddHandler(reader.read)
 
-	rss := RSSHandler{db: &dbhandler, conf: &conf}
+	rss := RSSHandler{db: &dbhandler, conf: &conf, callback: &callback_handler}
 	dg.AddHandler(rss.menu)
+
+
 
 
 

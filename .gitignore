@@ -48,3 +48,6 @@ Temporary Items
 
 # Config Files
 *.conf
+
+# Database Files
+*.db
