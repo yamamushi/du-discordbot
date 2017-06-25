@@ -11,7 +11,8 @@ RUN go get github.com/bwmarrin/discordgo
 RUN go get github.com/BurntSushi/toml
 RUN go get github.com/asdine/storm
 RUN go get gopkg.in/oleiade/lane.v1
-RUN go get go get github.com/satori/go.uuid
+RUN go get github.com/satori/go.uuid
+RUN go get github.com/mmcdole/gofeed
 
 # Install and run du-discordbot
 RUN go install github.com/yamamushi/du-discordbot

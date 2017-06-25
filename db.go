@@ -3,7 +3,6 @@ package main
 import (
 
 	"github.com/asdine/storm"
-
 	"fmt"
 )
 
@@ -14,38 +13,46 @@ type DBHandler struct {
 
 }
 
-func (db *DBHandler) FirstTimeSetup() error {
+func (h *DBHandler) FirstTimeSetup() error {
 
 	var user User
 
-	err := db.DB.One("ID", db.conf.DiscordConfig.AdminID, &user)
+	err := h.DB.One("ID", h.conf.DiscordConfig.AdminID, &user)
 	if err != nil {
 		println("Running first time db config")
-		user.ID = db.conf.DiscordConfig.AdminID
+		user.ID = h.conf.DiscordConfig.AdminID
 		user.SetRole("owner")
-		err := db.DB.Save(&user)
-		if err != nil{
+		err := h.DB.Save(&user)
+		if err != nil {
 			fmt.Println("error saving owner")
 			return err
 		}
-		if(user.Owner){
+		if(user.Owner) {
 			fmt.Println("Database has been configured")
-			err = db.DB.One("ID", db.conf.DiscordConfig.AdminID, &user)
+			err = h.DB.One("ID", h.conf.DiscordConfig.AdminID, &user)
 			fmt.Println("Owner ID: " + user.ID)
 			return nil
 		}
 	}
 
 	return nil
+
+}
+
+
+func (h *DBHandler) TransferOwner() error {
+
+	return nil
+
 }
 
 
 
-func (db *DBHandler) GetUser(uid string) (decoded User, err error) {
+func (h *DBHandler) GetUser(uid string) (decoded User, err error) {
 
 	var user User
 
-	err = db.DB.One("ID", uid, &user)
+	err = h.DB.One("ID", uid, &user)
 
 	return user, err
 }

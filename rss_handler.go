@@ -7,30 +7,14 @@ import (
 )
 
 type RSSHandler struct {
-	feeds	RSSFeeds
 	db		*DBHandler
 	conf	*mainConfig
 	callback *CallbackHandler
 	dg		*discordgo.Session
 }
 
-type RSSFeed struct {
-	Name 	string
-	URL   string
-}
 
-type RSSFeeds struct {
-	Feeds[] RSSFeed
-}
-
-
-func (h *RSSHandler) addfeed() error {
-
-	return nil
-
-}
-
-func (h *RSSHandler) menu(s *discordgo.Session, m *discordgo.MessageCreate) {
+func (h *RSSHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	cp := h.conf.DUBotConfig.CP
 
@@ -106,6 +90,14 @@ func (h *RSSHandler) ConfirmRSS(command string, s *discordgo.Session, m *discord
 	}
 
 	if m.Content == "Y" || m.Content == "y" {
+
+		rss := RSS{}
+		err := rss.Validate(command)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error Validating URL: " + err.Error())
+			return
+		}
+
 		s.ChannelMessageSend(m.ChannelID, "Selection Confirmed: " + command )
 		h.AddRSS(command)
 		return
