@@ -54,3 +54,14 @@ func StreamerRole(u *User) {
 func RecruiterRole(u *User) {
 	u.Recruiter = true
 }
+
+func ClearRoles(u *User) {
+	u.Owner = false
+	u.Admin = false
+	u.SModerator = false
+	u.JModerator = false
+	u.Editor = false
+	u.Agora = false
+	u.Streamer = false
+	u.Recruiter = false
+}

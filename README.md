@@ -104,11 +104,10 @@ You will see several examples of handlers being added to the queue, but let's sk
 Below this line (obviously), let's create our `HelloHandler` and add it to the _discordgo_ session. 
 
 ```go
-	// Add new handlers below this line //
+    // Add new handlers below this line //
 
-hello := HelloHandler{}
-h.dg.AddHandler(hello.Read)
-
+    hello := HelloHandler{}
+    h.dg.AddHandler(hello.Read)
 ```
 
 That's it!

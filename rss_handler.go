@@ -8,7 +8,7 @@ import (
 
 type RSSHandler struct {
 	db		*DBHandler
-	conf	*mainConfig
+	conf	*Config
 	callback *CallbackHandler
 	dg		*discordgo.Session
 }

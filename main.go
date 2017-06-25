@@ -49,7 +49,7 @@ func main() {
 
 
 	// Run a quick first time db configuration to verify that it is working properly
-	dbhandler := DBHandler{conf: &conf, DB: db}
+	dbhandler := DBHandler{conf: &conf, rawdb: db}
 	err = dbhandler.FirstTimeSetup()
 	if err != nil {
 		log.Fatal(err)

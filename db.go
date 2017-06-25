@@ -8,51 +8,82 @@ import (
 
 type DBHandler struct {
 
-	DB *storm.DB
-	conf *mainConfig
+	rawdb   *storm.DB
+	conf *Config
 
 }
 
 func (h *DBHandler) FirstTimeSetup() error {
 
 	var user User
+	user.ID = h.conf.DiscordConfig.AdminID
+	user.Init()
 
-	err := h.DB.One("ID", h.conf.DiscordConfig.AdminID, &user)
+	db := h.rawdb.From("Users")
+
+	err := db.One("ID", h.conf.DiscordConfig.AdminID, &user)
 	if err != nil {
-		println("Running first time db config")
-		user.ID = h.conf.DiscordConfig.AdminID
+		fmt.Println("Running first time db config")
+		walletdb := db.From("Wallets")
 		user.SetRole("owner")
-		err := h.DB.Save(&user)
+		err := db.Save(&user)
 		if err != nil {
 			fmt.Println("error saving owner")
 			return err
 		}
+
+		wallet := Wallet{Account: h.conf.DiscordConfig.AdminID, Balance: 10000}
+		err = walletdb.Save(&wallet)
+		if err != nil {
+			fmt.Println("error saving wallet")
+			return err
+		}
+
 		if(user.Owner) {
-			fmt.Println("Database has been configured")
-			err = h.DB.One("ID", h.conf.DiscordConfig.AdminID, &user)
+			err = db.One("ID", h.conf.DiscordConfig.AdminID, &user)
+			if err != nil{
+				fmt.Println("Could not retrieve data from the database, something went wrong!")
+				return err
+			}
 			fmt.Println("Owner ID: " + user.ID)
+			fmt.Println("Database has been configured")
 			return nil
 		}
 	}
-
 	return nil
-
 }
 
+func (h *DBHandler) Insert(object interface{}) error {
 
-func (h *DBHandler) TransferOwner() error {
+	err := h.rawdb.Save(object)
+	if err != nil {
+		fmt.Println("Could not insert object: ", err.Error())
+		return err
+	}
 
 	return nil
-
 }
 
+func (h *DBHandler) Find(first string, second string, object interface{}) error {
 
+	err := h.rawdb.One(first, second, object)
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
-func (h *DBHandler) GetUser(uid string) (decoded User, err error) {
+func (h *DBHandler) Update(object interface{}) error {
+	err := h.rawdb.Update(object)
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
-	var user User
+func (h *DBHandler) GetUser(uid string) (user User, err error) {
 
-	err = h.DB.One("ID", uid, &user)
+	err = h.rawdb.One("ID", uid, &user)
 
 	return user, err
 }

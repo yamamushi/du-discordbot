@@ -28,6 +28,9 @@ func (h *MainHandler) Init() error {
 
 	// Add new handlers below this line //
 
+	user := UserHandler{conf: h.conf, db: h.db}
+	user.Init()
+	h.dg.AddHandler(user.Read)
 
 
 	// Open a websocket connection to Discord and begin listening.
@@ -65,7 +68,7 @@ func (h *MainHandler) PostInit(dg *discordgo.Session) error {
 // This function will be called (due to AddHandler above) every time a new
 // message is created on any channel that the autenticated bot has access to.
 func (h *MainHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
-
+	// very important to set this first!
 	cp := h.conf.DUBotConfig.CP
 
 	// Ignore all messages created by the bot itself
@@ -73,6 +76,12 @@ func (h *MainHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author.ID == s.State.User.ID {
 		return
 	}
+
+	// Ignore bots
+	if m.Author.Bot {
+		return
+	}
+
 
 	// If the message is "ping" reply with "Pong!"
 	if m.Content == cp + "ping" {
