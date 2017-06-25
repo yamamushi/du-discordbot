@@ -12,6 +12,7 @@ type User struct {
 	Agora		bool `storm:"index"`
 	Streamer	bool `storm:"index"`
 	Recruiter	bool `storm:"index"`
+
 }
 
 func (u *User) Init() {

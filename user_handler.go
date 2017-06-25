@@ -25,6 +25,11 @@ func (h *UserHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
+	// Ignore bots
+	if m.Author.Bot {
+		return
+	}
+
 	message := strings.Fields(m.Content)
 
 	var u User
@@ -34,6 +39,7 @@ func (h *UserHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		fmt.Println("Adding new user to DB!")
 		user := User{ID: m.Author.ID}
 		user.Init()
+		fmt.Println("User Initialized!")
 		err := db.Save(&user)
 		if err != nil {
 			fmt.Println("Error inserting user into Database!")
@@ -43,7 +49,7 @@ func (h *UserHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		walletdb := db.From("Wallets")
 
 		var wallet Wallet
-		err = walletdb.One("ID", m.Author.ID, &wallet)
+		err = walletdb.One("Account", m.Author.ID, &wallet)
 		if err != nil {
 			wallet := Wallet{Account: m.Author.ID}
 			wallet.AddBalance(1000)
