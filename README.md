@@ -8,7 +8,7 @@ A Dual Universe bot being developed for the unofficial Dual Universe discord.
 - [X] Docker Support
 - [ ] Internal Permissions System
 - [ ] RSS Subscriptions
-- [ ] Currency System
+- [X] Currency System
 - [ ] More Games!
 - [ ] Reminders / Notifications
 - [ ] Dual Universe Wiki Integration

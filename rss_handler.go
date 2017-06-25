@@ -23,13 +23,15 @@ func (h *RSSHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		command := strings.Fields(m.Content)
 
 		// Grab our sender ID to verify if this user has permission to use this command
-		u, err := h.db.GetUser(m.Author.ID)
+		db := h.db.rawdb.From("Users")
+		var user User
+		err := db.One("ID", m.Author.ID, &user)
 		if err != nil {
 			fmt.Println("error retrieving user:" + m.Author.ID)
 		}
 
 
-		if u.Admin {
+		if user.Admin {
 
 			if len(command) < 2{
 				s.ChannelMessageSend(m.ChannelID, "Expected flag for 'rss' command" )

@@ -31,6 +31,10 @@ func (w *Wallet) SendBalance(receiver *Wallet, amount int) error {
 		return errors.New("Insufficient Sender Balance")
 	}
 
+	if amount < 0 {
+		return errors.New("You cannot send a negative amount!")
+	}
+
 	w.Balance = w.Balance - amount
 	receiver.Balance = receiver.Balance + amount
 	return nil
