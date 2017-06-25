@@ -1,4 +1,0 @@
-package main
-
-// Owner commands
-

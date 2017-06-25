@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-type mainConfig struct {
+type Config struct {
 	DiscordConfig   discordConfig 	`toml:"discord"`
 	DBConfig		databaseConfig 	`toml:"database"`
 	DUBotConfig 	dubotConfig 	`toml:"du-bot"`
@@ -27,9 +27,9 @@ type dubotConfig struct {
 	Playing string 	`toml:"default_now_playing"`
 }
 
-func ReadConfig(path string) ( config mainConfig, err error) {
+func ReadConfig(path string) ( config Config, err error) {
 
-	var conf mainConfig
+	var conf Config
 	if _, err := toml.DecodeFile(path, &conf); err != nil {
 		fmt.Println(err)
 		return conf, err

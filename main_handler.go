@@ -8,14 +8,14 @@ import (
 type MainHandler struct {
 
 	db *DBHandler
-	conf *mainConfig
+	conf *Config
 	dg *discordgo.Session
 
 }
 
 func (h *MainHandler) Init() error {
-
-	// Add our main handler
+	// DO NOT add anything above this line!!
+	// Add our main handler -
 	h.dg.AddHandler(h.Read)
 
 	// Create a callback Handler and add it to our Handler Queue
@@ -25,6 +25,8 @@ func (h *MainHandler) Init() error {
 	// Create our RSS handler
 	rss := RSSHandler{db: h.db, conf: h.conf, callback: &callback_handler, dg: h.dg}
 	h.dg.AddHandler(rss.Read)
+
+	// Add new handlers below this line //
 
 
 

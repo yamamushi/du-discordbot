@@ -13,6 +13,8 @@ type User struct {
 	Streamer	bool
 	Recruiter	bool
 
+	Wallet
+
 }
 
 func (u *User) SetRole(role string) {
