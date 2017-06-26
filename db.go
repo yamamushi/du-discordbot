@@ -83,8 +83,12 @@ func (h *DBHandler) Update(object interface{}) error {
 
 func (h *DBHandler) GetUser(uid string) (user User, err error) {
 
-	err = h.rawdb.One("ID", uid, &user)
+	userdb := h.rawdb.From("Users")
+	err = userdb.One("ID", uid, &user)
+	if err != nil {
+		return user, err
+	}
 
-	return user, err
+	return user, nil
 }
 

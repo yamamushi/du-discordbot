@@ -52,10 +52,90 @@ func (h *RSSHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 				return
 			}
 
+			if command[1] == "list" && len(command) == 2 {
+				formatted := h.GetRSSList(m.ChannelID)
+				s.ChannelMessageSend(m.ChannelID, formatted)
+				return
+			}
+
+			if command[1] == "get" && len(command) == 2 {
+				s.ChannelMessageSend(m.ChannelID, "Please supply a feed URL: ")
+				return
+			}
+
+			if command[1] == "get" && len(command) > 2 {
+				message, err := h.GetLatestItem(m.ChannelID, command[2])
+				if err != nil {
+					s.ChannelMessageSend(m.ChannelID, err.Error())
+					return
+				}
+				s.ChannelMessageSend(m.ChannelID, message)
+				return
+			}
+
 		}
 	}
 }
 
+func (h *RSSHandler) GetLatestItem(channel string, url string) (formatted string, err error) {
+	rss := RSS{db: h.db}
+
+	item, err := rss.GetLatestItem(url, channel)
+
+	if err != nil {
+		return formatted, err
+	}
+
+	if item.Twitter {
+		formatted = "Latest Tweet from " + item.Author + "\n\n"
+	} else if item.Reddit {
+
+		var subreddit string
+		if strings.HasPrefix(url, "https://www.reddit.com"){
+			subreddit = strings.TrimPrefix(strings.TrimSuffix(url, ".rss"), "https://www.reddit.com")
+		} else if strings.HasPrefix(url, "http://www.reddit.com"){
+			subreddit = strings.TrimPrefix(strings.TrimSuffix(url, ".rss"), "http://www.reddit.com")
+		}
+		//subreddit = strings.Trim(subreddit, "http://www.reddit.com")
+		formatted = "Latest Update from " + subreddit + " - " + "https://www.reddit.com/user"+item.Author + " \n\n"
+		formatted = formatted + item.Title + "\n\n"
+		//formatted = formatted + item.Content + "\n"
+		//formatted = formatted + item.Description + "\n"
+		formatted = formatted + item.Link + "\n"
+		formatted = formatted + item.Published + "\n"
+
+	} else {
+		formatted = "Latest update from " + url + "\n"
+		formatted = formatted + item.Author + "\n"
+		formatted = formatted + item.Title + "\n"
+		formatted = formatted + item.Content + "\n"
+		//formatted = formatted + item.Description + "\n"
+		formatted = formatted + item.Link + "\n"
+		formatted = formatted + item.Published + "\n"
+	}
+
+	return formatted, nil
+}
+
+
+func (h *RSSHandler) GetRSSList(channel string) (formatted string) {
+
+	rss := RSS{db: h.db}
+	feeds, err := rss.GetChannel(channel)
+	if err != nil {
+		return "No subscriptions could be found for this channel"
+	}
+
+	formatted = "RSS Subscriptions for this Channel:" + "\n"
+	for _, i := range feeds {
+		formatted = formatted + i.Title + " - " + i.URL + "\n"
+	}
+
+	//formatted = formatted + "```"
+
+	return formatted
+
+}
 
 
 func (h *RSSHandler) GetRSS(command string, s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -83,7 +163,7 @@ func (h *RSSHandler) GetRSS(command string, s *discordgo.Session, m *discordgo.M
 
 
 
-func (h *RSSHandler) ConfirmRSS(command string, s *discordgo.Session, m *discordgo.MessageCreate) {
+func (h *RSSHandler) ConfirmRSS(url string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	cp := h.conf.DUBotConfig.CP
 	if strings.HasPrefix(m.Content, cp){
@@ -93,23 +173,17 @@ func (h *RSSHandler) ConfirmRSS(command string, s *discordgo.Session, m *discord
 
 	if m.Content == "Y" || m.Content == "y" {
 
-		rss := RSS{}
-		err := rss.Validate(command)
+		rss := RSS{db: h.db}
+		err := rss.Subscribe(url, "", m.ChannelID)
 		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, "Error Validating URL: " + err.Error())
+			s.ChannelMessageSend(m.ChannelID, "Error Subscribing to URL: " + err.Error())
 			return
 		}
 
-		s.ChannelMessageSend(m.ChannelID, "Selection Confirmed: " + command )
-		h.AddRSS(command)
+		s.ChannelMessageSend(m.ChannelID, "Selection Confirmed: " + url )
 		return
 	}
 
 	s.ChannelMessageSend(m.ChannelID, "RSS Add Cancelled")
 }
 
-
-func (h *RSSHandler) AddRSS(url string) error {
-	fmt.Println("Adding RSS Feed: " + url)
-	return nil
-}

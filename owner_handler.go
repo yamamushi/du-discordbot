@@ -1,13 +1,13 @@
 package main
 
 
-type AdminHandler struct {
+type OwnerHandler struct {
 
 	DB *DBHandler
 
 }
 
-func (h *AdminHandler) TransferOwner () error {
+func (h *OwnerHandler) TransferOwner () error {
 
 	return nil
 
