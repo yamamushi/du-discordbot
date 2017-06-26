@@ -17,7 +17,7 @@ type RSSFeed struct {
 	ID	string `storm:"id"`
 	Title 	string
 	URL   string `storm:"index"`
-	LastRun string // Not particularly needed, but may become useful
+	LastRun time.Time // Not particularly needed, but may become useful
 	Created string
 	Description string
 	Author string
@@ -27,6 +27,8 @@ type RSSFeed struct {
 	Link string
 	Twitter bool `storm:"index"`
 	Reddit bool
+	LastItem string // URL of last item
+	Posts []string // List of Posted URL's
 }
 
 type RSSItem struct {
@@ -81,6 +83,15 @@ func (h *RSS) GetFromDB(url string, channel string) (rssfeed RSSFeed, err error)
 	}
 
 	return rssfeed, errors.New("No record found")
+}
+
+func (h *RSS) GetDB() (rssfeeds []RSSFeed, err error){
+	db := h.db.rawdb.From("RSS")
+	err = db.All(&rssfeeds)
+	if err != nil{
+		return rssfeeds, err
+	}
+	return rssfeeds, nil
 }
 
 func (h *RSS) GetChannel(channel string) (rssfeeds []RSSFeed, err error){
@@ -237,7 +248,6 @@ func (h *RSS) Subscribe(url string, title string, channel string) (err error){
 
 	isTwitter := false
 	if strings.HasPrefix( url, "https://twitrss.me/") {
-		fmt.Println("New Twitter Feed Detected")
 		author = strings.TrimPrefix(feed.Link, "https://twitter.com/")
 		isTwitter = true
 	}
@@ -247,15 +257,48 @@ func (h *RSS) Subscribe(url string, title string, channel string) (err error){
 		isReddit = true
 	}
 
-	fmt.Println("Assembling RSSFeed")
-
 	rssfeed := RSSFeed{ID: GetUUID(), URL: url, Title: title, Description: feed.Description,
 		Created: time.Now().String(), Updated: feed.Updated, Published: feed.Published,
 		ChannelID: channel, Link: feed.Link, Author: author, Twitter: isTwitter, Reddit: isReddit}
 
-	fmt.Println("Adding RSS Feed to DB")
+	fmt.Println("Adding RSS Feed to DB: " + url + " Channel: " + channel)
 
 	h.AddToDB(rssfeed)
+	return nil
+}
+
+
+func (h *RSS) UpdateLastRun(lasttime time.Time, rssfeed RSSFeed) (err error){
+
+	rssfeed.LastRun = lasttime
+
+	db := h.db.rawdb.From("RSS")
+	err = db.Update(&rssfeed)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+
+func (h *RSS) UpdatePosts(rssfeed RSSFeed) (err error) {
+
+	lastitem := rssfeed.LastItem
+
+	for _, post := range rssfeed.Posts {
+		if post == lastitem {
+			return nil
+		}
+	}
+
+	rssfeed.Posts = append(rssfeed.Posts, lastitem)
+
+	db := h.db.rawdb.From("RSS")
+	err = db.Update(&rssfeed)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -280,12 +323,10 @@ func (h *RSS) GetLatestItem(url string, channel string) (rssitem RSSItem, err er
 
 			feedAuthor := strings.TrimPrefix(rssfeed.Author, "https://twitter.com/")
 
-			fmt.Println("feed author: " + feedAuthor)
 			for _, item := range feed.Items {
 
 				author := strings.Split(strings.TrimPrefix(item.Link,"https://twitter.com/"), "/")[0]
 
-				fmt.Println("feed author: " + feedAuthor + " item author: " + author )
 				if author == feedAuthor {
 					rssitem.Twitter = true
 					rssitem.Author = "@"+feedAuthor
@@ -294,8 +335,14 @@ func (h *RSS) GetLatestItem(url string, channel string) (rssitem RSSItem, err er
 					rssitem.Published = item.Published
 					rssitem.Content = item.Content
 					rssitem.Description = item.Description
+
+					rssfeed.LastItem = item.Link
+					h.UpdateLastRun(time.Now(), rssfeed)
+
 					return rssitem, nil
 				}
+
+				h.UpdateLastRun(time.Now(), rssfeed)
 				return rssitem, nil
 			}
 		}
@@ -312,6 +359,9 @@ func (h *RSS) GetLatestItem(url string, channel string) (rssitem RSSItem, err er
 			rssitem.Content = item.Content
 			rssitem.Description = item.Description
 
+			rssfeed.LastItem = item.Link
+			h.UpdateLastRun(time.Now(), rssfeed)
+
 			return rssitem, nil
 		}
 
@@ -324,9 +374,13 @@ func (h *RSS) GetLatestItem(url string, channel string) (rssitem RSSItem, err er
 		rssitem.Content = item.Content
 		rssitem.Description = item.Description
 
+		rssfeed.LastItem = item.Link
+		h.UpdateLastRun(time.Now(), rssfeed)
+
 		return rssitem, nil
 
 	}
 
+	h.UpdateLastRun(time.Now(), rssfeed)
 	return rssitem, errors.New("No items found!")
 }

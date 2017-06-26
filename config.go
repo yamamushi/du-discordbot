@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/BurntSushi/toml"
 	"fmt"
+	"time"
 )
 
 type Config struct {
@@ -25,6 +26,7 @@ type dubotConfig struct {
 	// Command Prefix
 	CP 		string 	`toml:"command_prefix"`
 	Playing string 	`toml:"default_now_playing"`
+	RSSTimeout time.Duration  `toml:"rss_fetch_timeout"`
 }
 
 func ReadConfig(path string) ( config Config, err error) {

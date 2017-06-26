@@ -94,10 +94,11 @@ func (h *UserHandler) CheckUser (ID string) {
 	var u User
 	err := db.One("ID", ID, &u)
 	if err != nil {
-		fmt.Println("Adding new user to DB!")
+		fmt.Println("Adding new user to DB: " + ID)
+
 		user := User{ID: ID}
 		user.Init()
-		fmt.Println("User Initialized!")
+
 		err := db.Save(&user)
 		if err != nil {
 			fmt.Println("Error inserting user into Database!")
@@ -162,7 +163,7 @@ func (h *UserHandler) Transfer(message []string, s *discordgo.Session, m *discor
 
 	mentionedUser := mentions[0]
 
-	sender, err := h.GetWallet(mentionedUser.ID)
+	sender, err := h.GetWallet(m.Author.ID)
 	if err != nil{
 		s.ChannelMessageSend(m.ChannelID, "Internal error, still in development!")
 	}

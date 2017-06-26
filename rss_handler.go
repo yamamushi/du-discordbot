@@ -4,6 +4,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"fmt"
 	"strings"
+	"time"
 )
 
 type RSSHandler struct {
@@ -17,6 +18,8 @@ type RSSHandler struct {
 func (h *RSSHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	cp := h.conf.DUBotConfig.CP
+
+
 
 	if strings.HasPrefix(m.Content, cp + "rss") {
 
@@ -59,7 +62,7 @@ func (h *RSSHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 			}
 
 			if command[1] == "get" && len(command) == 2 {
-				s.ChannelMessageSend(m.ChannelID, "Please supply a feed URL: ")
+				h.GetAllLatest(s, m)
 				return
 			}
 
@@ -77,42 +80,124 @@ func (h *RSSHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 }
 
+func (h *RSSHandler) UpdateRSSFeeds(s *discordgo.Session) {
+
+	for true {
+		// Only run every X minutes
+		time.Sleep(h.conf.DUBotConfig.RSSTimeout * time.Minute)
+
+		rss := RSS{db: h.db}
+		rssfeeds, err := rss.GetDB()
+		if err != nil {
+			fmt.Println("Error Reading Database RSS! - " + err.Error())
+			return
+		}
+
+		for _, feed := range rssfeeds {
+
+
+			now := time.Now()
+			lastrun := feed.LastRun
+			expires := now.Sub(lastrun)
+
+			if expires > h.conf.DUBotConfig.RSSTimeout * time.Minute {
+
+				item, err := rss.GetLatestItem(feed.URL, feed.ChannelID)
+				if err != nil {
+					fmt.Println(err.Error())
+					return
+				}
+
+				submitted := false
+				for _, post := range feed.Posts {
+					if post == item.Link {
+						submitted = true
+					}
+				}
+
+				feed.LastItem = item.Link
+				err = rss.UpdatePosts(feed)
+				if err != nil{
+					fmt.Println(err.Error())
+					return
+				}
+
+				if !submitted {
+					formatted := h.FormatRSSItem(feed.ChannelID, item)
+					s.ChannelMessageSend(feed.ChannelID, formatted)
+				}
+			}
+
+			time.Sleep(5 * time.Second)
+		}
+	}
+}
+
+
+func (h *RSSHandler) FormatRSSItem(url string, rssitem RSSItem) (formatted string) {
+
+	if rssitem.Twitter {
+
+		formatted = "Latest Tweet from " + rssitem.Author + "\n\n"
+		formatted = formatted + rssitem.Link + "\n"
+
+	} else if rssitem.Reddit {
+
+		formatted = "New Subreddit Post from " + "https://www.reddit.com/user"+strings.TrimPrefix(rssitem.Author,"/u")+ " \n\n"
+		formatted = formatted + rssitem.Title + "\n\n"
+		//formatted = formatted + item.Content + "\n"
+		//formatted = formatted + item.Description + "\n"
+		formatted = formatted + rssitem.Link + "\n"
+		formatted = formatted + rssitem.Published + "\n"
+
+	} else {
+
+		formatted = "Latest update from " + url + "\n"
+		formatted = formatted + rssitem.Author + "\n"
+		formatted = formatted + rssitem.Title + "\n"
+		formatted = formatted + rssitem.Content + "\n"
+		//formatted = formatted + item.Description + "\n"
+		formatted = formatted + rssitem.Link + "\n"
+		formatted = formatted + rssitem.Published + "\n"
+
+	}
+	return formatted
+}
+
+// This will send, beware of that.
+func (h *RSSHandler) GetAllLatest(s *discordgo.Session, m *discordgo.MessageCreate) (err error){
+
+	rss := RSS{db: h.db}
+	feeds, err := rss.GetChannel(m.ChannelID)
+	if err != nil {
+		return err
+	}
+
+
+	for _, i := range feeds {
+
+		item, err := rss.GetLatestItem(i.URL, m.ChannelID)
+		if err != nil {
+			return err
+		}
+
+		formatted := h.FormatRSSItem(i.URL, item)
+		s.ChannelMessageSend(m.ChannelID, formatted)
+		time.Sleep( 3 * time.Second)
+	}
+
+	return nil
+}
+
 func (h *RSSHandler) GetLatestItem(channel string, url string) (formatted string, err error) {
 	rss := RSS{db: h.db}
 
 	item, err := rss.GetLatestItem(url, channel)
-
 	if err != nil {
 		return formatted, err
 	}
 
-	if item.Twitter {
-		formatted = "Latest Tweet from " + item.Author + "\n\n"
-	} else if item.Reddit {
-
-		var subreddit string
-		if strings.HasPrefix(url, "https://www.reddit.com"){
-			subreddit = strings.TrimPrefix(strings.TrimSuffix(url, ".rss"), "https://www.reddit.com")
-		} else if strings.HasPrefix(url, "http://www.reddit.com"){
-			subreddit = strings.TrimPrefix(strings.TrimSuffix(url, ".rss"), "http://www.reddit.com")
-		}
-		//subreddit = strings.Trim(subreddit, "http://www.reddit.com")
-		formatted = "Latest Update from " + subreddit + " - " + "https://www.reddit.com/user"+item.Author + " \n\n"
-		formatted = formatted + item.Title + "\n\n"
-		//formatted = formatted + item.Content + "\n"
-		//formatted = formatted + item.Description + "\n"
-		formatted = formatted + item.Link + "\n"
-		formatted = formatted + item.Published + "\n"
-
-	} else {
-		formatted = "Latest update from " + url + "\n"
-		formatted = formatted + item.Author + "\n"
-		formatted = formatted + item.Title + "\n"
-		formatted = formatted + item.Content + "\n"
-		//formatted = formatted + item.Description + "\n"
-		formatted = formatted + item.Link + "\n"
-		formatted = formatted + item.Published + "\n"
-	}
+	formatted = h.FormatRSSItem(url, item)
 
 	return formatted, nil
 }

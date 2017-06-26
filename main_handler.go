@@ -25,6 +25,7 @@ func (h *MainHandler) Init() error {
 	// Create our RSS handler
 	rss := RSSHandler{db: h.db, conf: h.conf, callback: &callback_handler, dg: h.dg}
 	h.dg.AddHandler(rss.Read)
+	go rss.UpdateRSSFeeds(h.dg)
 
 	// Add new handlers below this line //
 

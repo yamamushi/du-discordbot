@@ -10,3 +10,4 @@ filename = "database.db"
 [du-bot]
 default_now_playing = "InDev"
 command_prefix = "~"
+rss_fetch_timeout = 3
