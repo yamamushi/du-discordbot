@@ -34,7 +34,7 @@ A Dual Universe bot being developed for the unofficial Dual Universe discord.
 
 ## Commands
 
-_du-discordbot_ maintains its own internal permissions system. It is important to note that these commands are not attributed to discord based roles. Ranks can therefore be assigned through du-discordbot.
+_du-discordbot_ maintains its own internal permissions system. It is important to note that these commands are not attributed to discord based roles. Ranks can therefore be assigned through _du-discordbot_.
 
 
 ### Admin Commands
@@ -122,6 +122,16 @@ type HelloHandler struct {
 
 func (h *HelloHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
+	// Ignore all messages created by the bot itself
+	if m.Author.ID == s.State.User.ID {
+		return
+	}
+
+	// Ignore bots
+	if m.Author.Bot {
+		return
+	}
+
     // Set our command prefix to the default one within our config file
 	cp := h.conf.DUBotConfig.CP
 	
@@ -143,7 +153,7 @@ You can save this file as `hello_handler.go`, I like the underscore in the filen
 Cool, we've got a simple handler built, but how do we actually get it to listen to incoming messages?
 
 
-Open up `func (h *MainHandler) Init() error`, which is defined within ``main_handler.go``, is our entry point for adding handlers into our _discordgo_ session.
+Open up `func (h *MainHandler) Init() error`, which is defined within ``main_handler.go``, our entry point for adding handlers into our _discordgo_ session.
 
 You will see several examples of handlers being added to the queue, but let's skip those for now and find the line that reads
 
@@ -189,6 +199,16 @@ type HelloHandler struct {
 
 
 func (h *HelloHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
+
+	// Ignore all messages created by the bot itself
+	if m.Author.ID == s.State.User.ID {
+		return
+	}
+
+	// Ignore bots
+	if m.Author.Bot {
+		return
+	}
 
     // Set our command prefix to the default one within our config file
 	cp := h.conf.DUBotConfig.CP
@@ -252,7 +272,7 @@ Now back in ``main_handler.go``, we'll update the section you changed before to 
     // Here we add the global callback_handler as needed by HelloHandler 
     // If you get errors registering sub callbacks, make sure you've 
     // Constructed the parent handlers appropriately.
-    hello := HelloHandler{conf: h.conf, callback: &callback_handler}
+    hello := HelloHandler{conf: h.conf, callback: h.callback}
     h.dg.AddHandler(hello.Read)
     
 ```

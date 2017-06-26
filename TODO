@@ -1,6 +1,6 @@
 - Add Permissions System through DB for Commands
-- Add RSS Feed
-- Add Twitter Feed
-- Add Message Formatting
-- Channel Blacklist
-- Commands Documentation
+- Add RSS Feed || "Complete", although it needs solid testing
+- Add Twitter Feed || Somewhat Working , needs further testing
+- Add Message Formatter
+- Channel Blacklist || This depends on the permissions system
+- Commands Documentation || In progress

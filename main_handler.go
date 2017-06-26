@@ -10,7 +10,9 @@ type MainHandler struct {
 	db *DBHandler
 	conf *Config
 	dg *discordgo.Session
-
+	callback *CallbackHandler
+	perm *PermissionsHandler
+	user *UserHandler
 }
 
 func (h *MainHandler) Init() error {
@@ -18,21 +20,11 @@ func (h *MainHandler) Init() error {
 	// Add our main handler -
 	h.dg.AddHandler(h.Read)
 
-	// Create a callback Handler and add it to our Handler Queue
-	callback_handler := CallbackHandler{dg: h.dg}
-	h.dg.AddHandler(callback_handler.Read)
-
+	// Add new handlers below this line //
 	// Create our RSS handler
-	rss := RSSHandler{db: h.db, conf: h.conf, callback: &callback_handler, dg: h.dg}
+	rss := RSSHandler{db: h.db, conf: h.conf, callback: h.callback, dg: h.dg}
 	h.dg.AddHandler(rss.Read)
 	go rss.UpdateRSSFeeds(h.dg)
-
-	// Add new handlers below this line //
-
-	user := UserHandler{conf: h.conf, db: h.db}
-	user.Init()
-	h.dg.AddHandler(user.Read)
-
 
 	// Open a websocket connection to Discord and begin listening.
 	err := h.dg.Open()

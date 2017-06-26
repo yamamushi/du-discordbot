@@ -12,11 +12,13 @@ type User struct {
 	Agora		bool `storm:"index"`
 	Streamer	bool `storm:"index"`
 	Recruiter	bool `storm:"index"`
+	Citizen		bool `storm:"index"`
 
 }
 
 func (u *User) Init() {
 	ClearRoles(u)
+	CitizenRole(u)
 }
 
 func (u *User) SetRole(role string) {
@@ -46,6 +48,9 @@ func (u *User) SetRole(role string) {
 
 	case "recruiter" :
 		RecruiterRole(u)
+
+	case "citizen" :
+		CitizenRole(u)
 
 	case "clear" :
 		ClearRoles(u)

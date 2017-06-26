@@ -65,3 +65,7 @@ func ClearRoles(u *User) {
 	u.Streamer = false
 	u.Recruiter = false
 }
+
+func CitizenRole(u *User) {
+	u.Citizen = true
+}
