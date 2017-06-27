@@ -77,6 +77,7 @@ func (h *PermissionsHandler) ReadPromote(commands []string, s *discordgo.Session
 	}
 	if len(m.Mentions) < 1 {
 		s.ChannelMessageSend(m.ChannelID, "User must be mentioned")
+		return
 	}
 	target := m.Mentions[0].ID
 	group := commands[2]
@@ -92,13 +93,14 @@ func (h *PermissionsHandler) ReadPromote(commands []string, s *discordgo.Session
 			s.ChannelMessageSend(m.ChannelID, m.Author.Mention() + " https://www.youtube.com/watch?v=fmz-K2hLwSI ")
 			return
 		} else {
-			s.ChannelMessageSend(m.ChannelID, "This group can not be assigned through the promote command.")
+			s.ChannelMessageSend(m.ChannelID, "This group cannot be assigned through the promote command.")
 			return
 		}
 	}
 	if group == "admin" {
 		if !user.Owner {
 			s.ChannelMessageSend(m.ChannelID, "You do not have permission to assign this group")
+			return
 		} else {
 			err = h.Promote(target, group)
 			if err != nil {
@@ -113,6 +115,7 @@ func (h *PermissionsHandler) ReadPromote(commands []string, s *discordgo.Session
 
 		if !user.Admin {
 			s.ChannelMessageSend(m.ChannelID, "You do not have permission to assign this group")
+			return
 		} else {
 			err = h.Promote(target, group)
 			if err != nil {
@@ -127,6 +130,7 @@ func (h *PermissionsHandler) ReadPromote(commands []string, s *discordgo.Session
 
 		if !user.SModerator {
 			s.ChannelMessageSend(m.ChannelID, "You do not have permission to assign this group")
+			return
 		} else {
 			err = h.Promote(target, group)
 			if err != nil {
@@ -141,6 +145,7 @@ func (h *PermissionsHandler) ReadPromote(commands []string, s *discordgo.Session
 
 		if !user.Moderator {
 			s.ChannelMessageSend(m.ChannelID, "You do not have permission to assign this group")
+			return
 		} else {
 			err = h.Promote(target, group)
 			if err != nil {
@@ -155,6 +160,7 @@ func (h *PermissionsHandler) ReadPromote(commands []string, s *discordgo.Session
 
 		if !user.Moderator {
 			s.ChannelMessageSend(m.ChannelID, "You do not have permission to assign this group")
+			return
 		} else {
 			err = h.Promote(target, group)
 			if err != nil {
@@ -169,6 +175,7 @@ func (h *PermissionsHandler) ReadPromote(commands []string, s *discordgo.Session
 
 		if !user.Moderator {
 			s.ChannelMessageSend(m.ChannelID, "You do not have permission to assign this group")
+			return
 		} else {
 			err = h.Promote(target, group)
 			if err != nil {
@@ -183,6 +190,7 @@ func (h *PermissionsHandler) ReadPromote(commands []string, s *discordgo.Session
 
 		if !user.Moderator {
 			s.ChannelMessageSend(m.ChannelID, "You do not have permission to assign this group")
+			return
 		} else {
 			err = h.Promote(target, group)
 			if err != nil {
@@ -192,6 +200,9 @@ func (h *PermissionsHandler) ReadPromote(commands []string, s *discordgo.Session
 			s.ChannelMessageSend(m.ChannelID, m.Mentions[0].Mention() + " has been added to the " + group + " group.")
 			return
 		}
+	} else {
+		s.ChannelMessageSend(m.ChannelID, group + " is not a valid group!")
+		return
 	}
 }
 

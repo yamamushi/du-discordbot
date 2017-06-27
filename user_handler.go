@@ -191,7 +191,7 @@ func (h *UserHandler) Transfer(message []string, s *discordgo.Session, m *discor
 
 	h.CheckUser(mentionedUser.ID)
 
-	i, err := strconv.Atoi(message[1])
+	amount, err := strconv.Atoi(message[1])
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, "Invalid value specified!: " + message[1])
 		return
@@ -202,14 +202,15 @@ func (h *UserHandler) Transfer(message []string, s *discordgo.Session, m *discor
 		s.ChannelMessageSend(m.ChannelID, "Internal error, still in development!")
 	}
 
-	err = sender.SendBalance(&receiver, i)
+	err = sender.SendBalance(&receiver, amount)
 	if err != nil{
 		s.ChannelMessageSend(m.ChannelID, err.Error())
 		return
 	}
 
-	db.Update(&receiver)
 	db.Update(&sender)
+	db.Update(&receiver)
+
 
 	mentionReceiver := mentions[0].Mention()
 	mentionSender := m.Author.Mention()

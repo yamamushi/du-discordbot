@@ -208,6 +208,9 @@ Below this line (obviously), let's create our `HelloHandler` and add it to the _
 ```go
     // Add new handlers below this line //
 
+    // If you get errors registering handlers, make sure the function
+    // Is defined correctly -> func(s *discordgo.Session, m *discordgo.MessageCreate)
+    
     hello := HelloHandler{conf: h.conf}
     h.dg.AddHandler(hello.Read)
 ```
@@ -237,7 +240,7 @@ import (
 
 type HelloHandler struct {
 
-	callback *CallbackHandler
+    callback *CallbackHandler
     conf *Config
 }
 
