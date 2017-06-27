@@ -1,7 +1,6 @@
 Table of Contents
 =================
 
-   * [Table of Contents](#table-of-contents)
    * [du-discordbot](#du-discordbot)
       * [Features](#features)
       * [Commands](#commands)
@@ -16,7 +15,7 @@ Table of Contents
       * [Docker](#docker)
       * [Adding Commands](#adding-commands)
          * [Hello Handler](#hello-handler)
-            * [Enabling HelloHandler](#enabling-hellohandler)
+         * [Enabling HelloHandler](#enabling-hellohandler)
          * [Hello Handler Sub-Callbacks](#hello-handler-sub-callbacks)
             
 
@@ -192,7 +191,7 @@ As you can see, the process of adding more strings to listen for is fairly easy,
 
 You can save this file as `hello_handler.go`, I like the underscore in the filename because it's easy for me to distinguish handler files in a directory listing.
 
-#### Enabling HelloHandler
+### Enabling HelloHandler
 
 Cool, we've got a simple handler built, but how do we actually get it to listen to incoming messages?
 
