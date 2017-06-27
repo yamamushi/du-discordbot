@@ -139,7 +139,7 @@ Launching this bot in docker is fairly straightforward.
 
 ## Adding Commands
 
-I won't go through the process of explaining the details of golang or the discordgo library, and you should definitely have a grasp of golang before proceeding. 
+I won't go through the process of explaining the details of [_golang_](https://tour.golang.org/welcome/1) or the [_discordgo_](https://github.com/bwmarrin/discordgo) library, and you should definitely have a grasp of golang before proceeding. 
 
 This should serve as a guide for how the control flow of the callback system works.
 

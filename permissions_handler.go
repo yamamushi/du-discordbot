@@ -42,7 +42,10 @@ func (h *PermissionsHandler) Read(s *discordgo.Session, m *discordgo.MessageCrea
 	}
 	*/
 
+	// Command prefix
 	cp := h.conf.DUBotConfig.CP
+
+	// Command from message content
 	command := strings.Fields(m.Content)
 	// We use this a bit, this is the author id formatted as a mention
 	//authormention := m.Author.Mention()
@@ -55,6 +58,7 @@ func (h *PermissionsHandler) Read(s *discordgo.Session, m *discordgo.MessageCrea
 
 	command[0] = strings.TrimPrefix(command[0], cp)
 
+	// After our command string has been trimmed down, check it against the command list
 	if command[0] == "set" {
 		if len(command) < 1 {
 			s.ChannelMessageSend(m.ChannelID, "<set> expects an argument.")
@@ -62,6 +66,7 @@ func (h *PermissionsHandler) Read(s *discordgo.Session, m *discordgo.MessageCrea
 		}
 	}
 	if command[0] == "promote" {
+		// Run our promote command function
 		h.ReadPromote(command, s, m)
 		return
 	}
@@ -69,6 +74,7 @@ func (h *PermissionsHandler) Read(s *discordgo.Session, m *discordgo.MessageCrea
 }
 
 
+// The promote command runs using our commands array to get the promotion settings
 func (h *PermissionsHandler) ReadPromote(commands []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if len(commands) < 3 {
@@ -79,15 +85,20 @@ func (h *PermissionsHandler) ReadPromote(commands []string, s *discordgo.Session
 		s.ChannelMessageSend(m.ChannelID, "User must be mentioned")
 		return
 	}
+
+	// Grab our target user id and group
 	target := m.Mentions[0].ID
 	group := commands[2]
 
+
+	// Get the authors user object from the database
 	user, err := h.db.GetUser(m.Author.ID)
 	if err != nil{
 		fmt.Println("Could not find user in PermissionsHandler.ReadPromote")
 		return
 	}
 
+	// Check the group argument
 	if group == "owner" {
 		if !user.Owner {
 			s.ChannelMessageSend(m.ChannelID, m.Author.Mention() + " https://www.youtube.com/watch?v=fmz-K2hLwSI ")
@@ -207,23 +218,31 @@ func (h *PermissionsHandler) ReadPromote(commands []string, s *discordgo.Session
 }
 
 
+// Set the given role on a user, and save the changes in the database
 func (h *PermissionsHandler) Promote(userid string, group string) (err error) {
 
+	// Get user from the database using the userid
 	user, err := h.user.GetUser(userid)
 	if err != nil{
 		return err
 	}
 
+	// Checks if a user is in a group based on the group string
 	if user.CheckRole(group) {
 		return errors.New("User Already in Group "+group+"!")
 	}
 
+	// Open the "Users" bucket in the database
 	db := h.db.rawdb.From("Users")
+
+	// Assign the group to our target user
 	user.SetRole(group)
 
+	// Save the user changes in the database
 	db.Update(&user)
 	return nil
 }
+
 
 
 func (h *PermissionsHandler) AdminCommand(command []string, s *discordgo.Session, m *discordgo.MessageCreate)  {
