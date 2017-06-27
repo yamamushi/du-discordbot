@@ -7,12 +7,17 @@ Table of Contents
       * [Commands](#commands)
          * [Admin Commands](#admin-commands)
          * [User Commands](#user-commands)
+      * [Permissions](#permissions)
+         * [Ranks](#ranks)
+         * [User Permission Commands](#user-permission-commands)
+         * [Command Permission Commands](#command-permission-commands)
       * [Discord](#discord)
    * [Developers Guide](#developers-guide)
       * [Docker](#docker)
       * [Adding Commands](#adding-commands)
          * [Hello Handler](#hello-handler)
             * [Enabling HelloHandler](#enabling-hellohandler)
+         * [Hello Handler Sub-Callbacks](#hello-handler-sub-callbacks)
             
 
 # du-discordbot
@@ -23,7 +28,8 @@ A Dual Universe bot being developed for the unofficial Dual Universe discord.
 
 - [X] Embedded Database
 - [X] Docker Support
-- [ ] Internal Permissions System
+- [X] Internal User Permissions System
+- [ ] Internal Command Permissions System
 - [X] RSS Subscriptions
 - [X] Currency System
 - [ ] More Games!
@@ -58,6 +64,44 @@ _du-discordbot_ maintains its own internal permissions system. It is important t
 | pong | Pongs the bot (not a latency pong!) | ~pong |
 
 
+## Permissions 
+
+_du-discordbot_ uses an internal permission system for group assignment. 
+
+Users are separated into groups that match the basic permissions system of the discord the bot was built for (see: [Discord](#discord)). 
+
+Commands, likewise, can be registered with the command registry along with a permission level (defaults to "_citizen_")
+
+If a command is run that is in the registry (the command registry is an extra feature that is not necessary when registering callbacks see: [Adding Commands](#adding-commands)), it will validate that a user has access to that command corresponding to their group, and return true or false. 
+ 
+ The outcome of that check will determine the result of the attempted command. 
+ 
+ tl;dr - _The things check the DB for permissions_
+
+### Ranks
+
+| Command       | Description   | Notes  |
+| ------------- | ------------- | ------------- |
+| owner | Configured owner of the bot, not the discord.  | Cannot be currently assigned |
+| admin | Bot Administrators | |
+| smoderator | Bot Senior Moderators  | |
+| moderator | Bot Moderators | | 
+| editor | Editors | -planned- |
+| agora | Fans who make things | -planned- | 
+| streamer | Streamers (Twitch/etc.) | -planned- | 
+| recruiter | Recruiters | -planned-  | 
+| citizen | Discord Citizen | All users whom the bot has seen speak have this role. |
+
+### User Permission Commands
+
+| Command       | Description   | Example Usage  |
+| ------------- | ------------- | ------------- |
+| promote | Promotes a user to the selected group  | ~promote @yamamushi admin |
+
+### Command Permission Commands
+
+-Planned-
+ 
 
 ## Discord
 
