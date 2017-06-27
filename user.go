@@ -4,15 +4,15 @@ type User struct {
 
 	ID string `storm:"id"`// primary key
 
-	Owner 		bool `storm:"index"`
-	Admin 		bool `storm:"index"`
-	SModerator	bool `storm:"index"`
-	JModerator	bool `storm:"index"`
-	Editor		bool `storm:"index"`
-	Agora		bool `storm:"index"`
-	Streamer	bool `storm:"index"`
-	Recruiter	bool `storm:"index"`
-	Citizen		bool `storm:"index"`
+	Owner      bool `storm:"index"`
+	Admin      bool `storm:"index"`
+	SModerator bool `storm:"index"`
+	Moderator  bool `storm:"index"`
+	Editor     bool `storm:"index"`
+	Agora      bool `storm:"index"`
+	Streamer   bool `storm:"index"`
+	Recruiter  bool `storm:"index"`
+	Citizen    bool `storm:"index"`
 
 }
 
@@ -34,8 +34,8 @@ func (u *User) SetRole(role string) {
 	case "smoderator" :
 		SModeratorRole(u)
 
-	case "jmoderator" :
-		JModeratorRole(u)
+	case "moderator" :
+		ModeratorRole(u)
 
 	case "editor" :
 		EditorRole(u)
@@ -57,3 +57,37 @@ func (u *User) SetRole(role string) {
 	}
 }
 
+func (u *User) CheckRole(role string) bool {
+
+	switch role {
+
+	case "owner" :
+		return u.Owner
+
+	case "admin" :
+		return u.Admin
+
+	case "smoderator" :
+		return u.SModerator
+
+	case "moderator" :
+		return u.Moderator
+
+	case "editor" :
+		return u.Editor
+
+	case "agora" :
+		return u.Agora
+
+	case "streamer" :
+		return u.Streamer
+
+	case "recruiter" :
+		return u.Recruiter
+
+	case "citizen" :
+		return u.Citizen
+	}
+
+	return false
+}

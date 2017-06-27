@@ -10,8 +10,6 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/asdine/storm"
-
-	"os/user"
 )
 
 // Variables used for command line parameters
@@ -50,6 +48,7 @@ func main() {
 
 
 	// Run a quick first time db configuration to verify that it is working properly
+	fmt.Println("Checking Database")
 	dbhandler := DBHandler{conf: &conf, rawdb: db}
 	err = dbhandler.FirstTimeSetup()
 	if err != nil {
@@ -67,17 +66,21 @@ func main() {
 
 
 	// Create a callback Handler and add it to our Handler Queue
+	fmt.Println("Adding Callback Handler")
 	callbackhandler := CallbackHandler{dg: dg}
 	dg.AddHandler(callbackhandler.Read)
 
 	// Create our userhandler
+	fmt.Println("Adding User Handler")
 	userhandler := UserHandler{conf: &conf, db: &dbhandler}
 	userhandler.Init()
 	dg.AddHandler(userhandler.Read)
 
+
 	// Create our permissionshandler
+	fmt.Println("Adding Permissions Handler")
 	permissionshandler := PermissionsHandler{dg: dg, conf: &conf, callback: &callbackhandler, db: &dbhandler, user: &userhandler}
-	dg.AddHandler(callbackhandler.Read)
+	dg.AddHandler(permissionshandler.Read)
 
 	// Now we create and initialize our main handler
 	handler := MainHandler{db: &dbhandler, conf: &conf, dg: dg, callback: &callbackhandler, perm: &permissionshandler}

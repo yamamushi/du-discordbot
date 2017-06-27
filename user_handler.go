@@ -84,6 +84,22 @@ func (h *UserHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		h.Transfer(message, s, m)
 		return
 	}
+	return
+}
+
+
+func (h *UserHandler) GetUser(userid string) (user User, err error) {
+
+	// Make sure user is in the database before we pull it out!
+	h.CheckUser(userid)
+
+	db := h.db.rawdb.From("Users")
+	err = db.One("ID", userid, &user)
+	if err != nil{
+		return user, err
+	}
+
+	return user, nil
 }
 
 

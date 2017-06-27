@@ -4,7 +4,7 @@ func OwnerRole(u *User) {
 	u.Owner = true
 	u.Admin = true
 	u.SModerator = true
-	u.JModerator = true
+	u.Moderator = true
 	u.Editor = true
 	u.Agora = true
 	u.Streamer = true
@@ -14,7 +14,7 @@ func OwnerRole(u *User) {
 func AdminRole(u *User) {
 	u.Admin = true
 	u.SModerator = true
-	u.JModerator = true
+	u.Moderator = true
 	u.Editor = true
 	u.Agora = true
 	u.Streamer = true
@@ -23,15 +23,15 @@ func AdminRole(u *User) {
 
 func SModeratorRole(u *User) {
 	u.SModerator = true
-	u.JModerator = true
+	u.Moderator = true
 	u.Editor = true
 	u.Agora = true
 	u.Streamer = true
 	u.Recruiter = true
 }
 
-func JModeratorRole(u *User) {
-	u.JModerator = true
+func ModeratorRole(u *User) {
+	u.Moderator = true
 	u.Editor = true
 	u.Agora = true
 	u.Streamer = true
@@ -59,7 +59,7 @@ func ClearRoles(u *User) {
 	u.Owner = false
 	u.Admin = false
 	u.SModerator = false
-	u.JModerator = false
+	u.Moderator = false
 	u.Editor = false
 	u.Agora = false
 	u.Streamer = false

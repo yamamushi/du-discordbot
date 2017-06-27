@@ -17,21 +17,26 @@ type MainHandler struct {
 
 func (h *MainHandler) Init() error {
 	// DO NOT add anything above this line!!
+	fmt.Println("Initializing Main Handler")
 	// Add our main handler -
 	h.dg.AddHandler(h.Read)
 
 	// Add new handlers below this line //
 	// Create our RSS handler
+	fmt.Println("Adding RSS Handler")
 	rss := RSSHandler{db: h.db, conf: h.conf, callback: h.callback, dg: h.dg}
 	h.dg.AddHandler(rss.Read)
 	go rss.UpdateRSSFeeds(h.dg)
 
 	// Open a websocket connection to Discord and begin listening.
+	fmt.Println("Opening Connection to Discord")
 	err := h.dg.Open()
 	if err != nil {
 		fmt.Println("Error Opening Connection: ", err)
 		return err
 	}
+	fmt.Println("Connection Established")
+
 
 	err = h.PostInit(h.dg)
 
@@ -40,6 +45,7 @@ func (h *MainHandler) Init() error {
 		return err
 	}
 
+	fmt.Println("Main Handler Initialized")
 	return nil
 }
 
@@ -47,14 +53,17 @@ func (h *MainHandler) Init() error {
 // Just some quick things to run after our websocket has been setup and opened
 
 func (h *MainHandler) PostInit(dg *discordgo.Session) error {
+	fmt.Println("Running Post-Init")
 
 	// Update our default playing status
+	fmt.Println("Updating Discord Status")
 	err := h.dg.UpdateStatus(0, h.conf.DUBotConfig.Playing)
 	if err != nil {
 		fmt.Println("error updating now playing,", err)
 		return err
 	}
 
+	fmt.Println("Post-Init Complete")
 	return nil
 }
 
