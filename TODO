@@ -4,3 +4,6 @@
 - Add Message Formatter
 - Channel Blacklist || This depends on the permissions system
 - Commands Documentation || In progress
+- Configurable Message Channels || Plan laid out, needs implementing
+- Logger || will depend on configurable message channels
+= Add forum integrations || new topics are almost working, need to add more robust features, like subscribing specific subforums to channels

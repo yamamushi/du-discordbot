@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/bwmarrin/discordgo"
 	"fmt"
+	"strings"
 )
 
 type MainHandler struct {
@@ -84,19 +85,42 @@ func (h *MainHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
+	user, err := h.db.GetUser(m.Author.ID)
+	if err != nil{
+		fmt.Println("Error finding user")
+		return
+	}
+
+	message := strings.Fields(m.Content)
+
+	command := message[0]
 
 	// If the message is "ping" reply with "Pong!"
-	if m.Content == cp + "ping" {
+	if command == cp + "ping" {
 		s.ChannelMessageSend(m.ChannelID, "Pong!")
 	}
 
 	// If the message is "pong" reply with "Ping!"
-	if m.Content == cp + "pong" {
+	if command == cp + "pong" {
 		s.ChannelMessageSend(m.ChannelID, "Ping!")
 	}
 
-	if m.Content == cp + "help" {
+	if command == cp + "help" {
 		s.ChannelMessageSend(m.ChannelID, "http://imgfave.com/collection/307305/Reaction-GIFs-no")
+	}
+
+	if command == cp + "follow" {
+
+		if !user.Admin {
+			return
+		}
+		if len(command) < 2 {
+			s.ChannelMessageSend(m.ChannelID, "Command usage: follow <user>")
+		}
+
+		forum := ForumIntegration{}
+		forum.FollowUser(message[1])
+		s.ChannelMessageSend(m.ChannelID, "Callback launched")
 	}
 
 }

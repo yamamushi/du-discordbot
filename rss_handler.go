@@ -44,14 +44,28 @@ func (h *RSSHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 			if command[1] == "add" && len(command) == 2 {
 				s.ChannelMessageSend(m.ChannelID, "Please supply a feed URL: ")
 				message := ""
-				h.callback.Watch( h.GetRSS, GetUUID(), message, s, m)
+				h.callback.Watch( h.AddRSS, GetUUID(), message, s, m)
 				return
 			}
 
 			if command[1] == "add" && len(command) > 2 {
 				s.ChannelMessageSend(m.ChannelID, "Add RSS Feed: " + command[2] + " Confirm? (Y/N)")
 				message := command[2]
-				h.callback.Watch( h.ConfirmRSS, GetUUID(), message, s, m)
+				h.callback.Watch( h.ConfirmAddRSS, GetUUID(), message, s, m)
+				return
+			}
+
+			if command[1] == "remove" && len(command) == 2 {
+				s.ChannelMessageSend(m.ChannelID, "Please supply a feed URL: ")
+				message := ""
+				h.callback.Watch( h.RemoveRSS, GetUUID(), message, s, m)
+				return
+			}
+
+			if command[1] == "remove" && len(command) > 2 {
+				s.ChannelMessageSend(m.ChannelID, "Remove RSS Feed: " + command[2] + " Confirm? (Y/N)")
+				message := command[2]
+				h.callback.Watch( h.ConfirmRemoveRSS, GetUUID(), message, s, m)
 				return
 			}
 
@@ -90,7 +104,8 @@ func (h *RSSHandler) UpdateRSSFeeds(s *discordgo.Session) {
 		rssfeeds, err := rss.GetDB()
 		if err != nil {
 			fmt.Println("Error Reading Database RSS! - " + err.Error())
-			return
+			//return
+			break
 		}
 
 		for _, feed := range rssfeeds {
@@ -102,16 +117,20 @@ func (h *RSSHandler) UpdateRSSFeeds(s *discordgo.Session) {
 
 			if expires > h.conf.DUBotConfig.RSSTimeout * time.Minute {
 
+				skip := false
 				item, err := rss.GetLatestItem(feed.URL, feed.ChannelID)
 				if err != nil {
 					fmt.Println(err.Error())
-					return
+					rss.Unsubscribe(feed.URL, feed.ChannelID) // Unsubscribe us if we got here
+					message := "Error reading feed, unsubscribing for sanity: " + feed.URL + "\n"
+					message = message + err.Error()
+					s.ChannelMessageSend(feed.ChannelID, message )
+					skip = true
 				}
 
-				submitted := false
 				for _, post := range feed.Posts {
 					if post == item.Link {
-						submitted = true
+						skip = true
 					}
 				}
 
@@ -119,11 +138,11 @@ func (h *RSSHandler) UpdateRSSFeeds(s *discordgo.Session) {
 				err = rss.UpdatePosts(feed)
 				if err != nil{
 					fmt.Println(err.Error())
-					return
+					skip = true
 				}
 
-				if !submitted {
-					formatted := h.FormatRSSItem(feed.ChannelID, item)
+				if !skip {
+					formatted := h.FormatRSSItem(feed.URL, item)
 					s.ChannelMessageSend(feed.ChannelID, formatted)
 				}
 			}
@@ -150,6 +169,11 @@ func (h *RSSHandler) FormatRSSItem(url string, rssitem RSSItem) (formatted strin
 		formatted = formatted + rssitem.Link + "\n"
 		formatted = formatted + rssitem.Published + "\n"
 
+	} else if rssitem.Youtube {
+		formatted = "Latest update from " + rssitem.Author + "\n"
+		formatted = formatted + rssitem.Title + "\n"
+		formatted = formatted + rssitem.Description + "\n"
+		formatted = formatted + rssitem.Link + "\n"
 	} else {
 
 		formatted = "Latest update from " + url + "\n"
@@ -223,7 +247,7 @@ func (h *RSSHandler) GetRSSList(channel string) (formatted string) {
 }
 
 
-func (h *RSSHandler) GetRSS(command string, s *discordgo.Session, m *discordgo.MessageCreate) {
+func (h *RSSHandler) AddRSS(command string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	// In this handler we don't do anything with the command string, instead we grab the response from m.Content
 
@@ -242,13 +266,13 @@ func (h *RSSHandler) GetRSS(command string, s *discordgo.Session, m *discordgo.M
 
 	s.ChannelMessageSend(m.ChannelID, "Adding: " + m.Content + " Confirm? (Y/N)")
 
-	h.callback.Watch( h.ConfirmRSS, GetUUID(), m.Content, s, m)
+	h.callback.Watch( h.ConfirmAddRSS, GetUUID(), m.Content, s, m)
 
 }
 
 
 
-func (h *RSSHandler) ConfirmRSS(url string, s *discordgo.Session, m *discordgo.MessageCreate) {
+func (h *RSSHandler) ConfirmAddRSS(url string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	cp := h.conf.DUBotConfig.CP
 	if strings.HasPrefix(m.Content, cp){
@@ -272,3 +296,53 @@ func (h *RSSHandler) ConfirmRSS(url string, s *discordgo.Session, m *discordgo.M
 	s.ChannelMessageSend(m.ChannelID, "RSS Add Cancelled")
 }
 
+
+
+func (h *RSSHandler) RemoveRSS(command string, s *discordgo.Session, m *discordgo.MessageCreate) {
+
+	// In this handler we don't do anything with the command string, instead we grab the response from m.Content
+
+	// We do this to avoid having duplicate commands overrunning each other
+	cp := h.conf.DUBotConfig.CP
+	if strings.HasPrefix(m.Content, cp){
+		s.ChannelMessageSend(m.ChannelID, "RSS Command Cancelled")
+		return
+	}
+
+	// A poor way of checking the validity of the RSS url for now
+	if m.Content == "" {
+		s.ChannelMessageSend(m.ChannelID, "Invalid Command Received")
+		return
+	}
+
+	s.ChannelMessageSend(m.ChannelID, "Removing: " + m.Content + " Confirm? (Y/N)")
+
+	h.callback.Watch( h.ConfirmRemoveRSS, GetUUID(), m.Content, s, m)
+
+}
+
+
+
+func (h *RSSHandler) ConfirmRemoveRSS(url string, s *discordgo.Session, m *discordgo.MessageCreate) {
+
+	cp := h.conf.DUBotConfig.CP
+	if strings.HasPrefix(m.Content, cp){
+		s.ChannelMessageSend(m.ChannelID, "RSS Command Cancelled")
+		return
+	}
+
+	if m.Content == "Y" || m.Content == "y" {
+
+		rss := RSS{db: h.db}
+		err := rss.Unsubscribe(url, m.ChannelID)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error Removing URL: " + err.Error())
+			return
+		}
+
+		s.ChannelMessageSend(m.ChannelID, "Selection Confirmed: " + url )
+		return
+	}
+
+	s.ChannelMessageSend(m.ChannelID, "RSS Remove Cancelled")
+}

@@ -110,7 +110,7 @@ func (h *UserHandler) CheckUser (ID string) {
 	var u User
 	err := db.One("ID", ID, &u)
 	if err != nil {
-		fmt.Println("Adding new user to DB: " + ID)
+		//fmt.Println("Adding new user to DB: " + ID)
 
 		user := User{ID: ID}
 		user.Init()
