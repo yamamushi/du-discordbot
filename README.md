@@ -29,12 +29,17 @@ A Dual Universe bot being developed for the unofficial Dual Universe discord.
 - [X] Docker Support
 - [X] Internal User Permissions System
 - [ ] Internal Command Permissions System
-- [X] RSS Subscriptions
-- [X] Currency System
-- [ ] More Games!
-- [ ] Reminders / Notifications
+- [ ] Internal Channels System
 - [ ] Dual Universe Wiki Integration
 - [ ] Dual Universe Resource Guide
+- [ ] Dual Universe Forum Integration
+- [X] RSS Subscriptions
+- [ ] Twitter Subscriptions
+- [X] Currency System
+- [ ] Bank System
+- [ ] More Games!
+- [ ] A Prize system for spending the credits from winning games
+- [ ] Reminders / Notifications
 
 
 ## Commands
