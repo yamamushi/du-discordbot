@@ -2,6 +2,7 @@
 
 - Add RSS Feed || "Complete", although it needs solid testing
 - Add Twitter Feed || Somewhat Working , needs further testing
+- Add Permissions System through DB for Commands || Needs further testing and documentation
 
 
 - Ongoing -
@@ -10,10 +11,10 @@
 
 - Priority List -
 
-- Add Permissions System through DB for Commands
+- Convert commands to use registry || #1 Priority
 - Configurable Message Channels || Plan laid out, needs implementing
 - Logger || will depend on configurable message channels
-- Channel Blacklist || This depends on the permissions system
+- Channel Blacklist || This depends on the permissions system and message channels
 
 
 - Upcoming Features -

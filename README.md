@@ -62,6 +62,12 @@ _du-discordbot_ maintains its own internal permissions system. It is important t
 | Command       | Description   | Example Usage  |
 | ------------- | ------------- | ------------- |
 | groups <user>| Shows groups the user belongs to | ~groups @yamamushi |
+| command enable | Enables a command in the current channel | command enable ping |
+| command disable | Disables a command in the current channel | command enable ping |
+| command list | Lists enabled commands for the current channel | command list |
+| command usage | Displays usage for the supplied command | command usage ping | 
+| command description | Displays description for the supplied command | command description ping | 
+
 
 
 ### User Commands

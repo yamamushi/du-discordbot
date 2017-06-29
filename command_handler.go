@@ -81,6 +81,24 @@ func (h *CommandHandler) ReadCommand(message []string, s *discordgo.Session, m *
 		return
 
 	}
+	if message[0] == "usage"{
+		if len(message) < 2 {
+			s.ChannelMessageSend(m.ChannelID, "<usage> requires at least one argument")
+			return
+		}
+		h.DisplayUsage(message, s, m)
+		return
+
+	}
+	if message[0] == "description"{
+		if len(message) < 2 {
+			s.ChannelMessageSend(m.ChannelID, "<description> requires at least one argument")
+			return
+		}
+		h.DisplayDescription(message, s, m)
+		return
+
+	}
 	if message[0] == "list" {
 		h.ListCommands(s, m)
 	}
@@ -96,6 +114,40 @@ func (h *CommandHandler) EnableCommand(message []string, s *discordgo.Session, m
 func (h *CommandHandler) DisableCommand(message []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 	h.registry.RemoveChannel(message[1], m.ChannelID)
 	s.ChannelMessageSend(m.ChannelID, "Command " + message[1] + " disabled for this channel")
+	return
+}
+
+func (h *CommandHandler) DisplayUsage(message []string, s *discordgo.Session, m *discordgo.MessageCreate) {
+
+	command, err := h.registry.GetCommand(message[1])
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, err.Error())
+		return
+	}
+
+	formattedmessage := ":\n" + " Usage guide for " + message[1] + "\n"
+	formattedmessage = formattedmessage + "```"
+	formattedmessage = formattedmessage + command.Usage
+	formattedmessage = formattedmessage + "```"
+
+	s.ChannelMessageSend(m.ChannelID, formattedmessage)
+	return
+}
+
+func (h *CommandHandler) DisplayDescription(message []string, s *discordgo.Session, m *discordgo.MessageCreate) {
+
+	command, err := h.registry.GetCommand(message[1])
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, err.Error())
+		return
+	}
+
+	formattedmessage := ":\n" + " Description for " + message[1] + "\n"
+	formattedmessage = formattedmessage + "```"
+	formattedmessage = formattedmessage + command.Description
+	formattedmessage = formattedmessage + "```"
+
+	s.ChannelMessageSend(m.ChannelID, formattedmessage)
 	return
 }
 

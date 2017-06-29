@@ -23,11 +23,14 @@ func (h *MainHandler) Init() error {
 	fmt.Println("Initializing Main Handler")
 	// Add our main handler -
 	h.dg.AddHandler(h.Read)
+	h.registry = h.command.registry
+
 
 	// Add new handlers below this line //
 	// Create our RSS handler
 	fmt.Println("Adding RSS Handler")
-	rss := RSSHandler{db: h.db, conf: h.conf, callback: h.callback, dg: h.dg}
+	rss := RSSHandler{db: h.db, conf: h.conf, callback: h.callback, dg: h.dg, registry: h.registry}
+	rss.Init()
 	h.dg.AddHandler(rss.Read)
 	go rss.UpdateRSSFeeds(h.dg)
 
@@ -48,7 +51,6 @@ func (h *MainHandler) Init() error {
 		return err
 	}
 
-	h.registry = h.command.registry
 
 	fmt.Println("Main Handler Initialized")
 	return nil
@@ -118,10 +120,14 @@ func (h *MainHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	if command == cp + "help" {
-		s.ChannelMessageSend(m.ChannelID, "http://imgfave.com/collection/307305/Reaction-GIFs-no")
+		s.ChannelMessageSend(m.ChannelID, "https://imgfave.azureedge.net/image_cache/140248453569251_animate.gif")
 	}
 
 	if command == cp + "follow" {
+		if h.registry.CheckChannel("follow", m.ChannelID){
+			s.ChannelMessageSend(m.ChannelID, "Not yet implemented!")
+			return
+		}
 
 		if !user.Admin {
 			return
@@ -139,10 +145,9 @@ func (h *MainHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 func (h *MainHandler) RegisterCommands() (err error) {
 
-	registry := h.command.registry
-
-	registry.Register("ping", "Ping command", "ping")
-	registry.Register("pong", "Pong command", "pong")
+	h.registry.Register("follow", "Follow a DU forum user. Updates will be sent via pm", "follow <forum name>")
+	h.registry.Register("ping", "Ping command", "ping")
+	h.registry.Register("pong", "Pong command", "pong")
 
 	return nil
 

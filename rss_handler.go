@@ -12,6 +12,19 @@ type RSSHandler struct {
 	conf	*Config
 	callback *CallbackHandler
 	dg		*discordgo.Session
+	registry *CommandRegistry
+}
+
+func (h *RSSHandler) Init() {
+	h.RegisterCommands()
+}
+
+func (h *RSSHandler) RegisterCommands() (err error) {
+
+	h.registry.Register("rss", "Manage the current channel's RSS Subscriptions", "rss add|remove|list")
+
+	return nil
+
 }
 
 
@@ -19,80 +32,89 @@ func (h *RSSHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	cp := h.conf.DUBotConfig.CP
 
-
+	if !SafeInput(s, m){
+		return
+	}
 
 	if strings.HasPrefix(m.Content, cp + "rss") {
+		if h.registry.CheckChannel("rss", m.ChannelID){
 
-		command := strings.Fields(m.Content)
+			command := strings.Fields(m.Content)
 
-		// Grab our sender ID to verify if this user has permission to use this command
-		db := h.db.rawdb.From("Users")
-		var user User
-		err := db.One("ID", m.Author.ID, &user)
-		if err != nil {
-			fmt.Println("error retrieving user:" + m.Author.ID)
-		}
-
-
-		if user.Admin {
-
-			if len(command) < 2{
-				s.ChannelMessageSend(m.ChannelID, "Expected flag for 'rss' command" )
-				return
+			// Grab our sender ID to verify if this user has permission to use this command
+			db := h.db.rawdb.From("Users")
+			var user User
+			err := db.One("ID", m.Author.ID, &user)
+			if err != nil {
+				fmt.Println("error retrieving user:" + m.Author.ID)
 			}
 
-			if command[1] == "add" && len(command) == 2 {
-				s.ChannelMessageSend(m.ChannelID, "Please supply a feed URL: ")
-				message := ""
-				h.callback.Watch( h.AddRSS, GetUUID(), message, s, m)
-				return
+			if user.Moderator {
+				h.ParseCommand(command, s, m)
 			}
-
-			if command[1] == "add" && len(command) > 2 {
-				s.ChannelMessageSend(m.ChannelID, "Add RSS Feed: " + command[2] + " Confirm? (Y/N)")
-				message := command[2]
-				h.callback.Watch( h.ConfirmAddRSS, GetUUID(), message, s, m)
-				return
-			}
-
-			if command[1] == "remove" && len(command) == 2 {
-				s.ChannelMessageSend(m.ChannelID, "Please supply a feed URL: ")
-				message := ""
-				h.callback.Watch( h.RemoveRSS, GetUUID(), message, s, m)
-				return
-			}
-
-			if command[1] == "remove" && len(command) > 2 {
-				s.ChannelMessageSend(m.ChannelID, "Remove RSS Feed: " + command[2] + " Confirm? (Y/N)")
-				message := command[2]
-				h.callback.Watch( h.ConfirmRemoveRSS, GetUUID(), message, s, m)
-				return
-			}
-
-			if command[1] == "list" && len(command) == 2 {
-				formatted := h.GetRSSList(m.ChannelID)
-				s.ChannelMessageSend(m.ChannelID, formatted)
-				return
-			}
-
-			if command[1] == "get" && len(command) == 2 {
-				h.GetAllLatest(s, m)
-				return
-			}
-
-			if command[1] == "get" && len(command) > 2 {
-				message, err := h.GetLatestItem(m.ChannelID, command[2])
-				if err != nil {
-					s.ChannelMessageSend(m.ChannelID, err.Error())
-					return
-				}
-				s.ChannelMessageSend(m.ChannelID, message)
-				return
-			}
-
 		}
 	}
 }
+
+
+func (h *RSSHandler) ParseCommand(command []string, s *discordgo.Session, m *discordgo.MessageCreate){
+
+	if len(command) < 2{
+		s.ChannelMessageSend(m.ChannelID, "Expected flag for 'rss' command" )
+		return
+	}
+
+	if command[1] == "add" && len(command) == 2 {
+		s.ChannelMessageSend(m.ChannelID, "Please supply a feed URL: ")
+		message := ""
+		h.callback.Watch( h.AddRSS, GetUUID(), message, s, m)
+		return
+	}
+
+	if command[1] == "add" && len(command) > 2 {
+		s.ChannelMessageSend(m.ChannelID, "Add RSS Feed: " + command[2] + " Confirm? (Y/N)")
+		message := command[2]
+		h.callback.Watch( h.ConfirmAddRSS, GetUUID(), message, s, m)
+		return
+	}
+
+	if command[1] == "remove" && len(command) == 2 {
+		s.ChannelMessageSend(m.ChannelID, "Please supply a feed URL: ")
+		message := ""
+		h.callback.Watch( h.RemoveRSS, GetUUID(), message, s, m)
+		return
+	}
+
+	if command[1] == "remove" && len(command) > 2 {
+		s.ChannelMessageSend(m.ChannelID, "Remove RSS Feed: " + command[2] + " Confirm? (Y/N)")
+		message := command[2]
+		h.callback.Watch( h.ConfirmRemoveRSS, GetUUID(), message, s, m)
+		return
+	}
+
+	if command[1] == "list" && len(command) == 2 {
+		formatted := h.GetRSSList(m.ChannelID)
+		s.ChannelMessageSend(m.ChannelID, formatted)
+		return
+	}
+
+	if command[1] == "get" && len(command) == 2 {
+		h.GetAllLatest(s, m)
+		return
+	}
+
+	if command[1] == "get" && len(command) > 2 {
+		message, err := h.GetLatestItem(m.ChannelID, command[2])
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, err.Error())
+			return
+		}
+		s.ChannelMessageSend(m.ChannelID, message)
+		return
+	}
+}
+
+
 
 func (h *RSSHandler) UpdateRSSFeeds(s *discordgo.Session) {
 
