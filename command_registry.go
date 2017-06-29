@@ -17,6 +17,7 @@ type CommandRegistry struct {
 
 	db *DBHandler
 	conf *Config
+	user *UserHandler
 
 }
 
@@ -229,6 +230,29 @@ func (h *CommandRegistry) CheckGroup(command string, group string) (bool) {
 	return false
 }
 
+
+func (h *CommandRegistry) CheckUserGroups(command string, user User) (bool) {
+
+	groups, err := h.GetGroups(command)
+	if err != nil {
+		return false
+	}
+
+	usergroups, err := h.user.GetGroups(user.ID)
+	if err != nil {
+		return false
+	}
+
+	for _, group := range groups {
+		for _, usergroup := range usergroups {
+			if group == usergroup {
+				return true
+			}
+		}
+	}
+
+	return false
+}
 
 func (h *CommandRegistry) AddUser(command string, user string) (err error){
 

@@ -83,7 +83,8 @@ func main() {
 
 	// Create our command handler
 	fmt.Println("Add Command Registry Handler")
-	commandhandler := CommandHandler{dg: dg, db: &dbhandler, callback: &callbackhandler, user: &userhandler, conf: &conf, perm: &permissionshandler}
+	commandhandler := CommandHandler{dg: dg, db: &dbhandler, callback: &callbackhandler,
+		user: &userhandler, conf: &conf, perm: &permissionshandler}
 	commandhandler.Init()
 	dg.AddHandler(commandhandler.Read)
 

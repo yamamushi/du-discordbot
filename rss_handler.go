@@ -36,8 +36,14 @@ func (h *RSSHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
+	user, err := h.db.GetUser(m.Author.ID)
+	if err != nil{
+		//fmt.Println("Error finding user")
+		return
+	}
+
 	if strings.HasPrefix(m.Content, cp + "rss") {
-		if h.registry.CheckChannel("rss", m.ChannelID){
+		if h.registry.CheckPermission("rss", m.ChannelID, user){
 
 			command := strings.Fields(m.Content)
 
