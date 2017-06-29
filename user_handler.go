@@ -37,7 +37,7 @@ func (h *UserHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	user, err := h.db.GetUser(m.Author.ID)
 	if err != nil{
-		fmt.Println("Error finding user")
+		//fmt.Println("Error finding user")
 		return
 	}
 
@@ -78,6 +78,37 @@ func (h *UserHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if message[0] == cp + "addbalance" && user.Admin {
 		h.AddBalance(message, s, m)
 		return
+	}
+
+	if message[0] == cp + "groups" {
+		mentions := m.Mentions
+
+		if len(mentions) == 0 {
+			groups, err := h.GetGroups(user.ID)
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "Error retrieving groups: " + err.Error() )
+				return
+			}
+
+			s.ChannelMessageSend(m.ChannelID,  h.FormatGroups(groups))
+			return
+		}
+
+
+		if !user.CheckRole("moderator") {
+			s.ChannelMessageSend(m.ChannelID, "You do not have permission to use this command" )
+			return
+		}
+
+		if len(message) == 2 {
+			groups, err := h.GetGroups(mentions[0].ID)
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "Error retrieving groups: " + err.Error() )
+				return
+			}
+			s.ChannelMessageSend(m.ChannelID,  h.FormatGroups(groups))
+			return
+		}
 	}
 
 	if message[0] == cp + "transfer" {
@@ -134,7 +165,8 @@ func (h *UserHandler) CheckUser (ID string) {
 				return
 			}
 		} else {
-			fmt.Println("Wallet already exists for user!")
+			//fmt.Println("Wallet already exists for user!")
+			return
 		}
 
 	}
@@ -261,4 +293,57 @@ func (h *UserHandler) GetBalance (ID string) (string, error) {
 
 	return strconv.Itoa(wallet.Balance), nil
 
+}
+
+
+func (h *UserHandler) GetGroups (ID string) (groups []string, err error) {
+
+	h.CheckUser(ID)
+	user, err := h.GetUser(ID)
+	if err != nil {
+		return groups, err
+	}
+	if user.CheckRole("owner"){
+		groups = append(groups, "owner")
+	}
+	if user.CheckRole("admin"){
+		groups = append(groups, "admin")
+	}
+	if user.CheckRole("smoderator"){
+		groups = append(groups, "smoderator")
+	}
+	if user.CheckRole("moderator"){
+		groups = append(groups, "moderator")
+	}
+	if user.CheckRole("editor"){
+		groups = append(groups, "editor")
+	}
+	if user.CheckRole("agora"){
+		groups = append(groups, "agora")
+	}
+	if user.CheckRole("streamer"){
+		groups = append(groups, "streamer")
+	}
+	if user.CheckRole("recruiter"){
+		groups = append(groups, "recruiter")
+	}
+	if user.CheckRole("citizen"){
+		groups = append(groups, "citizen")
+	}
+
+	return groups, nil
+}
+
+
+func (h *UserHandler) FormatGroups (groups []string) (formatted string) {
+	for i, group := range groups {
+		if i == len(groups) - 1{
+			formatted = formatted + group
+		} else {
+			formatted = formatted + group + ", "
+		}
+
+	}
+
+	return formatted
 }

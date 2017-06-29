@@ -87,7 +87,7 @@ func (h *MainHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	user, err := h.db.GetUser(m.Author.ID)
 	if err != nil{
-		fmt.Println("Error finding user")
+		//fmt.Println("Error finding user")
 		return
 	}
 
@@ -122,6 +122,7 @@ func (h *MainHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		forum.FollowUser(message[1])
 		s.ChannelMessageSend(m.ChannelID, "Callback launched")
 	}
-
 }
+
+
 

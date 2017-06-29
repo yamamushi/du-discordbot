@@ -54,8 +54,47 @@ func (u *User) SetRole(role string) {
 
 	case "clear" :
 		ClearRoles(u)
+
+	default:
+		return
 	}
 }
+
+
+func (u *User) RemoveRole(role string) {
+
+	switch role {
+
+	case "owner" :
+		u.Owner = false
+
+	case "admin" :
+		u.Admin = false
+
+	case "smoderator" :
+		u.SModerator = false
+
+	case "moderator" :
+		u.Moderator = false
+
+	case "editor" :
+		u.Editor = false
+
+	case "agora" :
+		u.Agora = false
+
+	case "streamer" :
+		u.Streamer = false
+
+	case "recruiter" :
+		u.Recruiter = false
+
+	case "citizen" :
+		u.Citizen = false
+
+	}
+}
+
 
 func (u *User) CheckRole(role string) bool {
 

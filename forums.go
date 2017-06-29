@@ -12,9 +12,6 @@ Integration with the Dual Universe Forums @ https://board.dualthegame.com/
 
 This WILL NOT post to the forums, it will only READ from the publicly available forums.
 
-
-I will remove the http specific stuff from here eventually, but I'd like to keep it consolidated to the one place it's being used right now.
-
  */
 
 

@@ -1,9 +1,22 @@
-- Add Permissions System through DB for Commands
+- Needs Testing for Completion -
+
 - Add RSS Feed || "Complete", although it needs solid testing
 - Add Twitter Feed || Somewhat Working , needs further testing
-- Add Message Formatter
-- Channel Blacklist || This depends on the permissions system
+
+
+- Ongoing -
 - Commands Documentation || In progress
+
+
+- Priority List -
+
+- Add Permissions System through DB for Commands
 - Configurable Message Channels || Plan laid out, needs implementing
 - Logger || will depend on configurable message channels
-= Add forum integrations || new topics are almost working, need to add more robust features, like subscribing specific subforums to channels
+- Channel Blacklist || This depends on the permissions system
+
+
+- Upcoming Features -
+
+- Add Message Formatter
+- Add forum integrations || new topics are almost working, need to add more robust features, like subscribing specific subforums to channels

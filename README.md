@@ -52,6 +52,7 @@ _du-discordbot_ maintains its own internal permissions system. It is important t
 
 | Command       | Description   | Example Usage  |
 | ------------- | ------------- | ------------- |
+| groups <user>| Shows groups the user belongs to | ~groups @yamamushi |
 | rss add  | Adds a new feed to the channel subscriptions  | ~rss add http://example.com/feed.rss |
 | rss get  | Retrieves the latest RSS Items for the current channel  | ~rss get |
 | rss list  | Lists the current channel subscriptions | ~rss list  |
@@ -66,6 +67,7 @@ _du-discordbot_ maintains its own internal permissions system. It is important t
 | transfer <amount> <user> | Transfers credits to selected user | ~transfer 100 @yamamushi  |
 | ping | Pings the bot (not a latency ping!) | ~ping |
 | pong | Pongs the bot (not a latency pong!) | ~pong |
+| groups | Shows groups the user belongs to | ~groups |
 
 
 ## Permissions 

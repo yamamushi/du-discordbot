@@ -7,9 +7,9 @@ import (
 )
 
 type Config struct {
-	DiscordConfig   discordConfig 	`toml:"discord"`
+	DiscordConfig	discordConfig 	`toml:"discord"`
 	DBConfig		databaseConfig 	`toml:"database"`
-	DUBotConfig 	dubotConfig 	`toml:"du-bot"`
+	DUBotConfig		dubotConfig 	`toml:"du-bot"`
 }
 
 type discordConfig struct {

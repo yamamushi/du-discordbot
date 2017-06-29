@@ -65,22 +65,27 @@ func main() {
 	defer dg.Close()
 
 
-	// Create a callback Handler and add it to our Handler Queue
+	// Create a callback handler and add it to our Handler Queue
 	fmt.Println("Adding Callback Handler")
 	callbackhandler := CallbackHandler{dg: dg}
 	dg.AddHandler(callbackhandler.Read)
 
-	// Create our userhandler
+	// Create our user handler
 	fmt.Println("Adding User Handler")
 	userhandler := UserHandler{conf: &conf, db: &dbhandler}
 	userhandler.Init()
 	dg.AddHandler(userhandler.Read)
 
-
-	// Create our permissionshandler
+	// Create our permissions handler
 	fmt.Println("Adding Permissions Handler")
 	permissionshandler := PermissionsHandler{dg: dg, conf: &conf, callback: &callbackhandler, db: &dbhandler, user: &userhandler}
 	dg.AddHandler(permissionshandler.Read)
+
+	// Create our command handler
+	fmt.Println("Add Command Registry Handler")
+	commandhandler := CommandHandler{dg: dg, db: &dbhandler, callback: &callbackhandler, user: &userhandler, conf: &conf, perm: &permissionshandler}
+	commandhandler.Init()
+	dg.AddHandler(commandhandler.Read)
 
 	// Now we create and initialize our main handler
 	handler := MainHandler{db: &dbhandler, conf: &conf, dg: dg, callback: &callbackhandler, perm: &permissionshandler}
