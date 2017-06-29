@@ -16,6 +16,7 @@ import (
 type CommandRegistry struct {
 
 	db *DBHandler
+	conf *Config
 
 }
 
@@ -356,10 +357,21 @@ func (h *CommandRegistry) GroupList(command string) (groups []string, err error)
 	return groups, nil
 }
 
-func (h *CommandRegistry) CommandsForChannel(channel string) (records []CommandRecord, err error){
+func (h *CommandRegistry) CommandsForChannel(page int, channel string) (records []CommandRecord, err error){
 
-	// Check Groups
 	db := h.db.rawdb.From("Commands")
+
+	// Sanitize our page count
+	pagecount, err := h.CommandsForChannelPageCount(channel)
+	if err != nil{
+		return records, err
+	}
+	if page > pagecount {
+		page = pagecount
+	}
+	if page < 0 {
+		return records, errors.New("Invalid page")
+	}
 
 	commandrecords := []CommandRecord{}
 	err = db.All(&commandrecords)
@@ -367,13 +379,22 @@ func (h *CommandRegistry) CommandsForChannel(channel string) (records []CommandR
 		return records, err
 	}
 
+	recordcount := 0
+	currentrecordcount := 0
 	for _, record := range commandrecords  {
-		for _, channelID:= range record.Channels {
-			if channelID == channel {
-				records = append(records, record)
+			for _, channelID := range record.Channels {
+				if channelID == channel {
+					currentrecordcount = currentrecordcount + 1
+					if currentrecordcount > page * h.conf.DUBotConfig.PerPageCount {
+						if recordcount < h.conf.DUBotConfig.PerPageCount {
+							records = append(records, record)
+							recordcount = recordcount + 1
+						}
+					}
+				}
 			}
 		}
-	}
+
 
 	if len(records) < 1{
 		return records, errors.New("not found")
@@ -381,6 +402,54 @@ func (h *CommandRegistry) CommandsForChannel(channel string) (records []CommandR
 
 	return records, nil
 }
+
+func (h *CommandRegistry) CommandsForChannelCount(channel string) (count int, err error) {
+	db := h.db.rawdb.From("Commands")
+
+	commandrecords := []CommandRecord{}
+	err = db.All(&commandrecords)
+	if err != nil{
+		return 0, err
+	}
+	for _, record := range commandrecords  {
+		for _, channelID:= range record.Channels {
+			if channelID == channel {
+				count = count + 1
+			}
+		}
+	}
+	return count, nil
+}
+
+
+
+func (h *CommandRegistry) CommandsForChannelPageCount(channel string) (pages int, err error){
+	// Check Groups
+	db := h.db.rawdb.From("Commands")
+
+	pages = 0
+
+	commandrecords := []CommandRecord{}
+	err = db.All(&commandrecords)
+	if err != nil{
+		return pages, err
+	}
+
+	commandCount, err := h.CommandsForChannelCount(channel)
+	if err != nil {
+		return pages, err
+	}
+
+	if commandCount < 1{
+		return pages, errors.New("not found")
+	}
+
+	pages = (commandCount / h.conf.DUBotConfig.PerPageCount) + 1
+
+	return pages, nil
+}
+
+
 
 func (h *CommandRegistry) SetDescription(command string, description string) (err error) {
 

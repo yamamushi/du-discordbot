@@ -10,4 +10,11 @@ filename = "database.db"
 [du-bot]
 default_now_playing = "InDev"
 command_prefix = "~"
+
+# Total number of minutes to wait in between each rss fetch (per run, not per feed)
 rss_fetch_timeout = 3
+
+# The total number of things to list per page (used for <command list> command)
+# 5 is a good default as too high will cause message lengths to overrun resulting in responses not displayed
+# Minimum value is 2
+per_page_count = 5

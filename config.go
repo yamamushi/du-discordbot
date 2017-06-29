@@ -27,6 +27,8 @@ type dubotConfig struct {
 	CP 		string 	`toml:"command_prefix"`
 	Playing string 	`toml:"default_now_playing"`
 	RSSTimeout time.Duration  `toml:"rss_fetch_timeout"`
+	PerPageCount int  `toml:"per_page_count"`
+
 }
 
 func ReadConfig(path string) ( config Config, err error) {

@@ -9,6 +9,9 @@ Our interface to our command registry
 
 import (
 	"github.com/bwmarrin/discordgo"
+	"strconv"
+	"os"
+	"fmt"
 )
 
 type CommandHandler struct {
@@ -26,6 +29,11 @@ func (h *CommandHandler) Init(){
 
 	// Setup our command registry interface
 	h.registry = new(CommandRegistry)
+	h.registry.conf = h.conf
+	if h.conf.DUBotConfig.PerPageCount < 2 {
+		fmt.Println("Invalid Config Parameter Setting: [du-bot]:per_page_count must be 2 or higher!")
+		os.Exit(0)
+	}
 	h.registry.db = h.db
 
 }
@@ -81,6 +89,22 @@ func (h *CommandHandler) ReadCommand(message []string, s *discordgo.Session, m *
 		return
 
 	}
+	//TODO
+	/*
+
+
+	Add Group command here
+
+
+	 */
+	/*
+
+
+	Add User command here
+
+
+	 */
+
 	if message[0] == "usage"{
 		if len(message) < 2 {
 			s.ChannelMessageSend(m.ChannelID, "<usage> requires at least one argument")
@@ -100,7 +124,21 @@ func (h *CommandHandler) ReadCommand(message []string, s *discordgo.Session, m *
 
 	}
 	if message[0] == "list" {
-		h.ListCommands(s, m)
+		page := 0
+		if len(message) < 2 {
+			page = 0
+			h.ListCommands(page, s, m)
+		} else {
+			page, err := strconv.Atoi(message[1])
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, message[1] + " is not a valid page number")
+				return
+			}
+			if page > 0 {
+				page = page - 1
+			}
+			h.ListCommands(page, s, m)
+		}
 	}
 }
 
@@ -152,9 +190,9 @@ func (h *CommandHandler) DisplayDescription(message []string, s *discordgo.Sessi
 }
 
 
-func (h *CommandHandler) ListCommands(s *discordgo.Session, m *discordgo.MessageCreate) {
+func (h *CommandHandler) ListCommands(page int, s *discordgo.Session, m *discordgo.MessageCreate) {
 
-	recordlist, err := h.registry.CommandsForChannel(m.ChannelID)
+	recordlist, err := h.registry.CommandsForChannel(page, m.ChannelID)
 	if err != nil{
 
 		if err.Error() == "not found" {
@@ -165,17 +203,100 @@ func (h *CommandHandler) ListCommands(s *discordgo.Session, m *discordgo.Message
 		return
 	}
 
-	formattedmessage := ":\n" + " Command list for this channel "
-	formattedmessage = formattedmessage + "\n-------------------------------\n"
+	pagecount, err := h.registry.CommandsForChannelPageCount(m.ChannelID)
+	if err != nil{
+		s.ChannelMessageSend(m.ChannelID, err.Error())
+		return
+	}
+
+	formattedmessage := h.FormatCommands(recordlist) + "\nPage " + strconv.Itoa(page+1) +
+		" of " + strconv.Itoa(pagecount)
+	s.ChannelMessageSend(m.ChannelID, formattedmessage)
+
+	return
+}
+
+
+
+func (h *CommandHandler) FormatCommands(recordlist []CommandRecord) (formattedlist string) {
+
+
+	formattedmessage := ":\n" + " Command list for this channel (see command <description> or command <usage> if table is too small)\n"
+
 	formattedmessage = formattedmessage + "```"
+	formattedmessage = formattedmessage + "|---------------------|-------------------------|-------------------------|\n"
+	formattedmessage = formattedmessage + "|       Command       |       Description       |          Usage          |\n"
+	formattedmessage = formattedmessage + "|---------------------|-------------------------|-------------------------|\n"
+
+
+	// I am aware this is probably overcomplicated, but it's not a very frequently used command
+	commandColumnlen := len("|       Command       ")-2
+	descriptionColumnlen := len("|       Description       ")-2
+	usageColumnlen := len("|          Usage          ")-2
 
 	for _, command := range recordlist {
-		formattedmessage = formattedmessage + command.Command + " " + command.Description + "\n"
+		commandlen := len(command.Command)
+		Command := command.Command
+
+		if commandlen < commandColumnlen {
+			diff := commandColumnlen - commandlen
+			for i := 0; i < diff ; i++ {
+				Command = Command + " "
+			}
+		}
+
+		if commandlen > commandColumnlen {
+			diff := commandlen - commandColumnlen + 1
+			for i := 0; i < diff ; i++ {
+				Command = Command[:len(Command)-1]
+			}
+			Command = Command + " "
+		}
+
+		descriptionlen := len(command.Description)
+		Description := command.Description
+
+		if descriptionlen < descriptionColumnlen {
+			diff := descriptionColumnlen - descriptionlen
+			for i := 0; i < diff ; i++ {
+				Description = Description + " "
+			}
+		}
+
+		if descriptionlen > descriptionColumnlen {
+			diff := descriptionlen - descriptionColumnlen + 1
+			for i := 0; i < diff ; i++ {
+				Description = Description[:len(Description)-1]
+			}
+			Description = Description + " "
+		}
+
+		usagelen := len(command.Usage)
+		Usage := command.Usage
+
+		if usagelen < usageColumnlen {
+			diff := usageColumnlen - usagelen
+			for i := 0; i < diff ; i++ {
+				Usage = Usage + " "
+			}
+		}
+
+		if usagelen > usageColumnlen {
+			diff := usagelen - usageColumnlen + 1
+			for i := 0; i < diff ; i++ {
+				Usage = Usage[:len(Usage)-1]
+			}
+			Usage = Usage + " "
+		}
+
+		formattedmessage = formattedmessage + "| " + Command + "| " + Description + "| " + Usage +"|\n"
 	}
+
+	formattedmessage = formattedmessage + "|---------------------|-------------------------|-------------------------|\n"
 	formattedmessage = formattedmessage + "```"
 
-	s.ChannelMessageSend(m.ChannelID, formattedmessage)
-	return
+	return formattedmessage
+
 }
 
 
