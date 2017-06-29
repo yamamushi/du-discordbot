@@ -8,8 +8,6 @@ Our interface to our command registry
 
 
 import (
-	"strings"
-
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -37,13 +35,8 @@ func (h *CommandHandler) Init(){
 
 func (h *CommandHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
-	// Ignore all messages created by the bot itself
-	if m.Author.ID == s.State.User.ID {
-		return
-	}
-
-	// Ignore bots
-	if m.Author.Bot {
+	// Check for safety
+	if !SafeInput(s, m){
 		return
 	}
 
@@ -51,68 +44,86 @@ func (h *CommandHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) 
 	if err != nil {
 		return
 	}
-
 	if !user.CheckRole("admin"){
 		return
 	}
 
-	// Set our command prefix to the default one within our config file
-	cp := h.conf.DUBotConfig.CP
-	message := strings.Fields(m.Content)
+	command, message := CleanCommand(m.Content, h.conf)
+
+	if command == "command" {
+		h.ReadCommand(message, s, m)
+
+	}
+}
+
+
+func (h *CommandHandler) ReadCommand(message []string, s *discordgo.Session, m *discordgo.MessageCreate){
+
 	if len(message) < 1 {
+		s.ChannelMessageSend(m.ChannelID, "<command> requires an argument")
 		return
 	}
 
-	message[0] = strings.Trim(message[0], cp)
-	command := message[0]
-
-	// If the message read is "hello" reply in the same channel with "Hi!"
-	if command == "command" {
+	if message[0] == "enable"{
 		if len(message) < 2 {
-			s.ChannelMessageSend( m.ChannelID, "<command> expects an argument")
+			s.ChannelMessageSend(m.ChannelID, "<enable> requires at least one argument")
 			return
 		}
+		h.EnableCommand(message, s, m)
+		return
 	}
-	if command == "prompt" {
+	if message[0] == "disable"{
+		if len(message) < 2 {
+			s.ChannelMessageSend(m.ChannelID, "<disable> requires at least one argument")
+			return
+		}
+		h.DisableCommand(message, s, m)
+		return
 
-		s.ChannelMessageSend(m.ChannelID, "Y or N?")
-
-		// CallbackHandler.Watch expects a message, which it could
-		// Also use to pass in arguments directly to a callback
-		// That needs some setup or other parameters
-		// In this example, our sub callback doesn't do anything
-		// With the message it receives, so we can leave it blank
-		message := ""
-
-		// (callback, uuid, message, session, messagecreate)
-		h.callback.Watch( h.Validate, GetUUID(), message, s, m)
+	}
+	if message[0] == "list" {
+		h.ListCommands(s, m)
 	}
 }
 
+func (h *CommandHandler) EnableCommand(message []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
-// All sub-callbacks MUST have this function signature
-// func( string, *discordgo.Session, *discordgo.MessageCreate)
-func (h *CommandHandler) Validate(message string, s *discordgo.Session, m *discordgo.MessageCreate) {
-
-	// Setup our command prefix
-	cp := h.conf.DUBotConfig.CP
-	// We want to cancel our command if another one is called by our user
-	// We do this to avoid having duplicate/similar commands overrunning each other
-	if strings.HasPrefix(m.Content, cp){
-		s.ChannelMessageSend(m.ChannelID, "Prompt Cancelled")
-		return
-	}
-
-	// Check
-	if m.Content == "Y" || m.Content == "y" {
-		s.ChannelMessageSend(m.ChannelID, "You Selected Yes" )
-		return
-	}
-	if m.Content == "N" || m.Content == "n" {
-		s.ChannelMessageSend(m.ChannelID, "You Selected No" )
-		return
-	}
-
-	s.ChannelMessageSend(m.ChannelID, "Invalid Response")
-
+	h.registry.AddChannel(message[1], m.ChannelID)
+	s.ChannelMessageSend(m.ChannelID, "Command " + message[1] + " enabled for this channel")
+	return
 }
+
+func (h *CommandHandler) DisableCommand(message []string, s *discordgo.Session, m *discordgo.MessageCreate) {
+	h.registry.RemoveChannel(message[1], m.ChannelID)
+	s.ChannelMessageSend(m.ChannelID, "Command " + message[1] + " disabled for this channel")
+	return
+}
+
+
+func (h *CommandHandler) ListCommands(s *discordgo.Session, m *discordgo.MessageCreate) {
+
+	recordlist, err := h.registry.CommandsForChannel(m.ChannelID)
+	if err != nil{
+
+		if err.Error() == "not found" {
+			s.ChannelMessageSend(m.ChannelID, "No commands for this channel found")
+			return
+		}
+		s.ChannelMessageSend(m.ChannelID, err.Error())
+		return
+	}
+
+	formattedmessage := ":\n" + " Command list for this channel "
+	formattedmessage = formattedmessage + "\n-------------------------------\n"
+	formattedmessage = formattedmessage + "```"
+
+	for _, command := range recordlist {
+		formattedmessage = formattedmessage + command.Command + " " + command.Description + "\n"
+	}
+	formattedmessage = formattedmessage + "```"
+
+	s.ChannelMessageSend(m.ChannelID, formattedmessage)
+	return
+}
+
+

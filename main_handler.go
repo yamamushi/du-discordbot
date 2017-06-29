@@ -14,6 +14,8 @@ type MainHandler struct {
 	callback *CallbackHandler
 	perm *PermissionsHandler
 	user *UserHandler
+	command *CommandHandler
+	registry *CommandRegistry
 }
 
 func (h *MainHandler) Init() error {
@@ -46,6 +48,8 @@ func (h *MainHandler) Init() error {
 		return err
 	}
 
+	h.registry = h.command.registry
+
 	fmt.Println("Main Handler Initialized")
 	return nil
 }
@@ -63,6 +67,8 @@ func (h *MainHandler) PostInit(dg *discordgo.Session) error {
 		fmt.Println("error updating now playing,", err)
 		return err
 	}
+
+	h.RegisterCommands()
 
 	fmt.Println("Post-Init Complete")
 	return nil
@@ -97,12 +103,18 @@ func (h *MainHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	// If the message is "ping" reply with "Pong!"
 	if command == cp + "ping" {
-		s.ChannelMessageSend(m.ChannelID, "Pong!")
+		if h.registry.CheckChannel("ping", m.ChannelID){
+			s.ChannelMessageSend(m.ChannelID, "Pong!")
+			return
+		}
 	}
 
 	// If the message is "pong" reply with "Ping!"
 	if command == cp + "pong" {
-		s.ChannelMessageSend(m.ChannelID, "Ping!")
+		if h.registry.CheckChannel("pong", m.ChannelID){
+			s.ChannelMessageSend(m.ChannelID, "Ping!")
+			return
+		}
 	}
 
 	if command == cp + "help" {
@@ -125,4 +137,13 @@ func (h *MainHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 }
 
 
+func (h *MainHandler) RegisterCommands() (err error) {
 
+	registry := h.command.registry
+
+	registry.Register("ping", "Ping command", "ping")
+	registry.Register("pong", "Pong command", "pong")
+
+	return nil
+
+}

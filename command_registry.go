@@ -10,6 +10,7 @@ The command registry adds the ability for commands to be "protected" by permissi
 
 import (
 	"errors"
+	"fmt"
 )
 
 type CommandRegistry struct {
@@ -21,12 +22,37 @@ type CommandRegistry struct {
 
 type CommandRecord struct {
 
-	ID string `storm:"id"`
-	Command string `storm:"index"`
+	Command string `storm:"id"`
 	Groups []string `storm:"index"`
 	Channels []string `storm:"index"`
 	Users []string `storm:"index"`
+	Description string
+	Usage string
 
+}
+
+// Does the same thing as Create Command without a return value
+func (h *CommandRegistry) Register(command string, description string, usage string) {
+
+	db := h.db.rawdb.From("Commands")
+
+	record := CommandRecord{}
+	err := db.One("Command", command, &record)
+	if err == nil {
+		return // command already exists
+	}
+
+	record.Command = command
+	record.Description = description
+	record.Usage = usage
+
+	err = h.SaveCommand(record)
+	if err != nil {
+		fmt.Println("Could not save command to registry" + err.Error())
+		return
+	}
+
+	return
 }
 
 func (h *CommandRegistry) CreateCommand(command string) (err error) {
@@ -34,9 +60,9 @@ func (h *CommandRegistry) CreateCommand(command string) (err error) {
 	db := h.db.rawdb.From("Commands")
 
 	record := CommandRecord{}
-	err = db.Find("Command", command, &record)
+	err = db.One("Command", command, &record)
 	if err == nil {
-		return errors.New("Command already exists!")
+		return errors.New("Command already exists")
 	}
 
 	record.Command = command
@@ -51,6 +77,7 @@ func (h *CommandRegistry) CreateCommand(command string) (err error) {
 
 func (h *CommandRegistry) SaveCommand(record CommandRecord) (err error) {
 	db := h.db.rawdb.From("Commands")
+	err = db.DeleteStruct(&record)
 	err = db.Save(&record)
 	return err
 }
@@ -58,15 +85,16 @@ func (h *CommandRegistry) SaveCommand(record CommandRecord) (err error) {
 func (h *CommandRegistry) RemoveCommand(record CommandRecord) (err error) {
 
 	db := h.db.rawdb.From("Commands")
-	err = db.Remove(&record)
+	err = db.DeleteStruct(&record)
 	return err
 }
 
 func (h *CommandRegistry) GetCommand(command string) (record CommandRecord, err error){
 
 	db := h.db.rawdb.From("Commands")
+	record = CommandRecord{}
 
-	err = db.Find("Command", command, &record)
+	err = db.One("Command", command, &record)
 	if err != nil {
 		return record, err
 	}
@@ -88,8 +116,8 @@ func (h *CommandRegistry) AddGroup(command string, group string) (err error){
 	}
 
 	record.Groups = append(record.Groups, group)
+	h.SaveCommand(record)
 	return nil
-
 }
 
 func (h *CommandRegistry) RemoveGroup(command string, group string) (err error){
@@ -135,6 +163,7 @@ func (h *CommandRegistry) AddChannel(command string, channel string) (err error)
 	}
 
 	record.Channels = append(record.Channels, channel)
+	h.SaveCommand(record)
 	return nil
 }
 
@@ -214,6 +243,7 @@ func (h *CommandRegistry) AddUser(command string, user string) (err error){
 	}
 
 	record.Users = append(record.Users, user)
+	h.SaveCommand(record)
 	return nil
 }
 
@@ -282,7 +312,128 @@ func (h *CommandRegistry) CheckPermission(command string, channel string, user U
 			return true
 		}
 	}
-
 	return false
+}
 
+func (h *CommandRegistry) ChannelList(command string) (channels []string, err error){
+	// Check Channels
+	cmd, err := h.GetCommand(command)
+	if err != nil{
+		fmt.Println("Could not get command for channel list")
+		return channels, err
+	}
+
+	for _, channel := range cmd.Channels  {
+		channels = append(channels, channel)
+	}
+	return channels, nil
+}
+
+func (h *CommandRegistry) UserList(command string) (users []string, err error){
+	// Check Users
+	cmd, err := h.GetCommand(command)
+	if err != nil{
+		return users, err
+	}
+
+	for _, user := range cmd.Users  {
+		users = append(users, user)
+	}
+	return users, nil
+}
+
+func (h *CommandRegistry) GroupList(command string) (groups []string, err error){
+
+	// Check Groups
+	cmd, err := h.GetCommand(command)
+	if err != nil{
+		return groups, err
+	}
+
+	for _, group := range cmd.Groups  {
+		groups = append(groups, group)
+	}
+	return groups, nil
+}
+
+func (h *CommandRegistry) CommandsForChannel(channel string) (records []CommandRecord, err error){
+
+	// Check Groups
+	db := h.db.rawdb.From("Commands")
+
+	commandrecords := []CommandRecord{}
+	err = db.All(&commandrecords)
+	if err != nil{
+		return records, err
+	}
+
+	for _, record := range commandrecords  {
+		for _, channelID:= range record.Channels {
+			if channelID == channel {
+				records = append(records, record)
+			}
+		}
+	}
+
+	if len(records) < 1{
+		return records, errors.New("not found")
+	}
+
+	return records, nil
+}
+
+func (h *CommandRegistry) SetDescription(command string, description string) (err error) {
+
+	record, err := h.GetCommand(command)
+	if err != nil{
+		return err
+	}
+
+	record.Description = description
+
+	err = h.SaveCommand(record)
+	if err != nil{
+		return err
+	}
+
+	return nil
+}
+
+func (h *CommandRegistry) GetDescription(command string) (description string, err error) {
+
+	record, err := h.GetCommand(command)
+	if err != nil {
+		return description, err
+	}
+
+	description = record.Description
+	return description, nil
+}
+
+func (h *CommandRegistry) SetUsage(command string, usage string) (err error) {
+
+	record, err := h.GetCommand(command)
+	if err != nil {
+		return err
+	}
+
+	record.Usage = usage
+
+	err = h.SaveCommand(record)
+	if err != nil{
+		return err
+	}
+
+	return nil
+}
+
+func (h *CommandRegistry) GetUsage(command string) (usage string, err error) {
+
+	record, err := h.GetCommand(command)
+	if err != nil {
+		return usage, err
+	}
+
+	usage = record.Usage
+	return usage, nil
 }

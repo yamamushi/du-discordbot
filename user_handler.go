@@ -33,6 +33,10 @@ func (h *UserHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	message := strings.Fields(m.Content)
 
+	if len(message) < 1 {
+		return
+	}
+
 	h.CheckUser(m.Author.ID)
 
 	user, err := h.db.GetUser(m.Author.ID)

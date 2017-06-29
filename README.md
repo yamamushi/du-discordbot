@@ -52,10 +52,16 @@ _du-discordbot_ maintains its own internal permissions system. It is important t
 
 | Command       | Description   | Example Usage  |
 | ------------- | ------------- | ------------- |
-| groups <user>| Shows groups the user belongs to | ~groups @yamamushi |
 | rss add  | Adds a new feed to the channel subscriptions  | ~rss add http://example.com/feed.rss |
 | rss get  | Retrieves the latest RSS Items for the current channel  | ~rss get |
 | rss list  | Lists the current channel subscriptions | ~rss list  |
+
+
+### Moderator Commands
+
+| Command       | Description   | Example Usage  |
+| ------------- | ------------- | ------------- |
+| groups <user>| Shows groups the user belongs to | ~groups @yamamushi |
 
 
 ### User Commands

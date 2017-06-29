@@ -88,7 +88,7 @@ func main() {
 	dg.AddHandler(commandhandler.Read)
 
 	// Now we create and initialize our main handler
-	handler := MainHandler{db: &dbhandler, conf: &conf, dg: dg, callback: &callbackhandler, perm: &permissionshandler}
+	handler := MainHandler{db: &dbhandler, conf: &conf, dg: dg, callback: &callbackhandler, perm: &permissionshandler, command: &commandhandler}
 	err = handler.Init()
 	if err != nil {
 		fmt.Println("error in mainHandler.init", err)
