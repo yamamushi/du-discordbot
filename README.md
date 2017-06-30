@@ -7,13 +7,16 @@ Table of Contents
    * [du-discordbot](#du-discordbot)
       * [Features](#features)
       * [Commands](#commands)
+         * [Owner Commands](#owner-commands)
          * [Admin Commands](#admin-commands)
+         * [Moderator Commands](#senior-moderator-commands)
          * [Moderator Commands](#moderator-commands)
          * [User Commands](#user-commands)
       * [Permissions](#permissions)
          * [Ranks](#ranks)
          * [User Permission Commands](#user-permission-commands)
          * [Command Permissions](#command-permissions)
+         * [Channel Permissions](#channel-permissions)
       * [Discord](#discord)
    * [Developers Guide](#developers-guide)
       * [Docker](#docker)
@@ -52,6 +55,9 @@ A Dual Universe bot being developed for the [unofficial Dual Universe discord](h
 _du-discordbot_ maintains its own internal permissions system. It is important to note that these commands are not attributed to discord based roles. Ranks can therefore be assigned through _du-discordbot_.
 
 
+### Owner Commands
+
+
 ### Admin Commands
 
 
@@ -62,7 +68,7 @@ _du-discordbot_ maintains its own internal permissions system. It is important t
 | rss list  | Lists the current channel subscriptions | ~rss list  |
 
 
-### Senior Commands
+### Senior Moderator Commands
 
 
 ### Moderator Commands
