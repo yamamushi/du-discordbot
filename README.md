@@ -1,3 +1,5 @@
+**This readme can also be found (arguably in a better format) on the [github wiki](https://github.com/yamamushi/du-discordbot/wiki).**
+
 Table of Contents
 =================
 
@@ -24,7 +26,7 @@ Table of Contents
 
 # du-discordbot
 
-A Dual Universe bot being developed for the unofficial Dual Universe discord.
+A Dual Universe bot being developed for the [unofficial Dual Universe discord](https://discord.me/dualuniverse).
 
 ## Features
 
@@ -119,9 +121,9 @@ If a command is run that is in the registry (the command registry is an extra fe
 | ------------- | ------------- | ------------- |
 | promote | Promotes a user to the selected group  | ~promote @yamamushi admin |
 
-### Command Permissions
+## Command Permissions
 
-The command registry is an internal permissions system for commands, which allows for limiting their usage x    as configured.
+The command registry is an internal permissions system for commands, which allows for limiting their usage as configured.
 
 Permissions on commands can be registered in one of three ways:
 
