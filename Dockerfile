@@ -4,7 +4,11 @@ FROM golang
 
 # Copy the local package files to the container's workspace.
 ADD . /go/src/github.com/yamamushi/du-discordbot
-ADD du-bot.conf /go
+
+# Create our shared volume
+RUN mkdir /du-bot
+ADD du-bot.conf /du-bot
+
 
 # Get the du-discordbot dependencies inside the container.
 RUN go get github.com/bwmarrin/discordgo
@@ -21,6 +25,7 @@ RUN go get github.com/yamamushi/gofeed
 RUN go install github.com/yamamushi/du-discordbot
 
 # Run the outyet command by default when the container starts.
+WORKDIR /du-bot
 ENTRYPOINT /go/bin/du-discordbot
 
-
+VOLUME /du-bot

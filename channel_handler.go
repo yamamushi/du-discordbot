@@ -3,7 +3,6 @@ package main
 import (
 
 	"github.com/bwmarrin/discordgo"
-	//"fmt"
 	"strconv"
 )
 
@@ -84,7 +83,7 @@ func (h *ChannelHandler) Info(payload []string, s *discordgo.Session, m *discord
 	if len(payload) < 1 {
 		channelid = m.ChannelID
 	}
-	if len(payload) > 1 {
+	if len(payload) > 0 {
 		channelid = CleanChannel(payload[0])
 		_, err := strconv.Atoi(channelid)
 		if err != nil{
@@ -104,7 +103,6 @@ func (h *ChannelHandler) Info(payload []string, s *discordgo.Session, m *discord
 		s.ChannelMessageSend(m.ChannelID, err.Error())
 		return
 	}
-
 
 	var box string
 

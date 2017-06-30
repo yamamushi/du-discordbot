@@ -5,6 +5,7 @@ package main
 import (
 	"github.com/bwmarrin/discordgo"
 	"strings"
+	"fmt"
 )
 
 
@@ -91,23 +92,27 @@ func MentionChannel(channelid string, s *discordgo.Session) (mention string, err
 
 func CheckPermissions(command string, channelid string, user *User, s *discordgo.Session, com *CommandHandler) bool {
 
-	usergroups, err := com.user.GetGroups(command)
+	usergroups, err := com.user.GetGroups(user.ID)
 	if err != nil{
+		fmt.Println("Error Retrieving User Groups for " + user.ID)
 		return false
 	}
 
 	commandgroups, err := com.registry.GetGroups(command)
 	if err != nil{
+		fmt.Println("Error Retrieving Registry Groups for " + command)
 		return false
 	}
 
 	commandchannels, err := com.registry.GetChannels(command)
 	if err != nil{
+		fmt.Println("Error Retrieving Channels for " + command)
 		return false
 	}
 
 	commandusers, err := com.registry.GetUsers(command)
 	if err != nil{
+		fmt.Println("Error Retrieving Users for " + command)
 		return false
 	}
 

@@ -32,13 +32,13 @@ Launching this bot in docker is fairly straightforward.
 
 ```docker build -t du-discordbot .```
 
-3) Start the container with the name "du-discordbot"
+3) Start the container with the name _du-discordbot_ and a volume attached to `/du-bot`
 
-```docker run --name dubot --rm du-discordbot```
+```docker run -v $(pwd):/du-bot --name du-discordbot --rm du-discordbot```
 
 4) To stop the container, open another console and run
 
-```docker stop du-discordbot```
+```docker stop du-discordbot ```
 
 
 ## Adding Commands
