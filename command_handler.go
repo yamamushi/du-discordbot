@@ -158,27 +158,260 @@ func (h *CommandHandler) ReadCommand(message []string, s *discordgo.Session, m *
 }
 
 func (h *CommandHandler) ReadGroups(message []string, s *discordgo.Session, m *discordgo.MessageCreate){
+	command := message[0]
+	payload := RemoveStringFromSlice(message, command)
+
+	if len(payload) < 1 {
+		s.ChannelMessageSend(m.ChannelID, command + " requires an argument")
+		return
+	}
 	// list
+	if command == "list" {
+		groups, err := h.registry.GetGroups(payload[0])
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, err.Error())
+			return
+		}
 
+		if len(groups) < 1 {
+			s.ChannelMessageSend(m.ChannelID, ":\nNo Group assignments found for " + payload[0])
+			return
+		}
+
+		var formatted string
+		for i, group := range groups {
+
+			if i == len(groups)-1 {
+				formatted = formatted + group
+			} else {
+				formatted = formatted + group + ", "
+			}
+		}
+
+		s.ChannelMessageSend(m.ChannelID, ":\nGroups for " + payload[0] + " : " + formatted )
+		return
+	}
 	// add
+	if command == "add" {
+		if len(payload) < 2 {
+			s.ChannelMessageSend(m.ChannelID, command + " requires two arguments <group> <command>")
+			return
+		}
 
+		err := h.registry.AddGroup(payload[1], payload[0])
+		if err != nil{
+			s.ChannelMessageSend(m.ChannelID, err.Error())
+			return
+		}
+
+		s.ChannelMessageSend(m.ChannelID, payload[1] + " has been added to the " + payload[0] + " group.")
+		return
+	}
 	// remove
+	if command == "remove" {
+		if len(payload) < 2 {
+			s.ChannelMessageSend(m.ChannelID, command + " requires two arguments <group> <command>")
+			return
+		}
+		err := h.registry.RemoveGroup(payload[1], payload[0])
+		if err != nil{
+			s.ChannelMessageSend(m.ChannelID, err.Error())
+			return
+		}
+
+		s.ChannelMessageSend(m.ChannelID, payload[1] + " has been removed from the " + payload[0] + " group.")
+		return
+	}
 }
 
 func (h *CommandHandler) ReadUsers(message []string, s *discordgo.Session, m *discordgo.MessageCreate){
+	command := message[0]
+	payload := RemoveStringFromSlice(message, command)
+
+
+	if len(payload) < 1 {
+		s.ChannelMessageSend(m.ChannelID, command + " requires an argument")
+		return
+	}
 	// list
+	if command == "list" {
+		users, err := h.registry.GetUsers(payload[0])
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, err.Error())
+			return
+		}
 
+		if len(users) < 1 {
+			s.ChannelMessageSend(m.ChannelID, ":\nNo User assignments found for " + payload[0])
+			return
+		}
+
+		var formatted string
+		for i, user := range users {
+			dguser, err := s.User(user)
+			if err != nil{
+				s.ChannelMessageSend(m.ChannelID, err.Error())
+				return
+			}
+			if i == len(users)-1 {
+				formatted = formatted + dguser.Mention()
+			} else {
+				formatted = formatted + dguser.Mention() + ", "
+			}
+		}
+
+		s.ChannelMessageSend(m.ChannelID, ":\nUsers for " + payload[0] + " : " + formatted )
+		return
+	}
 	// add
+	if command == "add" {
+		if len(payload) < 2 {
+			s.ChannelMessageSend(m.ChannelID, command + " requires two arguments <user> <command>")
+			return
+		}
+		mentions := m.Mentions
+		if len(mentions) < 1 {
+			s.ChannelMessageSend(m.ChannelID, "Invalid Usage: User must be mentioned")
+			return
+		}
 
+		err := h.registry.AddUser(payload[1], mentions[0].ID)
+		if err != nil{
+			s.ChannelMessageSend(m.ChannelID, err.Error())
+			return
+		}
+
+		s.ChannelMessageSend(m.ChannelID, mentions[0].Mention() + " has been added to " + payload[1])
+		return
+	}
 	// remove
+	if command == "remove" {
+		if len(payload) < 2 {
+			s.ChannelMessageSend(m.ChannelID, command + " requires two arguments <user> <command>")
+			return
+		}
+		mentions := m.Mentions
+		if len(mentions) < 1 {
+			s.ChannelMessageSend(m.ChannelID, "Invalid Usage: User must be mentioned")
+			return
+		}
+		err := h.registry.RemoveUser(payload[1], mentions[0].ID)
+		if err != nil{
+			s.ChannelMessageSend(m.ChannelID, err.Error())
+			return
+		}
+
+		s.ChannelMessageSend(m.ChannelID, mentions[0].Mention() + " has been removed from " + payload[0])
+		return
+	}
 }
 
 func (h *CommandHandler) ReadChannels(message []string, s *discordgo.Session, m *discordgo.MessageCreate){
+	command := message[0]
+	payload := RemoveStringFromSlice(message, command)
+
+
+	if len(payload) < 1 {
+		s.ChannelMessageSend(m.ChannelID, command + " requires an argument")
+		return
+	}
 	// list
+	if command == "list" {
+		channels, err := h.registry.ChannelList(payload[0])
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, err.Error())
+			return
+		}
 
+		if len(channels) < 1 {
+			s.ChannelMessageSend(m.ChannelID, ":\nNo Channel assignments found for " + payload[0])
+			return
+		}
+
+		var formatted string
+		for i, channel := range channels {
+			dgchannel, err := s.Channel(channel)
+			if err != nil{
+				s.ChannelMessageSend(m.ChannelID, err.Error())
+				return
+			}
+			if i == len(channels)-1 {
+				formatted = formatted + "<#"+dgchannel.ID+">"
+			} else {
+				formatted = formatted + "<#"+dgchannel.ID+">, "
+			}
+		}
+
+		s.ChannelMessageSend(m.ChannelID, ":\nChannels for " + payload[0] + " : " + formatted )
+		return
+	}
 	// add
+	if command == "add" {
+		if len(payload) < 2 {
+			s.ChannelMessageSend(m.ChannelID, command + " requires two arguments <channel> <command>")
+			return
+		}
 
+		channelid := CleanChannel(payload[0])
+		_, err := strconv.Atoi(channelid)
+		if err != nil{
+			s.ChannelMessageSend(m.ChannelID, err.Error())
+		}
+
+		channelmention, err := s.Channel(channelid)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, err.Error())
+			return
+		}
+
+		if channelmention.Name == "" {
+			s.ChannelMessageSend(m.ChannelID, "Error during channel validation")
+			return
+		}
+
+		err = h.registry.AddChannel(payload[1], channelid)
+		if err != nil{
+			s.ChannelMessageSend(m.ChannelID, err.Error())
+			return
+		}
+
+		s.ChannelMessageSend(m.ChannelID, "<#"+channelmention.ID+">" + " has been added to " + payload[1])
+		return
+
+	}
 	// remove
+	if command == "remove" {
+		if len(payload) < 2 {
+			s.ChannelMessageSend(m.ChannelID, command + " requires two arguments <channel> <command>")
+			return
+		}
+
+		channelid := CleanChannel(payload[0])
+		_, err := strconv.Atoi(channelid)
+		if err != nil{
+			s.ChannelMessageSend(m.ChannelID, err.Error())
+		}
+
+
+		channelmention, err := s.Channel(channelid)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, err.Error())
+			return
+		}
+		if channelmention.Name == "" {
+			s.ChannelMessageSend(m.ChannelID, "Invalid Usage: Channel must be mentioned")
+			return
+		}
+
+		err = h.registry.RemoveChannel(payload[1], channelid)
+		if err != nil{
+			s.ChannelMessageSend(m.ChannelID, err.Error())
+			return
+		}
+
+		s.ChannelMessageSend(m.ChannelID, "<#"+channelmention.ID+">" + " has been removed from " + payload[0])
+		return
+	}
 }
 
 func (h *CommandHandler) EnableCommand(message []string, s *discordgo.Session, m *discordgo.MessageCreate) {

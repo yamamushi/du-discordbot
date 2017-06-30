@@ -58,3 +58,11 @@ func RemoveFromMessage(s []string, i int) []string {
 	s[len(s)-1], s[i] = s[i], s[len(s)-1]
 	return s[:len(s)-1]
 }
+
+func CleanChannel(mention string) (string){
+
+	mention = strings.TrimPrefix(mention, "<#")
+	mention = strings.TrimSuffix(mention, ">")
+	return mention
+
+}

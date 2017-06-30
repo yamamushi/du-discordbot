@@ -100,6 +100,10 @@ func (h *MainHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	message := strings.Fields(m.Content)
+	if len(message) < 1 {
+		fmt.Println(m.Content)
+		return
+	}
 
 	command := message[0]
 

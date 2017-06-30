@@ -326,17 +326,11 @@ func (h *CommandRegistry) CheckPermission(command string, channel string, user U
 		return true
 	}
 
-	// Check Groups
-	cmd, err := h.GetCommand(command)
-	if err != nil{
-		return false
+	if h.CheckUserGroups(command, user){
+		return true
 	}
 
-	for _, group := range cmd.Groups  {
-		if user.CheckRole(group) {
-			return true
-		}
-	}
+
 	return false
 }
 
