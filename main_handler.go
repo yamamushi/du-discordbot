@@ -109,7 +109,7 @@ func (h *MainHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	// If the message is "ping" reply with "Pong!"
 	if command == cp + "ping" {
-		if h.registry.CheckPermission("ping", m.ChannelID, user){
+		if CheckPermissions("ping", m.ChannelID, &user, s, h.command){
 			s.ChannelMessageSend(m.ChannelID, "Pong!")
 			return
 		}
@@ -117,7 +117,7 @@ func (h *MainHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	// If the message is "pong" reply with "Ping!"
 	if command == cp + "pong" {
-		if h.registry.CheckPermission("pong", m.ChannelID, user){
+		if CheckPermissions("pong", m.ChannelID, &user, s, h.command){
 			s.ChannelMessageSend(m.ChannelID, "Ping!")
 			return
 		}
@@ -128,7 +128,7 @@ func (h *MainHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	if command == cp + "follow" {
-		if h.registry.CheckPermission("follow", m.ChannelID, user){
+		if CheckPermissions("follow", m.ChannelID, &user, s, h.command){
 			s.ChannelMessageSend(m.ChannelID, "Not yet implemented!")
 			return
 		}

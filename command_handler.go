@@ -22,6 +22,7 @@ type CommandHandler struct {
 	registry *CommandRegistry
 	dg *discordgo.Session
 	user *UserHandler
+	ch *ChannelHandler
 }
 
 
@@ -53,7 +54,7 @@ func (h *CommandHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) 
 	if err != nil {
 		return
 	}
-	if !user.CheckRole("admin"){
+	if !user.CheckRole("smoderator"){
 		return
 	}
 
@@ -139,21 +140,54 @@ func (h *CommandHandler) ReadCommand(message []string, s *discordgo.Session, m *
 		return
 	}
 	if command == "list" {
-		page := 0
-		if len(message) < 2 {
-			page = 0
-			h.ListCommands(page, s, m)
-		} else {
-			page, err := strconv.Atoi(message[1])
-			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, message[1] + " is not a valid page number")
+		h.ReadList(message, s, m)
+		return
+	}
+}
+
+
+func (h *CommandHandler) ReadList(message []string, s *discordgo.Session, m *discordgo.MessageCreate){
+
+	// list
+	if len(message) < 2 {
+		h.ListCommands(m.ChannelID, 0, s, m)
+		return
+	}
+
+	// list <number> || list <channel>
+	if len(message) > 1 {
+
+		// if number by itself
+		page, err := strconv.Atoi(message[0])
+		if err == nil {
+			h.ListCommands(m.ChannelID, page, s, m)
+			return
+		}
+
+		// Check for channel as argument
+		channelid := CleanChannel(message[0])
+		_, err = s.Channel(channelid)
+		if err != nil{
+			s.ChannelMessageSend(m.ChannelID, "Invalid inputs provided")
+			return
+		}
+		h.ch.channeldb.CreateIfNotExists(channelid)
+
+		if len(message) == 2 {
+			// If channel argument and no page number supplied
+			h.ListCommands(channelid, 0, s, m)
+		}
+		if len(message) > 2 {
+			// Check to see if second argument is a number
+			page, err := strconv.Atoi(message[2])
+			if err == nil {
+				h.ListCommands(channelid, page, s, m)
 				return
 			}
-			if page > 0 {
-				page = page - 1
-			}
-			h.ListCommands(page, s, m)
+			h.ListCommands(channelid, page, s, m)
 		}
+
+		return
 	}
 }
 
@@ -416,15 +450,77 @@ func (h *CommandHandler) ReadChannels(message []string, s *discordgo.Session, m 
 
 func (h *CommandHandler) EnableCommand(message []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
-	h.registry.AddChannel(message[0], m.ChannelID)
-	s.ChannelMessageSend(m.ChannelID, "Command " + message[0] + " enabled for this channel")
+	if len(message) == 1{
+		err := h.registry.AddChannel(message[0], m.ChannelID)
+		if err != nil{
+			s.ChannelMessageSend(m.ChannelID, err.Error())
+			return
+		}
+
+		s.ChannelMessageSend(m.ChannelID, "Command " + message[0] + " enabled for this channel")
+		return
+	}
+	channelid := CleanChannel(message[1])
+	_, err := s.Channel(channelid)
+	if err != nil{
+		s.ChannelMessageSend(m.ChannelID, err.Error())
+		return
+	}
+
+	h.ch.channeldb.CreateIfNotExists(channelid)
+
+	formattedchannel, err := MentionChannel(channelid, s)
+	if err != nil{
+		s.ChannelMessageSend(m.ChannelID, err.Error())
+		return
+	}
+
+	err = h.registry.AddChannel(message[0], channelid)
+	if err != nil{
+		s.ChannelMessageSend(m.ChannelID, err.Error())
+		return
+	}
+
+	s.ChannelMessageSend(m.ChannelID, "Command " + message[0] + " enabled for " + formattedchannel)
 	return
 }
 
 func (h *CommandHandler) DisableCommand(message []string, s *discordgo.Session, m *discordgo.MessageCreate) {
-	h.registry.RemoveChannel(message[0], m.ChannelID)
-	s.ChannelMessageSend(m.ChannelID, "Command " + message[0] + " disabled for this channel")
+
+	if len(message) == 1{
+		err := h.registry.RemoveChannel(message[0], m.ChannelID)
+		if err != nil{
+			s.ChannelMessageSend(m.ChannelID, err.Error())
+			return
+		}
+
+		s.ChannelMessageSend(m.ChannelID, "Command " + message[0] + " disabled for this channel")
+		return
+	}
+	channelid := CleanChannel(message[1])
+	_, err := s.Channel(channelid)
+	if err != nil{
+		s.ChannelMessageSend(m.ChannelID, err.Error())
+		return
+	}
+
+	h.ch.channeldb.CreateIfNotExists(channelid)
+
+	formattedchannel, err := MentionChannel(channelid, s)
+	if err != nil{
+		s.ChannelMessageSend(m.ChannelID, err.Error())
+		return
+	}
+
+	err = h.registry.RemoveChannel(message[0], channelid)
+	if err != nil{
+		s.ChannelMessageSend(m.ChannelID, err.Error())
+		return
+	}
+
+	s.ChannelMessageSend(m.ChannelID, "Command " + message[0] + " disabled for " + formattedchannel)
 	return
+
 }
 
 func (h *CommandHandler) DisplayUsage(message []string, s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -462,11 +558,14 @@ func (h *CommandHandler) DisplayDescription(message []string, s *discordgo.Sessi
 }
 
 
-func (h *CommandHandler) ListCommands(page int, s *discordgo.Session, m *discordgo.MessageCreate) {
+func (h *CommandHandler) ListCommands(channelid string, page int, s *discordgo.Session, m *discordgo.MessageCreate) {
 
-	recordlist, err := h.registry.CommandsForChannel(page, m.ChannelID)
+	if channelid == ""{
+		channelid = m.ChannelID
+	}
+
+	recordlist, err := h.registry.CommandsForChannel(page, channelid)
 	if err != nil{
-
 		if err.Error() == "not found" {
 			s.ChannelMessageSend(m.ChannelID, "No commands for this channel found")
 			return
@@ -475,7 +574,7 @@ func (h *CommandHandler) ListCommands(page int, s *discordgo.Session, m *discord
 		return
 	}
 
-	pagecount, err := h.registry.CommandsForChannelPageCount(m.ChannelID)
+	pagecount, err := h.registry.CommandsForChannelPageCount(channelid)
 	if err != nil{
 		s.ChannelMessageSend(m.ChannelID, err.Error())
 		return

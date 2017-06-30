@@ -62,17 +62,19 @@ _du-discordbot_ maintains its own internal permissions system. It is important t
 | rss list  | Lists the current channel subscriptions | ~rss list  |
 
 
+### Senior Commands
+
+
 ### Moderator Commands
 
 | Command       | Description   | Example Usage  |
 | ------------- | ------------- | ------------- |
-| groups <user>| Shows groups the user belongs to | ~groups @yamamushi |
-| command enable | Enables a command in the current channel | command enable ping |
-| command disable | Disables a command in the current channel | command enable ping |
-| command list | Lists enabled commands for the current channel | command list |
+| groups <user>| Shows groups the user belongs to | groups @yamamushi |
+| command enable | Enables a command in the current channel or the target channel | command enable ping |
+| command disable | Disables a command in the current channel or the target channel | command enable ping #general|
+| command list | Lists enabled commands for the current channel or the target channel, accepts optional page number | command list #general 2|
 | command usage | Displays usage for the supplied command | command usage ping | 
 | command description | Displays description for the supplied command | command description ping | 
-
 
 
 ### User Commands
@@ -100,6 +102,11 @@ If a command is run that is in the registry (the command registry is an extra fe
  The outcome of that check will determine the result of the attempted command. 
  
  tl;dr - _The things check the DB for permissions_
+ 
+ **Remember that if you want to enable a command in discord, you have to enable it for the channel and for a user group.**
+ 
+ **Users must belong to this group to run a given command, even if it is enabled for a channel. Therefore it is useful to assign the "citizen" group to a command if you would like everyone to have access to it.**
+ 
 
 ### Ranks
 
@@ -115,13 +122,18 @@ If a command is run that is in the registry (the command registry is an extra fe
 | recruiter | Recruiters | -planned-  | 
 | citizen | Discord Citizen | All users whom the bot has seen speak have this role. |
 
-### User Permission Commands
+### Permission Commands
 
 | Command       | Description   | Example Usage  |
 | ------------- | ------------- | ------------- |
 | promote | Promotes a user to the selected group  | ~promote @yamamushi admin |
+| demote | Demotes a user to the selected group  | ~demote @yamamushi moderator |
+| command | Used to manage permissions on commands | [command permissions](#command-permissions) |
+| channel | Used to manage permissions on commands | [channel permissions](#channel-permissions) |
 
 ## Command Permissions
+
+ **By Default command permission commands are allowed by moderators and above**
 
 The command registry is an internal permissions system for commands, which allows for limiting their usage as configured.
 
@@ -132,6 +144,7 @@ Permissions on commands can be registered in one of three ways:
 | channels | restricting a command's usage to specific channels | 
 | groups | restricting a command's usage to specific groups |
 | users | restricting a command's usage to specific users |
+
 
 
 The three whitelist permissions can be managed with the following commands:
@@ -148,6 +161,35 @@ There is an additional command for listing the commands available in your curren
 | Command       | Description   | Example Usage  |
 | ------------- | ------------- | ------------- |
 | list | Lists the permissions for the current channel | ~command list |
+ 
+
+## Channel Permissions
+
+ **By Default channel permission commands are allowed by smoderators and above**
+
+The command registry is an internal permissions system for commands, which allows for limiting their usage as configured.
+
+Permissions on commands can be registered in one of three ways:
+
+| Permission | Description | Notes |
+| ---------- | ----------- | ----- |
+| botlog | Sets the channel to serve as the bot log channel | Unique Flag |
+| permissionlog | Sets the channel to serve as the permission log channel | Unique Flag |
+| banklog | Sets the channel to serve as the bank log channel | Unique Flag |
+| hq | Sets the channel to serve as the hq channel | Unique Flag, Can only be set by owner |
+| groups | restricting a command's usage to specific groups | |
+| users | restricting a command's usage to specific users | |
+
+
+
+The three whitelist permissions can be managed with the following commands:
+
+| Command       | Description   | Example Usage  |
+| ------------- | ------------- | -------------  |
+| channel info | Displays permission info about the channel | channel info #general |
+| channel group | Manages the group settings of the channel | channel group add admin #admin-channel |
+| channel set | Sets a flag on the channel | channel set botlog #bot-channel |
+| channel unset| Unsets a flag from the channel | channel unset botlog #general |
  
 
 ## Discord

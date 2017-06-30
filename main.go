@@ -82,11 +82,17 @@ func main() {
 	dg.AddHandler(permissionshandler.Read)
 
 	// Create our command handler
-	fmt.Println("Add Command Registry Handler")
+	fmt.Println("Adding Command Registry Handler")
 	commandhandler := CommandHandler{dg: dg, db: &dbhandler, callback: &callbackhandler,
 		user: &userhandler, conf: &conf, perm: &permissionshandler}
 	commandhandler.Init()
 	dg.AddHandler(commandhandler.Read)
+
+	fmt.Println("Adding Channel Permissions Handler")
+	channelhandler := ChannelHandler{db: &dbhandler, conf: &conf, registry: commandhandler.registry, user: &userhandler}
+	channelhandler.Init()
+	commandhandler.ch = &channelhandler
+	dg.AddHandler(channelhandler.Read)
 
 	// Now we create and initialize our main handler
 	handler := MainHandler{db: &dbhandler, conf: &conf, dg: dg, callback: &callbackhandler, perm: &permissionshandler, command: &commandhandler}
