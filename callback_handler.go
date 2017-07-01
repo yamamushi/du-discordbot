@@ -11,6 +11,7 @@ type CallbackHandler struct {
 
 	WatchList list.List
 	dg	*discordgo.Session
+	logger *Logger
 
 }
 

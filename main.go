@@ -64,38 +64,45 @@ func main() {
 	}
 	defer dg.Close()
 
+	logger := Logger{}
 
 	// Create a callback handler and add it to our Handler Queue
 	fmt.Println("Adding Callback Handler")
-	callbackhandler := CallbackHandler{dg: dg}
+	callbackhandler := CallbackHandler{dg: dg, logger: &logger}
 	dg.AddHandler(callbackhandler.Read)
 
 	// Create our user handler
 	fmt.Println("Adding User Handler")
-	userhandler := UserHandler{conf: &conf, db: &dbhandler}
+	userhandler := UserHandler{conf: &conf, db: &dbhandler, logger: &logger}
 	userhandler.Init()
 	dg.AddHandler(userhandler.Read)
 
 	// Create our permissions handler
 	fmt.Println("Adding Permissions Handler")
-	permissionshandler := PermissionsHandler{dg: dg, conf: &conf, callback: &callbackhandler, db: &dbhandler, user: &userhandler}
+	permissionshandler := PermissionsHandler{dg: dg, conf: &conf, callback: &callbackhandler, db: &dbhandler,
+		user: &userhandler, logger: &logger}
 	dg.AddHandler(permissionshandler.Read)
 
 	// Create our command handler
 	fmt.Println("Adding Command Registry Handler")
 	commandhandler := CommandHandler{dg: dg, db: &dbhandler, callback: &callbackhandler,
-		user: &userhandler, conf: &conf, perm: &permissionshandler}
+		user: &userhandler, conf: &conf, perm: &permissionshandler, logger: &logger}
 	commandhandler.Init()
 	dg.AddHandler(commandhandler.Read)
 
 	fmt.Println("Adding Channel Permissions Handler")
-	channelhandler := ChannelHandler{db: &dbhandler, conf: &conf, registry: commandhandler.registry, user: &userhandler}
+	channelhandler := ChannelHandler{db: &dbhandler, conf: &conf, registry: commandhandler.registry,
+		user: &userhandler, logger: &logger}
 	channelhandler.Init()
 	commandhandler.ch = &channelhandler
 	dg.AddHandler(channelhandler.Read)
 
+	// Initalize our Logger
+	logger.Init(&channelhandler)
+
 	// Now we create and initialize our main handler
-	handler := MainHandler{db: &dbhandler, conf: &conf, dg: dg, callback: &callbackhandler, perm: &permissionshandler, command: &commandhandler}
+	handler := MainHandler{db: &dbhandler, conf: &conf, dg: dg, callback: &callbackhandler, perm: &permissionshandler,
+		command: &commandhandler, logger: &logger}
 	err = handler.Init()
 	if err != nil {
 		fmt.Println("error in mainHandler.init", err)

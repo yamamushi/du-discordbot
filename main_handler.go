@@ -16,6 +16,7 @@ type MainHandler struct {
 	user *UserHandler
 	command *CommandHandler
 	registry *CommandRegistry
+	logger *Logger
 }
 
 func (h *MainHandler) Init() error {

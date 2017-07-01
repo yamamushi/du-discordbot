@@ -23,6 +23,7 @@ type CommandHandler struct {
 	dg *discordgo.Session
 	user *UserHandler
 	ch *ChannelHandler
+	logger *Logger
 }
 
 
