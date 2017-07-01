@@ -4,17 +4,51 @@
 bot_token = "bot user token goes here"
 admin_id = "the bot owner user id goes here"
 
+
 [database]
 filename = "database.db"
+
 
 [du-bot]
 default_now_playing = "InDev"
 command_prefix = "~"
 
-# Total number of minutes to wait in between each rss fetch (per run, not per feed)
-rss_fetch_timeout = 3
+# Total number of minutes to wait in between each rss fetch (per run, not per feed) Setting this too low may result
+# In sites blocking your requests.
+rss_fetch_timeout = 15
 
 # The total number of things to list per page (used for <command list> command)
 # 5 is a good default as too high will cause message lengths to overrun resulting in responses not displayed
 # Minimum value is 2
 per_page_count = 5
+
+enable_profiler = false
+
+
+[bank]
+bank_name = "Discord Bank"
+
+bank_url = ""
+
+bank_icon_url = ""
+
+# Set this to something long and unique
+bank_pin = ""
+
+# Setting this to true will only reset the bank wallet, it will not reset accounts
+reset_bank = false
+
+starting_bank_wallet_value = 1000000
+starting_user_account_value = 1000
+starting_user_wallet_value = 500
+
+[casino]
+casino_name = "Discord Casino"
+
+# Set this to something long and unique
+casino_pin = ""
+
+# Setting this to true will only reset the casino wallet, it will not reset accounts
+reset_casino = false
+
+starting_casino_wallet_value = 10000000

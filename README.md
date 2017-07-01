@@ -35,12 +35,15 @@ A Dual Universe bot being developed for the [unofficial Dual Universe discord](h
 - [ ] Dual Universe Resource Guide
 - [ ] Dual Universe Forum Integration
 - [X] RSS Subscriptions
-- [ ] Twitter Subscriptions
+- [ ] Twitter Subscriptions (semi-working, needs polishing)
 - [X] Currency System
-- [ ] Bank System
+- [ ] Bank System with Loans
+- [ ] A Casino
 - [ ] More Games!
 - [ ] A Prize system for spending the credits from winning games
 - [ ] Reminders / Notifications
+- [ ] A Discord Lua Interpreter
+- [ ] MyCroft.ai Integration
 
 
 ## Commands

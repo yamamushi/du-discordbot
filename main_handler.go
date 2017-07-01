@@ -17,11 +17,11 @@ type MainHandler struct {
 	command *CommandHandler
 	registry *CommandRegistry
 	logger *Logger
+	bankhandler *BankHandler
 }
 
 func (h *MainHandler) Init() error {
 	// DO NOT add anything above this line!!
-	fmt.Println("Initializing Main Handler")
 	// Add our main handler -
 	h.dg.AddHandler(h.Read)
 	h.registry = h.command.registry
@@ -52,8 +52,6 @@ func (h *MainHandler) Init() error {
 		return err
 	}
 
-
-	fmt.Println("Main Handler Initialized")
 	return nil
 }
 

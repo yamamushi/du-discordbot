@@ -10,6 +10,9 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/asdine/storm"
+
+	_ "net/http/pprof"
+	"net/http"
 )
 
 // Variables used for command line parameters
@@ -18,6 +21,7 @@ var (
 )
 
 func init() {
+	// Read our command line options
 	flag.StringVar(&ConfPath, "c", "du-bot.conf", "Path to Config File")
 	flag.Parse()
 
@@ -30,6 +34,8 @@ func init() {
 }
 
 func main() {
+
+	fmt.Println("\n\n|| Starting du-discordbot ||\n")
 
 	// Verify we can actually read our config file
 	conf, err := ReadConfig(ConfPath)
@@ -88,6 +94,8 @@ func main() {
 	commandhandler := CommandHandler{dg: dg, db: &dbhandler, callback: &callbackhandler,
 		user: &userhandler, conf: &conf, perm: &permissionshandler, logger: &logger}
 
+
+	// Create our permissions handler
 	fmt.Println("Adding Channel Permissions Handler")
 	channelhandler := ChannelHandler{db: &dbhandler, conf: &conf, registry: commandhandler.registry,
 		user: &userhandler, logger: &logger}
@@ -98,21 +106,36 @@ func main() {
 	commandhandler.Init(&channelhandler)
 	dg.AddHandler(commandhandler.Read)
 
-	bankhandler := BankHandler{db: &dbhandler, conf: &conf, com: &commandhandler, logger: &logger, user: &userhandler}
+	// Setup and initialize our Central Bank
+	fmt.Println("Setting Up Bank")
+	centralbank := Bank{db: &dbhandler, conf: &conf, user: &userhandler}
+	centralbank.Init()
+
+	// Create our Bank handler
+	fmt.Println("Adding Bank Handler")
+	bankhandler := BankHandler{db: &dbhandler, conf: centralbank.conf, com: &commandhandler, logger: &logger,
+		user: &userhandler, callback: &callbackhandler, bank: &centralbank}
 	dg.AddHandler(bankhandler.Read)
 
 	// Initalize our Logger
+	fmt.Println("Initializing Logger")
 	logger.Init(&channelhandler)
 
 	// Now we create and initialize our main handler
+	fmt.Println("\n|| Initializing Main Handler ||\n")
 	handler := MainHandler{db: &dbhandler, conf: &conf, dg: dg, callback: &callbackhandler, perm: &permissionshandler,
-		command: &commandhandler, logger: &logger}
+		command: &commandhandler, logger: &logger, bankhandler: &bankhandler}
 	err = handler.Init()
 	if err != nil {
 		fmt.Println("error in mainHandler.init", err)
 		return
 	}
+	fmt.Println("\n|| Main Handler Initialized ||\n")
 
+
+	if conf.DUBotConfig.Profiler {
+		http.ListenAndServe(":8080", http.DefaultServeMux)
+	}
 
 	// Wait here until CTRL-C or other term signal is received.
 	fmt.Println("Bot is now running.  Press CTRL-C to exit.")

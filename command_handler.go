@@ -35,8 +35,10 @@ func (h *CommandHandler) Init(channelhandler *ChannelHandler){
 	// Setup our command registry interface
 	h.registry = new(CommandRegistry)
 	h.registry.conf = h.conf
-	if h.conf.DUBotConfig.PerPageCount < 2 {
-		fmt.Println("Invalid Config Parameter Setting: [du-bot]:per_page_count must be 2 or higher!")
+	pagecount := h.conf.DUBotConfig.PerPageCount
+	if pagecount < 2 {
+		count:=  strconv.Itoa(pagecount)
+		fmt.Println("Invalid Config Parameter Setting: [du-bot]:per_page_count must be 2 or higher - Found "+ count)
 		os.Exit(0)
 	}
 	h.registry.db = h.db

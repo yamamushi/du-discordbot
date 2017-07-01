@@ -10,6 +10,8 @@ type Config struct {
 	DiscordConfig	discordConfig 	`toml:"discord"`
 	DBConfig		databaseConfig 	`toml:"database"`
 	DUBotConfig		dubotConfig 	`toml:"du-bot"`
+	BankConfig		bankConfig 		`toml:"bank"`
+	CasinoConfig	casinoConfig 	`toml:"casino"`
 }
 
 type discordConfig struct {
@@ -28,8 +30,31 @@ type dubotConfig struct {
 	Playing string 	`toml:"default_now_playing"`
 	RSSTimeout time.Duration  `toml:"rss_fetch_timeout"`
 	PerPageCount int  `toml:"per_page_count"`
+	Profiler bool `toml:"enable_profiler"`
 
 }
+
+type bankConfig struct {
+	BankName 	string	`toml:"bank_name"`
+	BankURL		string	`toml:"bank_url"`
+	BankIconURL	string	`toml:"bank_icon_url"`
+	Pin 		string 	`toml:"bank_pin"`
+	Reset	bool	`toml:"reset_bank"`
+	SeedWallet	int  `toml:"starting_bank_wallet_value"`
+	SeedUserAccountBalance	int  `toml:"starting_user_account_value"`
+	SeedUserWalletBalance	int  `toml:"starting_user_wallet_value"`
+
+}
+
+
+type casinoConfig struct {
+	CasinoName 	string	`toml:"casino_name"`
+	Pin 		string 	`toml:"casino_pin"`
+	Reset	bool	`toml:"reset_casino"`
+	SeedWallet	int  `toml:"starting_casino_wallet_value"`
+}
+
+
 
 func ReadConfig(path string) ( config Config, err error) {
 

@@ -124,7 +124,7 @@ func (h *UserHandler) CheckUser (ID string) {
 		err = walletdb.One("Account", ID, &wallet)
 		if err != nil {
 			wallet := Wallet{Account: ID}
-			wallet.AddBalance(1000)
+			wallet.AddBalance(h.conf.BankConfig.SeedUserWalletBalance)
 			err = walletdb.Save(&wallet)
 			if err != nil {
 				fmt.Println("Error inserting new wallet into Database!")
