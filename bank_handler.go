@@ -256,30 +256,31 @@ func (h *BankHandler) Prompt(s *discordgo.Session, m *discordgo.MessageCreate){
 */
 	prompt := new(discordgo.MessageEmbed)
 
-	prompt.URL = ""
+	prompt.URL = h.conf.BankConfig.BankURL
 	prompt.Type = ""
-	prompt.Title = "Testing"
-	prompt.Description = ""
+	prompt.Title = "Bank Menu"
+	prompt.Description = "Welcome to " + h.conf.BankConfig.BankName + " " + m.Author.Mention() + "!"
 	prompt.Timestamp = ""
 	prompt.Color = ColorGold()
-/*
-	footer := new(discordgo.MessageEmbedFooter)
-	footer.Text = ""
-	footer.IconURL = ""
-	prompt.Footer = footer
 
+	footer := new(discordgo.MessageEmbedFooter)
+	footer.Text = h.conf.BankConfig.BankMenuSlogan
+//	footer.IconURL = h.conf.BankConfig.BankIconURL
+	prompt.Footer = footer
+/*
 	image := new(discordgo.MessageEmbedImage)
-	image.URL = ""
-	image.Height = 10
-	image.Width = 10
+	image.URL = h.conf.BankConfig.BankIconURL
+	image.Height = 5
+	image.Width = 5
 	prompt.Image = image
 
+*/
 	thumbnail := new(discordgo.MessageEmbedThumbnail)
-	thumbnail.URL = ""
+	thumbnail.URL = h.conf.BankConfig.BankIconURL
 	thumbnail.Height = 10
 	thumbnail.Width = 10
 	prompt.Thumbnail = thumbnail
-
+/*
 	video := new(discordgo.MessageEmbedVideo)
 	video.URL = ""
 	video.Height = 10
@@ -296,17 +297,52 @@ func (h *BankHandler) Prompt(s *discordgo.Session, m *discordgo.MessageCreate){
 	author.URL = h.conf.BankConfig.BankURL
 	author.IconURL = "https://discordapp.com/api/users/"+s.State.User.ID+"/avatars/"+s.State.User.Avatar+".jpg"
 	prompt.Author = author
-/*
-	field := new(discordgo.MessageEmbedField)
-	field.Name = ""
-	field.Value = ""
-	field.Inline = true
 
-	fields := make([]*discordgo.MessageEmbedField, 5)
-	fields = append(fields, field)
+
+	fields := []*discordgo.MessageEmbedField{}
+
+
+	depositfield := discordgo.MessageEmbedField{}
+	depositfield.Name = "deposit"
+	depositfield.Value = "Deposit to account"
+	depositfield.Inline = true
+	fields = append(fields, &depositfield)
+
+	withdrawfield := discordgo.MessageEmbedField{}
+	withdrawfield.Name = "withdraw"
+	withdrawfield.Value = "Withdraw from account"
+	withdrawfield.Inline = true
+	fields = append(fields, &withdrawfield)
+
+	balancefield := discordgo.MessageEmbedField{}
+	balancefield.Name = "balance"
+	balancefield.Value = "Display account balance"
+	balancefield.Inline = true
+	fields = append(fields, &balancefield)
+
+	transferfield := discordgo.MessageEmbedField{}
+	transferfield.Name = "transfer"
+	transferfield.Value = "Transfer to account"
+	transferfield.Inline = true
+	fields = append(fields, &transferfield)
+
+	loansfield := discordgo.MessageEmbedField{}
+	loansfield.Name = "loans"
+	loansfield.Value = "Loan Management Menu"
+	loansfield.Inline = true
+	fields = append(fields, &loansfield)
+
+	redeemfield := discordgo.MessageEmbedField{}
+	redeemfield.Name = "redeem"
+	redeemfield.Value = "Credit Redemption Menu"
+	redeemfield.Inline = true
+	fields = append(fields, &redeemfield)
+
+
+
 	prompt.Fields = fields
 
-	*/
+
 	s.ChannelMessageSendEmbed(channel.ID, prompt)
 
 	payload = channel.ID

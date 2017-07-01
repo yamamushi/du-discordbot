@@ -43,6 +43,7 @@ type bankConfig struct {
 	SeedWallet	int  `toml:"starting_bank_wallet_value"`
 	SeedUserAccountBalance	int  `toml:"starting_user_account_value"`
 	SeedUserWalletBalance	int  `toml:"starting_user_wallet_value"`
+	BankMenuSlogan	string `toml:"bank_menu_slogan"`
 
 }
 

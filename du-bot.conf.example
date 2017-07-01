@@ -27,11 +27,8 @@ enable_profiler = false
 
 [bank]
 bank_name = "Discord Bank"
-
 bank_url = ""
-
 bank_icon_url = ""
-
 # Set this to something long and unique
 bank_pin = ""
 
@@ -41,6 +38,8 @@ reset_bank = false
 starting_bank_wallet_value = 1000000
 starting_user_account_value = 1000
 starting_user_wallet_value = 500
+
+bank_menu_slogan = "Have a great day!"
 
 [casino]
 casino_name = "Discord Casino"
