@@ -32,7 +32,7 @@ func (h *RSSHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	cp := h.conf.DUBotConfig.CP
 
-	if !SafeInput(s, m){
+	if !SafeInput(s, m, h.conf){
 		return
 	}
 

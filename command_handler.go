@@ -27,7 +27,10 @@ type CommandHandler struct {
 }
 
 
-func (h *CommandHandler) Init(){
+func (h *CommandHandler) Init(channelhandler *ChannelHandler){
+
+	// Setup our Channel Handler
+	h.ch = channelhandler
 
 	// Setup our command registry interface
 	h.registry = new(CommandRegistry)
@@ -47,7 +50,7 @@ func (h *CommandHandler) Init(){
 func (h *CommandHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	// Check for safety
-	if !SafeInput(s, m){
+	if !SafeInput(s, m, h.conf){
 		return
 	}
 
@@ -55,7 +58,7 @@ func (h *CommandHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) 
 	if err != nil {
 		return
 	}
-	if !user.CheckRole("smoderator"){
+	if !user.CheckRole("admin"){
 		return
 	}
 

@@ -153,6 +153,9 @@ func (h *MainHandler) RegisterCommands() (err error) {
 	h.registry.Register("follow", "Follow a DU forum user. Updates will be sent via pm", "follow <forum name>")
 	h.registry.Register("ping", "Ping command", "ping")
 	h.registry.Register("pong", "Pong command", "pong")
+	h.registry.Register("transfer",	"Transfer credits to another user", "transfer 100 @<user>")
+	h.registry.Register("balance", "Display user balance", "balance")
+	h.registry.Register("addbalance", "-?-", "-?-")
 
 	return nil
 

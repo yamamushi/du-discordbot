@@ -29,7 +29,7 @@ func (h *ChannelHandler) Init() {
 func (h *ChannelHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	// Check for safety
-	if !SafeInput(s, m){
+	if !SafeInput(s, m, h.conf){
 		return
 	}
 

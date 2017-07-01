@@ -5,7 +5,7 @@ package main
 import (
 	"github.com/bwmarrin/discordgo"
 	"strings"
-	"fmt"
+//	"fmt"
 )
 
 
@@ -19,7 +19,7 @@ func RemoveStringFromSlice(s []string, r string) []string {
 }
 
 
-func SafeInput(s *discordgo.Session, m *discordgo.MessageCreate) bool {
+func SafeInput(s *discordgo.Session, m *discordgo.MessageCreate, conf *Config) bool {
 	// Ignore all messages created by the bot itself
 	if m.Author.ID == s.State.User.ID {
 		return false
@@ -27,6 +27,10 @@ func SafeInput(s *discordgo.Session, m *discordgo.MessageCreate) bool {
 
 	// Ignore bots
 	if m.Author.Bot {
+		return false
+	}
+
+	if !strings.HasPrefix(m.Content, conf.DUBotConfig.CP){
 		return false
 	}
 
@@ -94,25 +98,25 @@ func CheckPermissions(command string, channelid string, user *User, s *discordgo
 
 	usergroups, err := com.user.GetGroups(user.ID)
 	if err != nil{
-		fmt.Println("Error Retrieving User Groups for " + user.ID)
+		//fmt.Println("Error Retrieving User Groups for " + user.ID)
 		return false
 	}
 
 	commandgroups, err := com.registry.GetGroups(command)
 	if err != nil{
-		fmt.Println("Error Retrieving Registry Groups for " + command)
+		//fmt.Println("Error Retrieving Registry Groups for " + command)
 		return false
 	}
 
 	commandchannels, err := com.registry.GetChannels(command)
 	if err != nil{
-		fmt.Println("Error Retrieving Channels for " + command)
+		//fmt.Println("Error Retrieving Channels for " + command)
 		return false
 	}
 
 	commandusers, err := com.registry.GetUsers(command)
 	if err != nil{
-		fmt.Println("Error Retrieving Users for " + command)
+		//fmt.Println("Error Retrieving Users for " + command)
 		return false
 	}
 

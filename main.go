@@ -87,15 +87,19 @@ func main() {
 	fmt.Println("Adding Command Registry Handler")
 	commandhandler := CommandHandler{dg: dg, db: &dbhandler, callback: &callbackhandler,
 		user: &userhandler, conf: &conf, perm: &permissionshandler, logger: &logger}
-	commandhandler.Init()
-	dg.AddHandler(commandhandler.Read)
 
 	fmt.Println("Adding Channel Permissions Handler")
 	channelhandler := ChannelHandler{db: &dbhandler, conf: &conf, registry: commandhandler.registry,
 		user: &userhandler, logger: &logger}
 	channelhandler.Init()
-	commandhandler.ch = &channelhandler
 	dg.AddHandler(channelhandler.Read)
+
+	// Don't forget to initialize the command handler -AFTER- the Channel Handler!
+	commandhandler.Init(&channelhandler)
+	dg.AddHandler(commandhandler.Read)
+
+	bankhandler := BankHandler{db: &dbhandler, conf: &conf, com: &commandhandler, logger: &logger, user: &userhandler}
+	dg.AddHandler(bankhandler.Read)
 
 	// Initalize our Logger
 	logger.Init(&channelhandler)
