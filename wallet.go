@@ -4,6 +4,7 @@ import (
 	"errors"
 )
 
+
 type Wallet struct {
 
 	Account string `storm:"id"`
@@ -39,5 +40,4 @@ func (w *Wallet) SendBalance(receiver *Wallet, amount int) error {
 	receiver.Balance = receiver.Balance + amount
 	return nil
 }
-
 

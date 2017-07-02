@@ -111,10 +111,15 @@ func main() {
 	centralbank := Bank{db: &dbhandler, conf: &conf, user: &userhandler}
 	centralbank.Init()
 
+	// Create our Wallet Handler
+	fmt.Println("Adding User Wallet Handler")
+	wallethandler := WalletHandler{db: &dbhandler, conf: &conf, user: &userhandler, logger: &logger}
+	dg.AddHandler(wallethandler.Read)
+
 	// Create our Bank handler
 	fmt.Println("Adding Bank Handler")
 	bankhandler := BankHandler{db: &dbhandler, conf: centralbank.conf, com: &commandhandler, logger: &logger,
-		user: &userhandler, callback: &callbackhandler, bank: &centralbank}
+		user: &userhandler, callback: &callbackhandler, bank: &centralbank, wallet: &wallethandler}
 	dg.AddHandler(bankhandler.Read)
 
 	// Initalize our Logger

@@ -30,12 +30,13 @@ type BankRecord struct {
 	Pin string
 	Balance int
 	LoansEnabled bool
-
 }
+
 
 type AccountRecord struct {
 
 	ID	string	`storm:"id"`
+	Pin string
 	UserID	string	`storm:"index"`
 	Balance	int
 	ActiveLoan	bool	`storm:"index"`
@@ -154,7 +155,10 @@ func (h *Bank) GetMainBankAccount() (account BankRecord, err error){
 
 
 func (h *Bank) GetAccountForUser(userid string) (account AccountRecord, err error){
-	h.CheckUserAccount(userid)
+
+	if !h.CheckUserAccount(userid){
+		h.CreateUserAccount(userid)
+	}
 
 	bankdb := h.db.rawdb.From("Bank")
 	accountdb := bankdb.From("Accounts")
@@ -183,14 +187,17 @@ func (h *Bank) GetAccountByAccountID(accountid string) (account AccountRecord, e
 
 func (h *Bank) CheckUserAccount(userid string) (bool){
 
-	err := h.CreateUserAccount(userid)
-	if err == nil {
-		return true
+	bankdb := h.db.rawdb.From("Bank")
+	accountdb := bankdb.From("Accounts")
+
+	account := AccountRecord{}
+	err := accountdb.One("UserID", userid, &account)
+
+	if err != nil {
+		return false
 	}
-	if err.Error() == "User Account Already Exists!" {
-		return true
-	}
-	return false
+
+	return true
 }
 
 
@@ -206,6 +213,7 @@ func (h *Bank) CreateUserAccount(userid string) (err error){
 	}
 
 	account.ID = GetUUID()
+	account.Pin = ""
 	account.UserID = userid
 	account.Balance = h.conf.BankConfig.SeedUserAccountBalance
 	account.ActiveLoan = false
@@ -222,6 +230,7 @@ func (h *Bank) SaveUserAccount(account AccountRecord) (err error) {
 
 	bankdb := h.db.rawdb.From("Bank")
 	accountdb := bankdb.From("Accounts")
+
 
 	if h.CheckUserAccount(account.UserID) {
 		err = accountdb.DeleteStruct(&account)

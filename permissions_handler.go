@@ -146,7 +146,7 @@ func (h *PermissionsHandler) ReadPromote(commands []string, s *discordgo.Session
 			if err != nil {
 				s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
 				h.logger.LogPerm(m.Author.Mention() + " attempted to run promote to smoderator || " +
-					target + "||" + group + "||" + err.Error(), s)
+					m.Mentions[0].Mention() + "||" + group + "||" + err.Error(), s)
 				return
 			}
 			s.ChannelMessageSend(m.ChannelID, m.Mentions[0].Mention() + " has been added to the " + group + " group.")
