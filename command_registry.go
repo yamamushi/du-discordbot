@@ -319,18 +319,22 @@ func (h *CommandRegistry) CheckUser(command string, user string) (bool) {
 
 func (h *CommandRegistry) CheckPermission(command string, channel string, user User) (bool) {
 
+	userpermission := false
 	if h.CheckUser(command, user.ID){
-		return true
+		userpermission = true
 	}
+	channelpermission := false
 	if h.CheckChannel(command, channel){
-		return true
+		channelpermission = true
 	}
 
 	if h.CheckUserGroups(command, user){
-		return true
+		userpermission = true
 	}
 
-
+	if channelpermission && userpermission {
+		return true
+	}
 	return false
 }
 

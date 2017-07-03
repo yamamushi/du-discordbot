@@ -37,7 +37,8 @@ func (h *MainHandler) Init() error {
 
 
 	fmt.Println("Adding Chess Handler")
-	chess := ChessHandler{db: h. db, conf: h.conf, logger: h.logger, wallet: h.bankhandler.wallet, bank: h.bankhandler}
+	chess := ChessHandler{db: h. db, conf: h.conf, logger: h.logger, wallet: h.bankhandler.wallet,
+		bank: h.bankhandler, command: h.command.registry, user: h.user}
 	chess.Init()
 	h.dg.AddHandler(chess.Read)
 
@@ -160,7 +161,7 @@ func (h *MainHandler) RegisterCommands() (err error) {
 	h.registry.Register("transfer",	"Transfer credits to another user", "transfer 100 @<user>")
 	h.registry.Register("balance", "Display user balance", "balance")
 	h.registry.Register("addbalance", "-?-", "-?-")
+	h.registry.Register("chess", "du-discordbot chess", "chess")
 
 	return nil
-
 }

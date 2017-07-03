@@ -457,13 +457,13 @@ func (h *BankHandler) ReadTransfer (payload []string, channelid string, s *disco
 
 	fromAccount, err := h.bank.GetAccountForUser(m.Author.ID)
 	if err != nil {
-		s.ChannelMessageSend(channelid, "Error getting user account: " + err.Error())
+		s.ChannelMessageSend(channelid, "Error getting sender user account: " + err.Error())
 		return
 	}
 
 	toAccount, err := h.bank.GetAccountByAccountID(payload[1])
 	if err != nil {
-		s.ChannelMessageSend(channelid, "Error getting user account: " + err.Error())
+		s.ChannelMessageSend(channelid, "Error getting target user account: " + err.Error())
 		return
 	}
 

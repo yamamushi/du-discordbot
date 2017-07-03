@@ -171,19 +171,20 @@ func (h *Bank) GetAccountForUser(userid string) (account AccountRecord, err erro
 	return record, nil
 }
 
+
 func (h *Bank) GetAccountByAccountID(accountid string) (account AccountRecord, err error){
 
 	bankdb := h.db.rawdb.From("Bank")
 	accountdb := bankdb.From("Accounts")
 
-	record := AccountRecord{}
-	err = accountdb.One("ID", accountid, &record)
+	err = accountdb.One("ID", accountid, &account)
 	if err != nil {
-		return record, err
+		return account, err
 	}
-	return record, nil
 
+	return account, nil
 }
+
 
 func (h *Bank) CheckUserAccount(userid string) (bool){
 

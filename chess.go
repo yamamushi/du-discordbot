@@ -7,7 +7,6 @@ import (
 	"errors"
 	"strings"
 	"strconv"
-	"fmt"
 
 	"github.com/yamamushi/chess/engine"
 	"github.com/yamamushi/chess/search"
@@ -44,6 +43,8 @@ type ChessPlayerRecord struct {
 	WhitePieceStyle  string
 	BlackPieceStyle  string
 	BoardStyle       string
+	PieceStyles		[]string
+	BoardStyles		[]string
 	Plots            string  // Workaround because we can't store a bool in the db apparently
 }
 
@@ -62,6 +63,7 @@ type PieceStyle struct {
 	Knight	ChessPiece
 	Rook	ChessPiece
 	Pawn	ChessPiece
+	Price	int
 }
 
 
@@ -69,17 +71,12 @@ type BoardStyle struct {
 
 	WhiteChessSquare string
 	BlackChessSquare string
+	Price int
 
 }
 
-
-
 var (
-
-	incmoves = make(chan *engine.Move, 1)
-	outmoves = make(chan *engine.Move, 1)
-	quit     = make(chan int, 1)
-
+	chessstylelist = []string{"default", "animal", "mosque", "church"}
 )
 
 const LOG = false
@@ -98,9 +95,9 @@ Functions Related to piece and board styles
 func (h *ChessGame) DefaultBoardStyle() (style BoardStyle){
 	style.WhiteChessSquare = ":white_large_square:"
 	style.BlackChessSquare = ":black_large_square:"
+	style.Price = 0
 	return style
 }
-
 
 func (h *ChessGame) DefaultWhitePieces() (style PieceStyle) {
 
@@ -110,6 +107,7 @@ func (h *ChessGame) DefaultWhitePieces() (style PieceStyle) {
 	style.Knight = ChessPiece{Type: "knight", Symbol: ":cop::skin-tone-1:"}
 	style.Rook = ChessPiece{Type: "rook", Symbol: ":guardsman::skin-tone-1:"}
 	style.Pawn = ChessPiece{Type: "pawn", Symbol: ":baby::skin-tone-1:"}
+	style.Price = 0
 	return style
 
 }
@@ -122,6 +120,7 @@ func (h *ChessGame) DefaultBlackPieces() (style PieceStyle) {
 	style.Knight = ChessPiece{Type: "knight", Symbol: ":cop::skin-tone-5:"}
 	style.Rook = ChessPiece{Type: "rook", Symbol: ":guardsman::skin-tone-5:"}
 	style.Pawn = ChessPiece{Type: "pawn", Symbol: ":baby::skin-tone-5:"}
+	style.Price = 0
 	return style
 }
 
@@ -133,8 +132,8 @@ func (h *ChessGame) StyleChurchPieces() (style PieceStyle) {
 	style.Knight = ChessPiece{Type: "knight", Symbol: ":cop::skin-tone-1:"}
 	style.Rook = ChessPiece{Type: "rook", Symbol: ":church:"}
 	style.Pawn = ChessPiece{Type: "pawn", Symbol: ":bow::skin-tone-1:"}
+	style.Price = 500
 	return style
-
 }
 
 func (h *ChessGame) StyleMosquePieces() (style PieceStyle) {
@@ -145,6 +144,7 @@ func (h *ChessGame) StyleMosquePieces() (style PieceStyle) {
 	style.Knight = ChessPiece{Type: "knight", Symbol: ":man_with_turban::skin-tone-4:"}
 	style.Rook = ChessPiece{Type: "rook", Symbol: ":mosque:"}
 	style.Pawn = ChessPiece{Type: "pawn", Symbol: ":bow::skin-tone-4:"}
+	style.Price = 500
 	return style
 }
 
@@ -156,6 +156,7 @@ func (h *ChessGame) StyleAnimalPieces() (style PieceStyle) {
 	style.Knight = ChessPiece{Type: "knight", Symbol: ":dolphin:"}
 	style.Rook = ChessPiece{Type: "rook", Symbol: ":elephant:"}
 	style.Pawn = ChessPiece{Type: "pawn", Symbol: ":fox:"}
+	style.Price = 750
 	return style
 }
 
@@ -212,7 +213,6 @@ func (h *ChessGame) GetStyles(black string, white string, board string) (blackst
 }
 
 
-
 func (h *ChessGame) EnablePlots(userid string) (err error){
 	record, err := h.GetRecordFromDB(userid)
 	if err != nil {
@@ -264,7 +264,7 @@ func (h *ChessGame) SaveRecordToDB(record ChessPlayerRecord) (err error) {
 	tmprecord := ChessPlayerRecord{}
 	err = db.One("UserID", record.UserID, &tmprecord)
 	if err == nil {
-		fmt.Println("Updating Record")
+//		fmt.Println("Updating Record")
 		err = db.Update(&record)
 		if err != nil {
 			return err
@@ -272,7 +272,7 @@ func (h *ChessGame) SaveRecordToDB(record ChessPlayerRecord) (err error) {
 		return nil
 	}
 
-	fmt.Println("Creating New Record")
+//	fmt.Println("Creating New Record")
 	err = db.Save(&record)
 	if err != nil {
 		return err
@@ -285,6 +285,8 @@ func (h *ChessGame) SaveRecordToDB(record ChessPlayerRecord) (err error) {
 func (h *ChessGame) NewPlayerRecord(userid string) (err error){
 
 	record := ChessPlayerRecord{UserID: userid, Games: 0, Wins: 0, Losses: 0, LastGameFEN: "", CurrentGame: "", WhitePieceStyle: "default",BlackPieceStyle: "default",BoardStyle: "default",Plots: "false",CurrentGameColor: "white"}
+	record.PieceStyles = append(record.PieceStyles, "default")
+	record.BoardStyles = append(record.BoardStyles, "default")
 
 	err = h.SaveRecordToDB(record)
 	return err
@@ -414,6 +416,90 @@ func (h *ChessGame) UpdateBoardStyle(style string, userid string) (err error){
 	return nil
 }
 
+func (h *ChessGame) GetBoardStyleNames(userid string) (styles []string, err error){
+	record, err := h.GetRecordFromDB(userid)
+	if err != nil {
+		return styles, err
+	}
+
+	return record.PieceStyles, nil
+}
+
+func (h *ChessGame) GetPieceStyleNames(userid string) (styles []string, err error){
+	record, err := h.GetRecordFromDB(userid)
+	if err != nil {
+		return styles, err
+	}
+	return record.BoardStyles, nil
+}
+
+func (h *ChessGame) CheckOwnedPieceStyleByName(userid string, style string) (owned bool){
+	record, err := h.GetRecordFromDB(userid)
+	if err != nil {
+		return false
+	}
+
+	for _, stylename := range record.PieceStyles {
+		if stylename == style {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (h *ChessGame) CheckOwnedBoardStyleByName(userid string, style string) (owned bool){
+	record, err := h.GetRecordFromDB(userid)
+	if err != nil {
+		return false
+	}
+
+	for _, stylename := range record.BoardStyles {
+		if stylename == style {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (h *ChessGame) AddPieceStyleByName(userid string, style string) (err error){
+	record, err := h.GetRecordFromDB(userid)
+	if err != nil {
+		return err
+	}
+
+	if h.CheckOwnedPieceStyleByName(userid, style){
+		return errors.New("Style already owned!")
+	}
+
+	record.PieceStyles = append(record.PieceStyles, style)
+
+	err = h.SaveRecordToDB(record)
+	if err != nil{
+		return errors.New("Error saving record to DB!")
+	}
+	return nil
+}
+
+func (h *ChessGame) AddBoardStyleByName(userid string, style string) (err error){
+	record, err := h.GetRecordFromDB(userid)
+	if err != nil {
+		return err
+	}
+
+	if h.CheckOwnedBoardStyleByName(userid, style){
+		return errors.New("Style already owned!")
+	}
+
+	record.PieceStyles = append(record.BoardStyles, style)
+
+	err = h.SaveRecordToDB(record)
+	if err != nil{
+		return errors.New("Error saving record to DB!")
+	}
+	return nil
+}
 
 /*
 

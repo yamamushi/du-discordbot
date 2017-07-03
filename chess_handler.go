@@ -11,14 +11,16 @@ import (
 type ChessHandler struct {
 
 	db *DBHandler
-	user *UserHandler
 	logger *Logger
 	conf *Config
 	wallet *WalletHandler
 	chess *ChessGame
 	bank *BankHandler
-
+	command *CommandRegistry
+	user *UserHandler
 }
+
+
 
 func (h *ChessHandler) Init() (err error){
 	h.chess = &ChessGame{db: h.db }
@@ -26,6 +28,7 @@ func (h *ChessHandler) Init() (err error){
 
 
 	if !h.bank.bank.CheckUserAccount("chessaccount"){
+		fmt.Println("Creating Chess Bank Account ")
 		err := h.bank.bank.CreateUserAccount("chessaccount")
 		if err != nil {
 			return err
@@ -49,173 +52,221 @@ func (h *ChessHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate){
 		return
 	}
 
-	if len(payload) < 1 {
-		h.DisplayInfo(s, m)
+	user, err := h.user.GetUser(m.Author.ID)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Could not retrieve user record: " + err.Error())
 		return
 	}
-	if len(payload) > 0 {
 
-		if !h.chess.PlayerHasRecord(m.Author.ID){
-			err := h.chess.NewPlayerRecord(m.Author.ID)
-			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, "Could not create new chess player record: " + err.Error())
-				return
-			}
-		}
+	if h.command.CheckPermission("chess",m.ChannelID, user) {
 
-		command, payload = SplitPayload(payload)
-
-		if command == "newgame" {
-
-			err := h.ChargeUser(10, m.Author.ID)
-			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, "Error charging user wallet " + err.Error())
-				return
-			}
-
-			if len(payload) < 1 {
-				err := h.chess.NewGame(m.Author.ID, "white")
-				if err != nil {
-					s.ChannelMessageSend(m.ChannelID, "Could not start new game: " + err.Error())
-					return
-				}
-				s.ChannelMessageSend(m.ChannelID, "New game started, Good Luck!")
-				return
-			}
-			if payload[0] == "white" {
-				err := h.chess.NewGame(m.Author.ID, "white")
-				if err != nil {
-					s.ChannelMessageSend(m.ChannelID, "Could not start new game: " + err.Error())
-					return
-				}
-				s.ChannelMessageSend(m.ChannelID, "New game started, Good Luck!")
-				return
-			}
-			if payload[0] == "black" {
-				err := h.chess.NewGame(m.Author.ID, "black")
-				if err != nil {
-					s.ChannelMessageSend(m.ChannelID, "Could not start new game: " + err.Error())
-					return
-				}
-				s.ChannelMessageSend(m.ChannelID, "New game started, White Moving first...")
-				h.BotMoveCallback(s, m)
-				return
-			}
-		}
-		if command == "plots" {
-			if len(payload) < 1 {
-				s.ChannelMessageSend(m.ChannelID, "<plots> expects an argument" )
-				return
-			}
-			if payload[0] == "enable"{
-				err := h.chess.EnablePlots(m.Author.ID)
-				if err != nil {
-					s.ChannelMessageSend(m.ChannelID, "Could not modify plots: " + err.Error())
-					return
-				}
-				s.ChannelMessageSend(m.ChannelID, "Plots enabled")
-				return
-			}
-			if payload[0] == "disable"{
-				err := h.chess.DisablePlots(m.Author.ID)
-				if err != nil {
-					s.ChannelMessageSend(m.ChannelID, "Could not modify plots: " + err.Error())
-					return
-				}
-				s.ChannelMessageSend(m.ChannelID, "Plots disabled")
-				return
-			}
-		}
-		if command == "move" {
-
-			if len(payload) < 1 {
-				s.ChannelMessageSend(m.ChannelID, "<move> expects an argument" )
-				return
-			}
-
-			err := h.chess.PlayerMove(m.Author.ID, payload[0])
-			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, "Could not move: " + err.Error())
-				return
-			}
-
-			message, err := h.chess.GetBoard(m.Author.ID,"default","default")
-			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, "Could not display board: " + err.Error())
-				return
-			}
-			s.ChannelMessageSend(m.ChannelID, "Player moved to " + payload[0] + message)
-			h.BotMoveCallback(s, m)
-			return
-		}
-		if command == "board" {
-			h.SendBoard(s,m)
-			return
-		}
-		if command == "fen" {
-			message, err := h.chess.GetFen(m.Author.ID)
-			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, "Could not display board: " + err.Error())
-				return
-			}
-			s.ChannelMessageSend(m.ChannelID, message)
-			return
-		}
-		if command == "styles" {
-			h.DisplayStyleMenu(payload, s, m)
-			return
-		}
-		if command == "resign" {
-			err := h.chess.Resign(m.Author.ID)
-			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, "Could not resign: " + err.Error())
-				return
-			}
-			err = h.chess.ProcessLoss(m.Author.ID)
-			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, "Error Processing Loss: " + err.Error())
-				return
-			}
-			s.ChannelMessageSend(m.ChannelID, "You have resigned from the game! Better luck next time!")
-			return
-		}
-		if command == "load" {
-			s.ChannelMessageSend(m.ChannelID, "Attempting to load saved game, this make take a while depending on the last board state. Attempting to view the board before it is loaded may result in temporary display errors")
-			err := h.chess.LoadCurrentGame(m.Author.ID)
-			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, "Could not load game: " + err.Error())
-				return
-			}
-			h.SendBoard(s, m)
-			s.ChannelMessageSend(m.ChannelID, "Game has been loaded, you may now continue.")
-			return
-		}
-		if command == "profile"{
-			if len(payload) < 1 {
-				h.DisplayProfile(m.Author.ID, s, m)
-				return
-			}
-			if len(m.Mentions) < 1 {
-				s.ChannelMessageSend(m.ChannelID, "Invalid user selected")
-				return
-			}
-
-			h.DisplayProfile(m.Mentions[0].ID, s, m)
-			return
-		}
-		if command == "help" {
+		if len(payload) < 1 {
 			h.DisplayHelp(s, m)
 			return
 		}
-		if command == "info" {
-			h.DisplayInfo(s, m)
+		if len(payload) > 0 {
+
+			if !h.chess.PlayerHasRecord(m.Author.ID) {
+				err := h.chess.NewPlayerRecord(m.Author.ID)
+				if err != nil {
+					s.ChannelMessageSend(m.ChannelID, "Could not create new chess player record: "+err.Error())
+					return
+				}
+			}
+
+			command, payload = SplitPayload(payload)
+
+			if command == "newgame" {
+				if len(payload) < 1 {
+					h.NewGame("white", s, m)
+					return
+				}
+				h.NewGame(payload[0], s, m)
+				return
+			}
+			if command == "plots" {
+				if len(payload) < 1 {
+					s.ChannelMessageSend(m.ChannelID, "<plots> expects an argument <enable> or <disable>")
+					return
+				}
+				if payload[0] == "enable" {
+					err := h.chess.EnablePlots(m.Author.ID)
+					if err != nil {
+						s.ChannelMessageSend(m.ChannelID, "Could not modify plots: "+err.Error())
+						return
+					}
+					s.ChannelMessageSend(m.ChannelID, "Plots enabled")
+					return
+				}
+				if payload[0] == "disable" {
+					err := h.chess.DisablePlots(m.Author.ID)
+					if err != nil {
+						s.ChannelMessageSend(m.ChannelID, "Could not modify plots: "+err.Error())
+						return
+					}
+					s.ChannelMessageSend(m.ChannelID, "Plots disabled")
+					return
+				}
+			}
+			if command == "bank" && user.Admin {
+
+				account, err := h.bank.bank.GetAccountForUser("chessaccount")
+				if err != nil {
+					s.ChannelMessageSend(m.ChannelID, "Could not find Chess Bank Account")
+					return
+				}
+				s.ChannelMessageSend(m.ChannelID, "Chess Bank Account #"+account.ID)
+				return
+			}
+			if command == "move" {
+
+				if len(payload) < 1 {
+					s.ChannelMessageSend(m.ChannelID, "<move> expects an argument")
+					return
+				}
+
+				err := h.chess.PlayerMove(m.Author.ID, payload[0])
+				if err != nil {
+					s.ChannelMessageSend(m.ChannelID, "Could not move: "+err.Error())
+					return
+				}
+
+				message, err := h.chess.GetBoard(m.Author.ID, "default", "default")
+				if err != nil {
+					s.ChannelMessageSend(m.ChannelID, "Could not display board: "+err.Error())
+					return
+				}
+				s.ChannelMessageSend(m.ChannelID, "Player moved to "+payload[0]+message)
+				h.BotMoveCallback(s, m)
+				return
+			}
+			if command == "board" {
+				h.SendBoard(s, m)
+				return
+			}
+			if command == "fen" {
+				message, err := h.chess.GetFen(m.Author.ID)
+				if err != nil {
+					s.ChannelMessageSend(m.ChannelID, "Could not display board: "+err.Error())
+					return
+				}
+				s.ChannelMessageSend(m.ChannelID, message)
+				return
+			}
+			if command == "styles" {
+				h.DisplayStyleMenu(payload, s, m)
+				return
+			}
+			if command == "resign" {
+				err := h.chess.Resign(m.Author.ID)
+				if err != nil {
+					s.ChannelMessageSend(m.ChannelID, "Could not resign: "+err.Error())
+					return
+				}
+				err = h.chess.ProcessLoss(m.Author.ID)
+				if err != nil {
+					s.ChannelMessageSend(m.ChannelID, "Error Processing Loss: "+err.Error())
+					return
+				}
+				h.SendBoard(s, m)
+				s.ChannelMessageSend(m.ChannelID, "You have resigned from the game! Better luck next time!")
+				return
+			}
+			if command == "load" {
+				s.ChannelMessageSend(m.ChannelID, "Attempting to load saved game, this make take a while depending on the last board state. Attempting to view the board before it is loaded may result in temporary display errors")
+				err := h.chess.LoadCurrentGame(m.Author.ID)
+				if err != nil {
+					s.ChannelMessageSend(m.ChannelID, "Could not load game: "+err.Error())
+					return
+				}
+				h.SendBoard(s, m)
+				s.ChannelMessageSend(m.ChannelID, "Game has been loaded, you may now continue.")
+				return
+			}
+			if command == "profile" {
+				if len(payload) < 1 {
+					h.DisplayProfile(m.Author.ID, s, m)
+					return
+				}
+				if len(m.Mentions) < 1 {
+					s.ChannelMessageSend(m.ChannelID, "Invalid user selected")
+					return
+				}
+
+				h.DisplayProfile(m.Mentions[0].ID, s, m)
+				return
+			}
+			if command == "help" {
+				h.DisplayHelp(s, m)
+				return
+			}
+			if command == "info" {
+				h.DisplayInfo(s, m)
+				return
+			}
+
+			s.ChannelMessageSend(m.ChannelID, "Invalid command")
 			return
 		}
-
-		return
 	}
 }
 
+func (h *ChessHandler) NewGame(color string, s *discordgo.Session, m *discordgo.MessageCreate){
+
+	if color != "white" && color != "White" && color != "black" && color != "Black"{
+		s.ChannelMessageSend(m.ChannelID, color + " is not a valid selection, please choose black or white.")
+		return
+	}
+
+	if color == "white" || color == "White"{
+
+		account, err := h.bank.bank.GetAccountForUser("chessaccount")
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error loading Chess Bank Account " + err.Error())
+			return
+		}
+
+		err = h.chess.NewGame(m.Author.ID, "white")
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Could not start new game: " + err.Error())
+			return
+		}
+		err = h.ChargeUser(15, m.Author.ID)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error charging user wallet " + err.Error())
+			return
+		}
+
+		s.ChannelMessageSend(m.ChannelID, "New game has been started, costing you 15 credits,"+
+			"current prize pool is "+ strconv.Itoa(account.Balance/8)+ " credits, Good Luck!")
+		h.SendBoard(s, m)
+		return
+	}
+	if color == "black" || color == "Black" {
+		account, err := h.bank.bank.GetAccountForUser("chessaccount")
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error loading Chess Bank Account " + err.Error())
+			return
+		}
+
+		err = h.chess.NewGame(m.Author.ID, "black")
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Could not start new game: " + err.Error())
+			return
+		}
+		err = h.ChargeUser(15, m.Author.ID)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error charging user wallet " + err.Error())
+			return
+		}
+
+		s.ChannelMessageSend(m.ChannelID, "New game has been started, costing you 15 credits,"+
+			"current prize pool is "+ strconv.Itoa(account.Balance/8)+ " credits" +
+			"\nWhite Moving first, this may take a moment...")
+		h.BotMoveCallback(s, m)
+		return
+	}
+}
 
 func (h *ChessHandler) SendBoard(s *discordgo.Session, m *discordgo.MessageCreate){
 	message, err := h.chess.GetBoard(m.Author.ID,"default","default")
@@ -245,13 +296,8 @@ func (h *ChessHandler) BotMoveCallback(s *discordgo.Session, m *discordgo.Messag
 			return
 		}
 
-		message, err := h.chess.GetBoard(m.Author.ID,"default","default")
-		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, "Could not display board: " + err.Error())
-			return
-		}
-
-		s.ChannelMessageSend(m.ChannelID,"Bot moved to " + payload[1] + message)
+		s.ChannelMessageSend(m.ChannelID,"Bot moved to " + payload[1])
+		h.SendBoard(s, m)
 		return
 	}
 	if response == "quit" {
@@ -275,6 +321,7 @@ func (h *ChessHandler) BotMoveCallback(s *discordgo.Session, m *discordgo.Messag
 					s.ChannelMessageSend(m.ChannelID, "Error Processing Win: " + err.Error())
 					return
 				}
+				h.SendBoard(s, m)
 				s.ChannelMessageSend(m.ChannelID, "White Wins! Congratulations!")
 				return
 			}
@@ -283,6 +330,7 @@ func (h *ChessHandler) BotMoveCallback(s *discordgo.Session, m *discordgo.Messag
 				s.ChannelMessageSend(m.ChannelID, "Error Processing Loss: " + err.Error())
 				return
 			}
+			h.SendBoard(s, m)
 			s.ChannelMessageSend(m.ChannelID, "White Wins! Better luck next time!")
 			return
 		}
@@ -299,6 +347,7 @@ func (h *ChessHandler) BotMoveCallback(s *discordgo.Session, m *discordgo.Messag
 					s.ChannelMessageSend(m.ChannelID, "Error Processing Win: " + err.Error())
 					return
 				}
+				h.SendBoard(s, m)
 				s.ChannelMessageSend(m.ChannelID, "Black Wins! Congratulations!")
 				return
 			}
@@ -307,6 +356,7 @@ func (h *ChessHandler) BotMoveCallback(s *discordgo.Session, m *discordgo.Messag
 				s.ChannelMessageSend(m.ChannelID, "Error Processing Loss: " + err.Error())
 				return
 			}
+			h.SendBoard(s, m)
 			s.ChannelMessageSend(m.ChannelID, "Black Wins! Better luck next time!")
 			return
 		}
@@ -321,6 +371,7 @@ func (h *ChessHandler) BotMoveCallback(s *discordgo.Session, m *discordgo.Messag
 				s.ChannelMessageSend(m.ChannelID, "Error Processing Stalemate: " + err.Error())
 				return
 			}
+			h.SendBoard(s, m)
 			s.ChannelMessageSend(m.ChannelID, "Stalemate!")
 			return
 		}
@@ -348,7 +399,7 @@ func (h *ChessHandler) DisplayHelp(s *discordgo.Session, m *discordgo.MessageCre
 	prompt.Type = ""
 	prompt.Title = "Chess Help Page"
 	prompt.Description = "Commands for <chess> \n :rotating_light:|| Curent Prize Pool - "+
-		strconv.Itoa(chessbalance) +" Credits! ||:rotating_light:"
+		strconv.Itoa(chessbalance/8) +" Credits! ||:rotating_light:"
 	prompt.Timestamp = ""
 	prompt.Color = ColorDark_Red()
 
@@ -434,6 +485,12 @@ func (h *ChessHandler) DisplayHelp(s *discordgo.Session, m *discordgo.MessageCre
 	boardfield.Inline = true
 	fields = append(fields, &boardfield)
 
+	plotsfield := discordgo.MessageEmbedField{}
+	plotsfield.Name = "plots"
+	plotsfield.Value = "enable or disable plots"
+	plotsfield.Inline = true
+	fields = append(fields, &plotsfield)
+
 	fenfield := discordgo.MessageEmbedField{}
 	fenfield.Name = "fen"
 	fenfield.Value = "Get your current game in FEN format"
@@ -484,32 +541,50 @@ func (h *ChessHandler) DisplayStyleMenu(payload []string, s *discordgo.Session, 
 				s.ChannelMessageSend(m.ChannelID, "<buy> expects an argument <stylename>")
 				return
 			}
-			s.ChannelMessageSend(m.ChannelID, "Under Construction")
-			return
 
+			valid := false
+			for _, style := range chessstylelist {
+				if payload[0] == style {
+					valid = true
+				}
+			}
+
+			if !valid {
+				s.ChannelMessageSend(m.ChannelID, "Invalid item selected")
+				return
+			}
+
+			record, err := h.chess.GetRecordFromDB(m.Author.ID)
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "Error retrieving record from db: " + err.Error())
+				return
+			}
+			for _, ownedstyle := range record.PieceStyles {
+				if ownedstyle == payload[0] {
+					s.ChannelMessageSend(m.ChannelID, "Style already owned!")
+					return
+				}
+			}
+
+			err = h.ChargeUser(h.chess.GetStyleForName(payload[0]).Price, m.Author.ID)
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "Could not charge wallet: " + err.Error())
+				return
+			}
+
+			err = h.chess.AddPieceStyleByName(m.Author.ID, payload[0])
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "Error adding piece style: " + err.Error())
+				return
+			}
+
+			s.ChannelMessageSend(m.ChannelID, m.Author.Mention() + " Purchased " + payload[0]+
+				" for " +strconv.Itoa(h.chess.GetStyleForName(payload[0]).Price)+" credits!")
+			return
 		}
 		if command == "list" {
-			stylelist := [4]string{"default", "animal", "mosque", "church"}
 
-			listmessage := ": \nPiece Styles Available : \n"
-
-			listmessage = listmessage + "\n\n"
-			listmessage = listmessage + "| Name | Pawn | Rook | Knight | Bishop | Queen | King |\n"
-			listmessage = listmessage + "-------------------------------------------------------\n"
-			for _, stylename := range stylelist {
-				style := h.chess.GetStyleForName(stylename)
-
-				listmessage = listmessage + "| " +stylename + " | "
-				listmessage = listmessage + style.Pawn.Symbol + "  |  "
-				listmessage = listmessage + style.Rook.Symbol + "    |  "
-				listmessage = listmessage + style.Knight.Symbol + "    |   "
-				listmessage = listmessage + style.Bishop.Symbol + "    |   "
-				listmessage = listmessage + style.Queen.Symbol + "    |   "
-				listmessage = listmessage + style.King.Symbol + "| \n"
-			}
-			listmessage = listmessage + ""
-
-			
+			listmessage := h.DisplayStylesByList(chessstylelist)
 
 			s.ChannelMessageSend(m.ChannelID, listmessage)
 			return
@@ -517,13 +592,138 @@ func (h *ChessHandler) DisplayStyleMenu(payload []string, s *discordgo.Session, 
 		}
 		if command == "inventory" || command == "inv" {
 
-			s.ChannelMessageSend(m.ChannelID, "Under Construction")
+			record, err := h.chess.GetRecordFromDB(m.Author.ID)
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "Could not retrieve inventory: " + err.Error())
+				return
+			}
+
+			message := ":\nStyles In " + m.Author.Mention() +"'s Inventory "
+			message = message + h.DisplayStylesByList(record.PieceStyles)
+
+			s.ChannelMessageSend(m.ChannelID, message)
 			return
-
 		}
+		if command == "set" {
+			if len(payload) < 1 {
+				s.ChannelMessageSend(m.ChannelID, "<set> expects an argument")
+				return
+			}
 
+			command, payload := SplitPayload(payload)
+			if command == "help"{
+				return
+			}
+			if command == "black"{
+				if len(payload) < 1 {
+					s.ChannelMessageSend(m.ChannelID, "<set black> expects an argument")
+					return
+				}
+				h.ChangePieceStyle("black", payload[0], s, m)
+				return
+			}
+			if command == "white"{
+				if len(payload) < 1 {
+					s.ChannelMessageSend(m.ChannelID, "<set white> expects an argument")
+					return
+				}
+				h.ChangePieceStyle("white", payload[0], s, m)
+				return
+			}
+		}
+	}
+}
+
+func (h *ChessHandler) ChangePieceStyle(piece string, style string, s *discordgo.Session, m *discordgo.MessageCreate){
+
+	if piece != "white" && piece != "black" {
+		s.ChannelMessageSend(m.ChannelID, style + " is not a valid piece")
+		return
 	}
 
+	isvalid := false
+	for _, stylename := range chessstylelist {
+		if stylename == style {
+			isvalid = true
+		}
+	}
+	if !isvalid {
+		s.ChannelMessageSend(m.ChannelID, style + " is not a valid style")
+		return
+	}
+
+
+	record, err := h.chess.GetRecordFromDB(m.Author.ID)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error loading chess account record: "+err.Error())
+		return
+	}
+
+	owned := false
+
+	for _, ownedstyle := range record.PieceStyles {
+		if style == ownedstyle {
+			owned = true
+		}
+	}
+
+	if !owned {
+		s.ChannelMessageSend(m.ChannelID, "You do not own this style!")
+		return
+	}
+	if piece == "black" {
+		if record.WhitePieceStyle == style && style != "default" {
+			s.ChannelMessageSend(m.ChannelID, "White and Black piece styles cannot match! (except for default style)")
+			return
+		}
+		if record.BlackPieceStyle == style {
+			s.ChannelMessageSend(m.ChannelID, "Style for Black is already set!")
+			return
+		}
+		record.BlackPieceStyle = style
+	}
+	if piece == "white" {
+		if record.BlackPieceStyle == style && style != "default" {
+			s.ChannelMessageSend(m.ChannelID, "White and Black piece styles cannot match! (except for default style)")
+			return
+		}
+		if record.WhitePieceStyle == style {
+			s.ChannelMessageSend(m.ChannelID, "Style for White is already set!")
+			return
+		}
+		record.WhitePieceStyle = style
+	}
+
+	err = h.chess.SaveRecordToDB(record)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error: could not save chess record: "+err.Error())
+		return
+	}
+	s.ChannelMessageSend(m.ChannelID, "Style for "+ piece+ " set!")
+	return
+}
+
+func (h *ChessHandler) DisplayStylesByList(stylelist []string) (message string){
+
+	listmessage := ":"
+
+	listmessage = listmessage + "\n\n"
+	listmessage = listmessage + "|  Name  |  Pawn  |  Rook  |  Knight  |  Bishop  |  Queen  |  King  |  Price  |\n"
+	listmessage = listmessage + "|-----------------------------------------------------------------------------|\n"
+	for _, stylename := range stylelist {
+		style := h.chess.GetStyleForName(stylename)
+
+		listmessage = listmessage + "| " +stylename + " | "
+		listmessage = listmessage + style.Pawn.Symbol + "  |  "
+		listmessage = listmessage + style.Rook.Symbol + "    |  "
+		listmessage = listmessage + style.Knight.Symbol + "    |   "
+		listmessage = listmessage + style.Bishop.Symbol + "    |   "
+		listmessage = listmessage + style.Queen.Symbol + "    |   "
+		listmessage = listmessage + style.King.Symbol + " |   "
+		listmessage = listmessage + strconv.Itoa(style.Price) + " | \n"
+	}
+	listmessage = listmessage + ""
+	return listmessage
 }
 
 
@@ -696,7 +896,7 @@ func (h *ChessHandler) ProcessWin(userid string) (err error){
 		return err
 	}
 
-	err = h.PayUser(account.Balance/2, userid)
+	err = h.PayUser(account.Balance/8, userid)
 	if err != nil {
 		return err
 	}
