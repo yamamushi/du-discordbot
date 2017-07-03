@@ -5,6 +5,8 @@ Table of Contents
 
    * [du-discordbot](#du-discordbot)
       * [Features](#features)
+      * [Bank](#Bank)
+      * [Wallet](#Wallet)
       * [Commands](#commands)
          * [Owner Commands](#owner-commands)
          * [Admin Commands](#admin-commands)
@@ -83,12 +85,51 @@ _du-discordbot_ maintains its own internal permissions system. It is important t
 
 | Command       | Description   | Example Usage  |
 | ------------- | ------------- | ------------- |
-| balance  | Lists your current credits balance  | ~balance |
-| balance <user> | Gets balance for selected user  | ~balance @yamamushi |
-| transfer <amount> <user> | Transfers credits to selected user | ~transfer 100 @yamamushi  |
-| ping | Pings the bot (not a latency ping!) | ~ping |
-| pong | Pongs the bot (not a latency pong!) | ~pong |
-| groups | Shows groups the user belongs to | ~groups |
+| groups | Shows groups the user belongs to | groups |
+| ping | Pings the bot (not a latency ping!) | ping |
+| pong | Pongs the bot (not a latency pong!) | pong |
+
+
+
+## Wallet
+
+Each user has a `wallet` that they carry with them. When users interact with games or other commands that accept credits, the funds will be taken from the wallet and never the users bank account.
+
+
+### Wallet Commands
+
+| Command       | Description   | Example Usage  |
+| ------------- | ------------- | ------------- |
+| wallet balance  | Lists your current credits balance  | wallet balance |
+| wallet balance <user> | Gets balance for selected user  | wallet balance @yamamushi |
+| wallet transfer <amount> <user> | Transfers credits to selected user | wallet transfer 100 @yamamushi  |
+
+
+
+## Bank 
+
+Running the `bank` command will launch the bank menu within a private chat.
+
+The bank interface offers several commands for interacting with your bank account. While not currently an issue, banking your funds will protect them from being taken out of your wallet in the future. It also prevents users from seeing how much you have. 
+
+
+### Bank Commands
+
+| Command       | Description   | Example Usage  |
+| ------------- | ------------- | ------------- |
+| bank | Opens the banking menu | bank |
+| balance | Displays your bank account balance | balance |
+| deposit | Deposits funds from your wallet | deposit 100 |
+| withdraw | Withdraws funds from your bank account | withdraw 100 |
+| transfer | Transfers funds to the provided bank account # | transfer 100 c9cfaa51-50b6-4f90-ada8-f938aadbfaba |
+| rewards | Opens the credit rewards menu | rewards |
+| loans | Opens the loans menu | loans |
+
+
+You can also bypass the banking menu by running commands as arguments to the bank command, ie:
+
+`bank deposit 15`
+
 
 
 ## Permissions 

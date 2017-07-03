@@ -156,3 +156,22 @@ func CheckPermissions(command string, channelid string, user *User, s *discordgo
 
 	return false
 }
+
+
+func MentionOwner(conf *Config, s *discordgo.Session, m *discordgo.MessageCreate) (mention string, err error) {
+	user, err := s.User(conf.DiscordConfig.AdminID)
+	if err != nil {
+		return mention, err
+	}
+
+	return user.Mention(), nil
+}
+
+func OwnerName(conf *Config, s *discordgo.Session, m *discordgo.MessageCreate) (name string, err error) {
+	user, err := s.User(conf.DiscordConfig.AdminID)
+	if err != nil {
+		return name, err
+	}
+
+	return user.Username, nil
+}

@@ -1,11 +1,12 @@
 package main
 
 import (
-	"github.com/yamamushi/gofeed"
 	"time"
 	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/yamamushi/gofeed"
 )
 
 type RSS struct {
@@ -214,7 +215,7 @@ func (h *RSS) GetPublished(url string, channel string) (published string, err er
 /*
 func (h *RSS) GetAuthor(url string, channel string) (author string, err error){
 
-	rssfeed, err := h.GetFromDB(url, channel)
+	rssfeed, err := h.GetRecordFromDB(url, channel)
 	if err != nil {
 		if rssfeed.URL == url {
 			return rssfeed.Author, nil

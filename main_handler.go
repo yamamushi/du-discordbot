@@ -35,6 +35,12 @@ func (h *MainHandler) Init() error {
 	h.dg.AddHandler(rss.Read)
 	go rss.UpdateRSSFeeds(h.dg)
 
+
+	fmt.Println("Adding Chess Handler")
+	chess := ChessHandler{db: h. db, conf: h.conf, logger: h.logger, wallet: h.bankhandler.wallet, bank: h.bankhandler}
+	chess.Init()
+	h.dg.AddHandler(chess.Read)
+
 	// Open a websocket connection to Discord and begin listening.
 	fmt.Println("Opening Connection to Discord")
 	err := h.dg.Open()

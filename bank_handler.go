@@ -228,25 +228,27 @@ func (h *BankHandler) ReadPrompt(channelid string, s *discordgo.Session, m *disc
 	}
 	if command == "withdraw" {
 		h.ReadWithdraw(payload, channelid, s, m)
+		return
 	}
 	if command == "balance" {
 		h.ReadBalance(payload, channelid, s, m)
 		return
 	}
 	if command == "transfer" {
-		h.ReadBalance(payload, channelid, s, m)
+		h.ReadTransfer(payload, channelid, s, m)
 		return
 	}
 	if command == "rewards" {
-		h.ReadBalance(payload, channelid, s, m)
+		h.ReadRewards(payload, channelid, s, m)
 		return
 	}
 	if command == "loans" {
-		h.ReadBalance(payload, channelid, s, m)
+		h.ReadLoans(payload, channelid, s, m)
 		return
 	}
 
 
+	fmt.Println(command)
 	s.ChannelMessageSend(channelid, "Invalid Command Received :: Banking Terminal Closed")
 	return
 
@@ -434,6 +436,62 @@ func (h *BankHandler) ReadBalance (payload []string, channelid string, s *discor
 }
 
 
+func (h *BankHandler) ReadTransfer (payload []string, channelid string, s *discordgo.Session, m *discordgo.MessageCreate){
+
+	if !h.bank.BankInitialized() {
+		h.logger.LogBank("Bank needs to be initialized!", s)
+		s.ChannelMessageSend(channelid, "Owner has not initialized the bank yet and has been notified")
+		return
+	}
+
+	if len(payload) < 2 {
+		s.ChannelMessageSend(channelid, "<transfer> expects 2 values: transfer <value> <ToAccount#>")
+		return
+	}
+
+	amount, err := strconv.Atoi(payload[0])
+	if err != nil {
+		s.ChannelMessageSend(channelid, "Invalid value supplied: "+payload[0])
+		return
+	}
+
+	fromAccount, err := h.bank.GetAccountForUser(m.Author.ID)
+	if err != nil {
+		s.ChannelMessageSend(channelid, "Error getting user account: " + err.Error())
+		return
+	}
+
+	toAccount, err := h.bank.GetAccountByAccountID(payload[1])
+	if err != nil {
+		s.ChannelMessageSend(channelid, "Error getting user account: " + err.Error())
+		return
+	}
+
+	err = h.TransferToAccount(amount, fromAccount.ID, toAccount.ID)
+	if err != nil {
+		s.ChannelMessageSend(channelid, "Could not transfer funds: " + err.Error())
+		return
+	}
+
+	s.ChannelMessageSend(channelid, payload[0]+" credits transferred to " + payload[1])
+	h.logger.LogBank(payload[0]+" credits transferred to " + payload[1],s)
+	return
+
+}
+
+
+func (h *BankHandler) ReadRewards (payload []string, channelid string, s *discordgo.Session, m *discordgo.MessageCreate){
+	s.ChannelMessageSend(channelid, "Not yet implemented.")
+	return
+}
+
+
+func (h *BankHandler) ReadLoans (payload []string, channelid string, s *discordgo.Session, m *discordgo.MessageCreate){
+	s.ChannelMessageSend(channelid, "Not yet implemented.")
+	return
+}
+
+
 func (h *BankHandler) Deposit (amount int, userid string, wallet Wallet) (err error){
 
 	account, err := h.bank.GetAccountForUser(userid)
@@ -459,6 +517,7 @@ func (h *BankHandler) Deposit (amount int, userid string, wallet Wallet) (err er
 
 }
 
+
 func (h *BankHandler) Withdraw (amount int, userid string, wallet Wallet) (err error){
 	account, err := h.bank.GetAccountForUser(userid)
 	if err != nil {
@@ -481,7 +540,36 @@ func (h *BankHandler) Withdraw (amount int, userid string, wallet Wallet) (err e
 	return nil
 }
 
+
 func (h *BankHandler) TransferToAccount (amount int, fromAccountID string, toAccountID string) (err error){
+
+	if amount < 1 {
+		return errors.New("Cannot transfer a negative value!")
+	}
+
+	if fromAccountID == toAccountID {
+		return errors.New("Invalid Bank Account ID Supplied!")
+	}
+
+	fromAccount, err := h.bank.GetAccountByAccountID(fromAccountID)
+	if err != nil {
+		return err
+	}
+
+	if amount > fromAccount.Balance {
+		return errors.New("Insufficient Account Balance")
+	}
+
+	toAccount, err := h.bank.GetAccountByAccountID(toAccountID)
+	if err != nil {
+		return err
+	}
+
+	fromAccount.Balance = fromAccount.Balance - amount
+	toAccount.Balance = toAccount.Balance + amount
+
+	h.bank.SaveUserAccount(fromAccount)
+	h.bank.SaveUserAccount(toAccount)
 
 	return nil
 }
