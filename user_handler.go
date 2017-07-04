@@ -10,7 +10,7 @@ type UserHandler struct {
 	conf *Config
 	db *DBHandler
 	cp string
-	logger *Logger
+	logchan chan string
 }
 
 func (h *UserHandler) Init() {
@@ -72,7 +72,7 @@ func (h *UserHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 			groups, err := h.GetGroups(mentions[0].ID)
 			if err != nil {
 				s.ChannelMessageSend(m.ChannelID, "Error retrieving groups: " + err.Error() )
-				h.logger.LogBot(mention + " || " + m.Author.Username + " || " + "groups" + "||" + err.Error() ,s)
+				h.logchan <- "Bot "+mention + " || " + m.Author.Username + " || " + "groups" + "||" + err.Error()
 				return
 			}
 			s.ChannelMessageSend(m.ChannelID,  h.FormatGroups(groups))

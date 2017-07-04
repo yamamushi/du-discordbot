@@ -70,7 +70,9 @@ func main() {
 	}
 	defer dg.Close()
 
-	logger := Logger{}
+	logchannel := make(chan string)
+	logger := Logger{logchan: logchannel}
+
 
 	// Create a callback handler and add it to our Handler Queue
 	fmt.Println("Adding Callback Handler")
@@ -79,26 +81,26 @@ func main() {
 
 	// Create our user handler
 	fmt.Println("Adding User Handler")
-	userhandler := UserHandler{conf: &conf, db: &dbhandler, logger: &logger}
+	userhandler := UserHandler{conf: &conf, db: &dbhandler, logchan: logchannel}
 	userhandler.Init()
 	dg.AddHandler(userhandler.Read)
 
 	// Create our permissions handler
 	fmt.Println("Adding Permissions Handler")
 	permissionshandler := PermissionsHandler{dg: dg, conf: &conf, callback: &callbackhandler, db: &dbhandler,
-		user: &userhandler, logger: &logger}
+		user: &userhandler, logchan: logchannel}
 	dg.AddHandler(permissionshandler.Read)
 
 	// Create our command handler
 	fmt.Println("Adding Command Registry Handler")
 	commandhandler := CommandHandler{dg: dg, db: &dbhandler, callback: &callbackhandler,
-		user: &userhandler, conf: &conf, perm: &permissionshandler, logger: &logger}
+		user: &userhandler, conf: &conf, perm: &permissionshandler, logchan: logchannel}
 
 
 	// Create our permissions handler
 	fmt.Println("Adding Channel Permissions Handler")
 	channelhandler := ChannelHandler{db: &dbhandler, conf: &conf, registry: commandhandler.registry,
-		user: &userhandler, logger: &logger}
+		user: &userhandler, logchan: logchannel}
 	channelhandler.Init()
 	dg.AddHandler(channelhandler.Read)
 
@@ -113,23 +115,23 @@ func main() {
 
 	// Create our Wallet Handler
 	fmt.Println("Adding User Wallet Handler")
-	wallethandler := WalletHandler{db: &dbhandler, conf: &conf, user: &userhandler, logger: &logger}
+	wallethandler := WalletHandler{db: &dbhandler, conf: &conf, user: &userhandler, logchan: logchannel}
 	dg.AddHandler(wallethandler.Read)
 
 	// Create our Bank handler
 	fmt.Println("Adding Bank Handler")
-	bankhandler := BankHandler{db: &dbhandler, conf: centralbank.conf, com: &commandhandler, logger: &logger,
+	bankhandler := BankHandler{db: &dbhandler, conf: centralbank.conf, com: &commandhandler, logchan: logchannel,
 		user: &userhandler, callback: &callbackhandler, bank: &centralbank, wallet: &wallethandler}
 	dg.AddHandler(bankhandler.Read)
 
 	// Initalize our Logger
 	fmt.Println("Initializing Logger")
-	logger.Init(&channelhandler)
+	logger.Init(&channelhandler, logchannel, dg)
 
 	// Now we create and initialize our main handler
 	fmt.Println("\n|| Initializing Main Handler ||\n")
 	handler := MainHandler{db: &dbhandler, conf: &conf, dg: dg, callback: &callbackhandler, perm: &permissionshandler,
-		command: &commandhandler, logger: &logger, bankhandler: &bankhandler, user: &userhandler}
+		command: &commandhandler, logchan: logchannel, bankhandler: &bankhandler, user: &userhandler}
 	err = handler.Init()
 	if err != nil {
 		fmt.Println("error in mainHandler.init", err)

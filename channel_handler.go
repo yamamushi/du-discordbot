@@ -13,8 +13,7 @@ type ChannelHandler struct {
 	registry *CommandRegistry
 	channeldb *ChannelDB
 	user *UserHandler
-	logger *Logger
-
+	logchan chan string
 }
 
 

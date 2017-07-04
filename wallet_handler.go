@@ -11,7 +11,7 @@ type WalletHandler struct {
 
 	db *DBHandler
 	user *UserHandler
-	logger *Logger
+	logchan chan string
 	conf *Config
 }
 
@@ -179,7 +179,7 @@ func (h *WalletHandler) Transfer(message []string, s *discordgo.Session, m *disc
 	mentionReceiver := mentions[0].Mention()
 	mentionSender := m.Author.Mention()
 	s.ChannelMessageSend(m.ChannelID, mentionReceiver + " received " + message[0] + " from " + mentionSender)
-	h.logger.LogBank(mentionReceiver + " received " + message[0] + " from " + mentionSender ,s)
+	h.logchan <- "Bank "+mentionReceiver + " received " + message[0] + " from " + mentionSender
 
 }
 

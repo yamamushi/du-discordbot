@@ -16,7 +16,7 @@ type MainHandler struct {
 	user *UserHandler
 	command *CommandHandler
 	registry *CommandRegistry
-	logger *Logger
+	logchan		chan string
 	bankhandler *BankHandler
 }
 
@@ -37,10 +37,20 @@ func (h *MainHandler) Init() error {
 
 
 	fmt.Println("Adding Chess Handler")
-	chess := ChessHandler{db: h. db, conf: h.conf, logger: h.logger, wallet: h.bankhandler.wallet,
+	chess := ChessHandler{db: h. db, conf: h.conf, logchan: h.logchan, wallet: h.bankhandler.wallet,
 		bank: h.bankhandler, command: h.command.registry, user: h.user}
 	chess.Init()
 	h.dg.AddHandler(chess.Read)
+
+
+	fmt.Println("Adding Utilities Handler")
+	utilities := UtilitiesHandler{db: h.db, conf: h.conf, user: h.user, registry: h.command.registry, logchan: h.logchan}
+	h.dg.AddHandler(utilities.Read)
+
+
+	fmt.Println("Adding Lua Handler")
+	luahandler := LuaHandler{db: h.db, conf: h.conf, user: h.user, registry: h.command.registry}
+	h.dg.AddHandler(luahandler.Read)
 
 	// Open a websocket connection to Discord and begin listening.
 	fmt.Println("Opening Connection to Discord")

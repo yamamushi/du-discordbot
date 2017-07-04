@@ -11,7 +11,7 @@ import (
 type ChessHandler struct {
 
 	db *DBHandler
-	logger *Logger
+	logchan chan string
 	conf *Config
 	wallet *WalletHandler
 	chess *ChessGame
@@ -158,6 +158,7 @@ func (h *ChessHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate){
 				return
 			}
 			if command == "resign" {
+				h.SendBoard(s, m)
 				err := h.chess.Resign(m.Author.ID)
 				if err != nil {
 					s.ChannelMessageSend(m.ChannelID, "Could not resign: "+err.Error())
@@ -168,7 +169,6 @@ func (h *ChessHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate){
 					s.ChannelMessageSend(m.ChannelID, "Error Processing Loss: "+err.Error())
 					return
 				}
-				h.SendBoard(s, m)
 				s.ChannelMessageSend(m.ChannelID, "You have resigned from the game! Better luck next time!")
 				return
 			}

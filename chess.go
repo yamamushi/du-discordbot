@@ -646,16 +646,23 @@ func (h *ChessGame) LoadCurrentGame(userid string) (err error) {
 
 	//fmt.Println("Getting Game")
 
-	for i, game := range h.boardlist {
-		if game.UserID == userid {
-			//fmt.Println("Removing")
-			h.boardlist = append(h.boardlist[:i], h.boardlist[i+1:]...)
+	session := &ChessGameSession{}
+	if !h.CheckGameInProgress(userid) {
+		for i, game := range h.boardlist {
+			if game.UserID == userid {
+				//fmt.Println("Removing")
+				h.boardlist = append(h.boardlist[:i], h.boardlist[i+1:]...)
+			}
 		}
 	}
 
-	session := &ChessGameSession{UserID: userid, AIGame: true, AIMove: false, InProgress: true}
-	h.boardlist = append(h.boardlist, session)
-	//fmt.Println("Adding")
+	session, err = h.GetGame(userid)
+	if err != nil {
+		session = &ChessGameSession{UserID: userid, AIGame: true, AIMove: false, InProgress: true}
+		h.boardlist = append(h.boardlist, session)
+		//fmt.Println("Adding")
+	}
+
 
 
 	// Reset our board
@@ -674,9 +681,8 @@ func (h *ChessGame) LoadCurrentGame(userid string) (err error) {
 		}
 	}
 
-	h.boardlist = append(h.boardlist, session)
 	if err != nil {
-		return err
+		h.boardlist = append(h.boardlist, session)
 	}
 
 	if record.LastColorMoved == record.CurrentGameColor {
@@ -932,6 +938,7 @@ func (h *ChessGame) ProcessBotMove(userid string, response chan string){
 
 func (h *ChessGame) GetBoard(userid string, piecestyle string, boardstyle string) (board string, err error){
 
+
 	board = ":\n"
 	board = board + ":earth_americas: :earth_africa: :earth_asia:|| Chess ||:earth_asia: :earth_africa: :earth_americas:"
 	board = board + "\n----------------------------------------\n"
@@ -952,6 +959,24 @@ func (h *ChessGame) GetBoard(userid string, piecestyle string, boardstyle string
 		return "", errors.New("Could not find game in progress!")
 	}
 
+	if record.CurrentGame != "" {
+		// Reset our board
+		game.board = &engine.Board{Turn: 1}
+		game.board.SetUpPieces()
+
+		//fmt.Println(record.CurrentGame)
+
+		currentgamerecord := strings.Fields(record.CurrentGame)
+		// Unpack our log by replaying each move on the board
+		for i, move := range currentgamerecord {
+			movetype := h.StringToMove(move)
+			err := game.board.Move(movetype)
+			//fmt.Println("Moving " + movetype.ToString())
+			if err != nil{
+				return board, errors.New("Error loading game at move " + strconv.Itoa(i) + " : "+ err.Error())
+			}
+		}
+	}
 
 	boardarray := game.board.ToArray()
 	for y := 7; y >= 0; y-- {

@@ -32,6 +32,7 @@ type dubotConfig struct {
 	PerPageCount int  `toml:"per_page_count"`
 	Profiler bool `toml:"enable_profiler"`
 
+
 }
 
 type bankConfig struct {

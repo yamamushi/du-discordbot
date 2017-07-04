@@ -12,7 +12,7 @@ type BankHandler struct {
 
 	conf *Config
 	db *DBHandler
-	logger *Logger
+	logchan chan string
 	user *UserHandler
 	com *CommandHandler
 	callback *CallbackHandler
@@ -93,7 +93,7 @@ func (h *BankHandler) Prompt(s *discordgo.Session, m *discordgo.MessageCreate){
 	useraccount, err := h.bank.GetAccountForUser(m.Author.ID)
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, "Could not load account: " + err.Error())
-		h.logger.LogBank(m.Author.Mention() + " Could not load account: " + err.Error(), s)
+		h.logchan <- "Bank Could not load account: " + err.Error()
 		return
 	}
 
@@ -269,7 +269,7 @@ func (h *BankHandler) InitBank(channelid string, s *discordgo.Session, m *discor
 		s.ChannelMessageSend(channelid, err.Error())
 		return
 	}
-	h.logger.LogBank("Bank Has Been Initialized", s)
+	h.logchan <- "Bank Has Been Initialized"
 	s.ChannelMessageSend(channelid, "Bank Has Been Initialized")
 }
 
@@ -277,7 +277,7 @@ func (h *BankHandler) InitBank(channelid string, s *discordgo.Session, m *discor
 func (h *BankHandler) ReadDeposit (payload []string, channelid string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if !h.bank.BankInitialized() {
-		h.logger.LogBank("Bank needs to be initialized!", s)
+		h.logchan <- "Bank needs to be initialized!"
 		s.ChannelMessageSend(channelid, "Owner has not initialized the bank yet and has been notified")
 		return
 	}
@@ -313,7 +313,7 @@ func (h *BankHandler) ReadDeposit (payload []string, channelid string, s *discor
 			return
 		}
 
-		h.logger.LogBank(m.Author.Mention() + " Deposited " + payload[0] + " into account " + account.ID, s)
+		h.logchan <- "Bank "+ m.Author.Mention() + " Deposited " + payload[0] + " into account " + account.ID
 		s.ChannelMessageSend(channelid, "Deposited " + payload[0] + " into account " + account.ID)
 		return
 	}
@@ -323,7 +323,7 @@ func (h *BankHandler) ReadDeposit (payload []string, channelid string, s *discor
 func (h *BankHandler) ReadWithdraw (payload []string, channelid string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if !h.bank.BankInitialized() {
-		h.logger.LogBank("Bank needs to be initialized!", s)
+		h.logchan <- "Bank needs to be initialized!"
 		s.ChannelMessageSend(channelid, "Owner has not initialized the bank yet and has been notified")
 		return
 	}
@@ -359,7 +359,7 @@ func (h *BankHandler) ReadWithdraw (payload []string, channelid string, s *disco
 			return
 		}
 
-		h.logger.LogBank(m.Author.Mention() + " Withdrew " + payload[0] + " from account " + account.ID, s)
+		h.logchan <- "Bank "+m.Author.Mention() + " Withdrew " + payload[0] + " from account " + account.ID
 		s.ChannelMessageSend(channelid, "Withdrew " + payload[0] + " from account " + account.ID)
 		return
 	}
@@ -369,7 +369,7 @@ func (h *BankHandler) ReadWithdraw (payload []string, channelid string, s *disco
 func (h *BankHandler) ReadBalance (payload []string, channelid string, s *discordgo.Session, m *discordgo.MessageCreate){
 
 	if !h.bank.BankInitialized() {
-		h.logger.LogBank("Bank needs to be initialized!", s)
+		h.logchan <- "Bank needs to be initialized!"
 		s.ChannelMessageSend(channelid, "Owner has not initialized the bank yet and has been notified")
 		return
 	}
@@ -396,10 +396,10 @@ func (h *BankHandler) ReadBalance (payload []string, channelid string, s *discor
 		if !user.Admin{
 			s.ChannelMessageSend(channelid, "You do not have permission to view another Bank Account Balance.")
 			if len(m.Mentions) > 0{
-				h.logger.LogBank(m.Author.Mention() + " attempted to view bank balance for + " + m.Mentions[0].Mention(), s)
+				h.logchan <- "Bank "+m.Author.Mention() + " attempted to view bank balance for + " + m.Mentions[0].Mention()
 				return
 			}
-			h.logger.LogBank(m.Author.Mention() + " attempted to view bank balance for + " + payload[0], s)
+			h.logchan <- "Bank "+m.Author.Mention() + " attempted to view bank balance for + " + payload[0]
 			return
 		}
 
@@ -439,7 +439,7 @@ func (h *BankHandler) ReadBalance (payload []string, channelid string, s *discor
 func (h *BankHandler) ReadTransfer (payload []string, channelid string, s *discordgo.Session, m *discordgo.MessageCreate){
 
 	if !h.bank.BankInitialized() {
-		h.logger.LogBank("Bank needs to be initialized!", s)
+		h.logchan <- "Bank needs to be initialized!"
 		s.ChannelMessageSend(channelid, "Owner has not initialized the bank yet and has been notified")
 		return
 	}
@@ -474,7 +474,7 @@ func (h *BankHandler) ReadTransfer (payload []string, channelid string, s *disco
 	}
 
 	s.ChannelMessageSend(channelid, payload[0]+" credits transferred to " + payload[1])
-	h.logger.LogBank(payload[0]+" credits transferred to " + payload[1],s)
+	h.logchan <- "Bank "+payload[0]+" credits transferred to " + payload[1]
 	return
 
 }

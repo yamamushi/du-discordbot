@@ -32,7 +32,7 @@ A Dual Universe bot being developed for the [unofficial Dual Universe discord](h
 - [X] Docker Support
 - [X] Internal User Permissions System
 - [X] Internal Command Permissions System
-- [ ] Internal Channels System
+- [X] Internal Channels System
 - [ ] Dual Universe Wiki Integration
 - [ ] Dual Universe Resource Guide
 - [ ] Dual Universe Forum Integration
@@ -41,6 +41,7 @@ A Dual Universe bot being developed for the [unofficial Dual Universe discord](h
 - [X] Currency System
 - [ ] Bank System with Loans
 - [ ] A Casino
+- [X] Chess with selectable piece and board styles
 - [ ] More Games!
 - [ ] A Prize system for spending the credits from winning games
 - [ ] Reminders / Notifications
