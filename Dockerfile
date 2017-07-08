@@ -18,13 +18,13 @@ RUN go get gopkg.in/oleiade/lane.v1
 RUN go get github.com/satori/go.uuid
 RUN go get github.com/anaskhan96/soup
 RUN go get github.com/lunixbochs/vtclean
-RUN go get github.com/Shopify/go-lua
+RUN go get github.com/yuin/gopher-lua
 
 # This is a fork of gofeed that allows for custom user-agent strings in requests to work with sites that filter these
 RUN go get github.com/yamamushi/gofeed
 
 # This is a fork of https://github.com/JacobRoberts/chess, to try and resolve issues with castling
-RUN go get github.com/JacobRoberts/chess
+RUN go get github.com/yamamushi/chess
 
 
 # Install and run du-discordbot

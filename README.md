@@ -5,14 +5,16 @@ Table of Contents
 
    * [du-discordbot](#du-discordbot)
       * [Features](#features)
-      * [Bank](#Bank)
-      * [Wallet](#Wallet)
       * [Commands](#commands)
          * [Owner Commands](#owner-commands)
          * [Admin Commands](#admin-commands)
          * [Moderator Commands](#senior-moderator-commands)
          * [Moderator Commands](#moderator-commands)
          * [User Commands](#user-commands)
+      * [Wallet](#Wallet)         
+      * [Bank](#Bank)
+      * [Lua](#Lua)
+      * [Chess](#Chess)
       * [Permissions](#permissions)
          * [Ranks](#ranks)
          * [User Permission Commands](#user-permission-commands)
@@ -35,18 +37,19 @@ A Dual Universe bot being developed for the [unofficial Dual Universe discord](h
 - [X] Internal Channels System
 - [ ] Dual Universe Wiki Integration
 - [ ] Dual Universe Resource Guide
-- [ ] Dual Universe Forum Integration
+- [ ] Dual Universe Forum Integration (half working with rss)
 - [X] RSS Subscriptions
 - [ ] Twitter Subscriptions (semi-working, needs polishing)
 - [X] Currency System
-- [ ] Bank System with Loans
+- [ ] Bank System with Loans (bank works, no loans yet!)
 - [ ] A Casino
 - [X] Chess with selectable piece and board styles
 - [ ] More Games!
 - [ ] A Prize system for spending the credits from winning games
-- [ ] Reminders / Notifications
-- [ ] A Discord Lua Interpreter
+- [ ] Reminders / Notifications 
+- [X] A Discord Lua Interpreter (is this the first discord lua parser?)
 - [ ] MyCroft.ai Integration
+- [ ] Random Utilities (too many to list here)
 
 
 ## Commands
@@ -89,6 +92,9 @@ _du-discordbot_ maintains its own internal permissions system. It is important t
 | groups | Shows groups the user belongs to | groups |
 | ping | Pings the bot (not a latency ping!) | ping |
 | pong | Pongs the bot (not a latency pong!) | pong |
+| moon | Displays the current view of the moon from earth | moon |
+| unshorten | Unshortens a bit.ly or similar url | unshorten <url> | 
+
 
 
 
@@ -130,6 +136,54 @@ The bank interface offers several commands for interacting with your bank accoun
 You can also bypass the banking menu by running commands as arguments to the bank command, ie:
 
 `bank deposit 15`
+
+
+
+## Chess 
+
+Chessbot will display a chess board and play a game of chess against users using the  [chess engine written by Jacob Roberts](https://github.com/JacobRoberts/chess).
+
+Each game of chess costs 15 credits, and the funds go towards the total chess award pool for winning a game. 
+
+Credits can be spent on chess piece styles as outlined in the chess menu.
+
+| Command       | Description   | Example Usage  |
+| ------------- | ------------- | ------------- |
+| chess | Displays the chess program help menu| chess |
+| chess styles | displays the chess styles help menu | chess styles | 
+
+
+
+## Lua
+
+Du-Discordbot has a builtin lua interpreter for testing lua code snippets. This is driven by [gopher-lua](https://github.com/yuin/gopher-lua).
+
+It is important to follow the formatting guidelines of the lua interpreter, or your script will not be read correctly.
+
+
+| Command       | Description   | Example Usage  |
+| ------------- | ------------- | ------------- |
+| lua | Displays the lua interpreter help menu| lua |
+
+
+Lua input must be formatted as follows:
+
+````go
+~lua read ```
+  function fib(n)
+    if n == 0 then
+      return 0
+    elseif n == 1 then
+      return 1
+    end
+    return fib(n-1) + fib(n-2)
+  end
+print(fib(10))
+```
+````
+
+Note that the first line has three backticks included with the command, and the last line has three backticks on a line by itself. This formatting allows the parser to pull your code from the input and run it.
+
 
 
 
