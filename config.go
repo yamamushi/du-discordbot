@@ -30,6 +30,7 @@ type dubotConfig struct {
 	Playing string 	`toml:"default_now_playing"`
 	RSSTimeout time.Duration  `toml:"rss_fetch_timeout"`
 	PerPageCount int  `toml:"per_page_count"`
+	LuaTimeout int `toml:"lua_timeout"`
 	Profiler bool `toml:"enable_profiler"`
 
 

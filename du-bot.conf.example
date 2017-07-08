@@ -22,6 +22,9 @@ rss_fetch_timeout = 15
 # Minimum value is 2
 per_page_count = 5
 
+# Max number of seconds to run a lua script before terminating
+lua_timeout = 10
+
 enable_profiler = false
 
 

@@ -2,11 +2,13 @@ package main
 
 import (
 	"github.com/bwmarrin/discordgo"
-	"github.com/Shopify/go-lua"
+	"github.com/yuin/gopher-lua"
 	"os"
 	"bytes"
 	"io"
 	"strings"
+	"time"
+	"context"
 )
 
 type LuaHandler struct {
@@ -116,14 +118,25 @@ func (h *LuaHandler) RunReadLuaInput(s *discordgo.Session, m *discordgo.MessageC
 
 func (h *LuaHandler) RunLua(script string,s *discordgo.Session, m *discordgo.MessageCreate){
 
-	l := lua.NewState()
-	lua.OpenLibraries(l)
-
 	old := os.Stdout // keep backup of the real stdout
 	r, w, _ := os.Pipe() // Create a new os pipe
 	os.Stdout = w // Reassign stdout to our temporary pipe
 
-	err := lua.DoString(l, script)
+
+	// Create our new lua state
+	l := lua.NewState()
+	defer l.Close()
+
+	// Create our context pattern with a timeout as set in the config file
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(h.conf.DUBotConfig.LuaTimeout)*time.Second)
+	defer cancel()
+
+
+	// set the context to our LuaState
+	l.SetContext(ctx)
+	
+
+	err := l.DoString(script)
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, "Could not execute script: " + err.Error())
 		return
@@ -136,6 +149,7 @@ func (h *LuaHandler) RunLua(script string,s *discordgo.Session, m *discordgo.Mes
 		io.Copy(&buf, r)
 		outC <- buf.String()
 	}()
+
 
 	// back to normal state
 	w.Close()
