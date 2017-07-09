@@ -13,10 +13,13 @@ type RSSHandler struct {
 	callback *CallbackHandler
 	dg		*discordgo.Session
 	registry *CommandRegistry
+	foruminteg	*ForumIntegration
 }
 
 func (h *RSSHandler) Init() {
 	h.RegisterCommands()
+	h.foruminteg = &ForumIntegration{}
+
 }
 
 func (h *RSSHandler) RegisterCommands() (err error) {
@@ -158,30 +161,40 @@ func (h *RSSHandler) UpdateRSSFeeds(s *discordgo.Session) {
 
 				for _, post := range feed.Posts {
 					if post == item.Link {
-						skip = true
+						if !feed.RepeatPosts {
+							skip = true
+							item.Update = false
+						} else {
+							item.Update = true
+						}
 					}
+				}
+
+				if feed.LastItem == item.Link {
+					skip = true
 				}
 
 				feed.LastItem = item.Link
 				err = rss.UpdatePosts(feed)
 				if err != nil{
-					fmt.Println(err.Error())
+					fmt.Println("RSS Update Error: " + err.Error())
 					skip = true
+
 				}
 
 				if !skip {
-					formatted := h.FormatRSSItem(feed.URL, item)
+					formatted := h.FormatRSSItem(feed.URL, item, feed.Title)
 					s.ChannelMessageSend(feed.ChannelID, formatted)
 				}
 			}
 
-			time.Sleep(5 * time.Second)
+			time.Sleep(10 * time.Second)
 		}
 	}
 }
 
 
-func (h *RSSHandler) FormatRSSItem(url string, rssitem RSSItem) (formatted string) {
+func (h *RSSHandler) FormatRSSItem(url string, rssitem RSSItem, feedtitle string) (formatted string) {
 
 	if rssitem.Twitter {
 
@@ -190,7 +203,7 @@ func (h *RSSHandler) FormatRSSItem(url string, rssitem RSSItem) (formatted strin
 
 	} else if rssitem.Reddit {
 
-		formatted = "New Subreddit Post from " + "https://www.reddit.com/user"+strings.TrimPrefix(rssitem.Author,"/u")+ " \n\n"
+		formatted = ":postbox: New Subreddit Post from "+Bold("https://www.reddit.com/user"+strings.TrimPrefix(rssitem.Author,"/u"))+" \n\n"
 		formatted = formatted + rssitem.Title + "\n\n"
 		//formatted = formatted + item.Content + "\n"
 		//formatted = formatted + item.Description + "\n"
@@ -198,13 +211,24 @@ func (h *RSSHandler) FormatRSSItem(url string, rssitem RSSItem) (formatted strin
 		formatted = formatted + rssitem.Published + "\n"
 
 	} else if rssitem.Youtube {
-		formatted = "Latest update from " + rssitem.Author + "\n"
+		//formatted = "Latest update from " + rssitem.Author + "\n"
+		formatted = ":video_camera: New YouTube upload from " + rssitem.Author + "!\n"
 		formatted = formatted + rssitem.Title + "\n"
 		formatted = formatted + rssitem.Description + "\n"
 		formatted = formatted + rssitem.Link + "\n"
+	} else if rssitem.Forum {
+		//formatted = "Latest update from " + rssitem.Author + "\n"
+		feedtitle = strings.TrimSuffix(feedtitle, " Latest Topics")
+		formatted = ":postbox: New unread post in "+Bold(feedtitle) +"\n\n"
+		formatted = formatted + ":newspaper: || "+ UnderlineBold(rssitem.Title) +" || \n\n"//+"<"+rssitem.Link+">\n\n"
+		username, comment, commenturl, err := h.foruminteg.GetLatestCommentForThread(rssitem.Link)
+		if err == nil {
+			formatted = formatted + "New Comment from "+Bold(username) +":\n"
+			formatted = formatted + "```"+comment+"```\n"
+			formatted = formatted +  "Continue reading @ <"+commenturl+">\n"
+		}
 	} else {
-
-		formatted = "Latest update from " + url + "\n"
+		formatted = ":postbox: New update: \n" // from " + url + "\n"
 		formatted = formatted + rssitem.Author + "\n"
 		formatted = formatted + rssitem.Title + "\n"
 		formatted = formatted + rssitem.Content + "\n"
@@ -233,13 +257,15 @@ func (h *RSSHandler) GetAllLatest(s *discordgo.Session, m *discordgo.MessageCrea
 			return err
 		}
 
-		formatted := h.FormatRSSItem(i.URL, item)
+		formatted := h.FormatRSSItem(i.URL, item, i.Title)
 		s.ChannelMessageSend(m.ChannelID, formatted)
 		time.Sleep( 3 * time.Second)
 	}
-
 	return nil
 }
+
+
+
 
 func (h *RSSHandler) GetLatestItem(channel string, url string) (formatted string, err error) {
 	rss := RSS{db: h.db}
@@ -249,7 +275,7 @@ func (h *RSSHandler) GetLatestItem(channel string, url string) (formatted string
 		return formatted, err
 	}
 
-	formatted = h.FormatRSSItem(url, item)
+	formatted = h.FormatRSSItem(url, item, item.Title)
 
 	return formatted, nil
 }
@@ -308,17 +334,27 @@ func (h *RSSHandler) ConfirmAddRSS(url string, s *discordgo.Session, m *discordg
 		return
 	}
 
-	if m.Content == "Y" || m.Content == "y" {
+	content := strings.Fields(m.Content)
+	if len(content) > 0 {
+		if content[0] == "Y" || content[0] == "y" {
 
-		rss := RSS{db: h.db}
-		err := rss.Subscribe(url, "", m.ChannelID)
-		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, "Error Subscribing to URL: " + err.Error())
+			repeat := false
+			if len(content) > 1 {
+				if content[1] == "repeat" || content[1] == "Repeat" {
+					repeat = true
+				}
+			}
+
+			rss := RSS{db: h.db}
+			err := rss.Subscribe(url, "", m.ChannelID, repeat)
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "Error Subscribing to URL: " + err.Error())
+				return
+			}
+
+			s.ChannelMessageSend(m.ChannelID, "Selection Confirmed: " + url )
 			return
 		}
-
-		s.ChannelMessageSend(m.ChannelID, "Selection Confirmed: " + url )
-		return
 	}
 
 	s.ChannelMessageSend(m.ChannelID, "RSS Add Cancelled")

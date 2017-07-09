@@ -29,7 +29,9 @@ type RSSFeed struct {
 	Twitter bool `storm:"index"`
 	Reddit bool
 	Youtube bool
+	Forum bool
 	LastItem string // URL of last item
+	RepeatPosts bool
 	Posts []string // List of Posted URL's
 }
 
@@ -44,6 +46,8 @@ type RSSItem struct {
 	Twitter bool
 	Reddit bool
 	Youtube bool
+	Forum bool
+	Update bool
 
 }
 
@@ -233,7 +237,7 @@ func (h *RSS) GetAuthor(url string, channel string) (author string, err error){
 }
 */
 
-func (h *RSS) Subscribe(url string, title string, channel string) (err error){
+func (h *RSS) Subscribe(url string, title string, channel string, repeatposts bool) (err error){
 
 	if !h.CheckDB(url, channel){
 		return errors.New("Already Subscribed to: " + url)
@@ -272,11 +276,17 @@ func (h *RSS) Subscribe(url string, title string, channel string) (err error){
 		isYoutube = true
 	}
 
+	isForum := false
+	if strings.HasPrefix( url, "https://board.dualthegame.com") || strings.HasPrefix(url, "http://board.dualthegame.com") {
+		isForum = true
+	}
+
 	rssfeed := RSSFeed{ID: GetUUID(), URL: url, Title: title, Description: feed.Description,
 		Created: time.Now().String(), Updated: feed.Updated, Published: feed.Published,
-		ChannelID: channel, Link: feed.Link, Author: author, Twitter: isTwitter, Reddit: isReddit, Youtube: isYoutube}
+		ChannelID: channel, Link: feed.Link, Author: author, Twitter: isTwitter, Reddit: isReddit,
+		Youtube: isYoutube, Forum: isForum, RepeatPosts: repeatposts}
 
-	fmt.Println("Adding RSS Feed to DB: " + url + " Channel: " + channel)
+	//fmt.Println("Adding RSS Feed to DB: " + url + " Channel: " + channel)
 
 	h.AddToDB(rssfeed)
 	return nil
@@ -364,6 +374,7 @@ func (h *RSS) GetLatestItem(url string, channel string) (rssitem RSSItem, err er
 					rssitem.Twitter = true
 					rssitem.Reddit = false
 					rssitem.Youtube = false
+					rssitem.Forum = false
 					rssitem.Author = "@"+feedAuthor
 					rssitem.Link = item.Link
 					rssitem.Title = item.Title
@@ -387,6 +398,7 @@ func (h *RSS) GetLatestItem(url string, channel string) (rssitem RSSItem, err er
 			rssitem.Twitter = false
 			rssitem.Reddit = true
 			rssitem.Youtube = false
+			rssitem.Forum = false
 			rssitem.Author = item.Author.Name
 			rssitem.Link = item.Link
 			rssitem.Title = item.Title
@@ -404,7 +416,26 @@ func (h *RSS) GetLatestItem(url string, channel string) (rssitem RSSItem, err er
 			rssitem.Twitter = false
 			rssitem.Reddit = false
 			rssitem.Youtube = true
+			rssitem.Forum = false
 			rssitem.Author = item.Author.Name
+			rssitem.Link = item.Link
+			rssitem.Title = item.Title
+			rssitem.Published = item.Published
+			rssitem.Content = item.Content
+			rssitem.Description = item.Description
+
+			rssfeed.LastItem = item.Link
+			h.UpdateLastRun(time.Now(), rssfeed)
+
+			return rssitem, nil
+		} else if rssfeed.Forum {
+
+			item := feed.Items[0]
+			rssitem.Twitter = false
+			rssitem.Reddit = false
+			rssitem.Youtube = false
+			rssitem.Forum = true
+			rssitem.Author = ""
 			rssitem.Link = item.Link
 			rssitem.Title = item.Title
 			rssitem.Published = item.Published
@@ -417,10 +448,12 @@ func (h *RSS) GetLatestItem(url string, channel string) (rssitem RSSItem, err er
 			return rssitem, nil
 		}
 
+
 		item := feed.Items[0]
 		rssitem.Twitter = false
 		rssitem.Reddit = false
 		rssitem.Youtube = false
+		rssitem.Forum = false
 		if item.Author != nil {
 			rssitem.Author = item.Author.Name
 		} else {

@@ -140,7 +140,7 @@ func (h *MainHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	if command == cp + "help" {
-		s.ChannelMessageSend(m.ChannelID, "https://imgfave.azureedge.net/image_cache/140248453569251_animate.gif")
+		s.ChannelMessageSend(m.ChannelID, "https://github.com/yamamushi/du-discordbot#table-of-contents")
 	}
 
 	if command == cp + "follow" {

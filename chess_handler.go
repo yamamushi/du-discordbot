@@ -528,8 +528,12 @@ func (h *ChessHandler) DisplayInfo( s *discordgo.Session, m *discordgo.MessageCr
 func (h *ChessHandler) DisplayStyleMenu(payload []string, s *discordgo.Session, m *discordgo.MessageCreate){
 
 	if len(payload) < 1 {
+		stylesmenu := "Styles || \nAvailable Options are : "
+		stylesmenu = stylesmenu + "```"
+		stylesmenu = stylesmenu + "buy - list - inventory - set"
+		stylesmenu = stylesmenu + "\n```\n"
 
-		s.ChannelMessageSend(m.ChannelID, "Under Construction")
+		s.ChannelMessageSend(m.ChannelID, stylesmenu)
 		return
 	}
 	if len(payload) > 0 {
@@ -606,12 +610,13 @@ func (h *ChessHandler) DisplayStyleMenu(payload []string, s *discordgo.Session, 
 		}
 		if command == "set" {
 			if len(payload) < 1 {
-				s.ChannelMessageSend(m.ChannelID, "<set> expects an argument")
+				s.ChannelMessageSend(m.ChannelID, "<set> expects an argument <black||white> <stylename>")
 				return
 			}
 
 			command, payload := SplitPayload(payload)
 			if command == "help"{
+				s.ChannelMessageSend(m.ChannelID, "<set> expects an argument <black||white> <stylename>")
 				return
 			}
 			if command == "black"{

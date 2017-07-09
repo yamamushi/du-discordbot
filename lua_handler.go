@@ -65,7 +65,7 @@ func (h *LuaHandler) ReadLua(payload []string, s *discordgo.Session, m *discordg
 	command, payload := SplitPayload(payload)
 
 	if command == "help" {
-		s.ChannelMessageSend(m.ChannelID, "Under Construction!")
+		s.ChannelMessageSend(m.ChannelID, "https://github.com/yamamushi/du-discordbot#lua")
 		return
 	}
 	if command == "load" {

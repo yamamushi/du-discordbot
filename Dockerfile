@@ -7,8 +7,6 @@ ADD . /go/src/github.com/yamamushi/du-discordbot
 
 # Create our shared volume
 RUN mkdir /du-bot
-ADD du-bot.conf /du-bot
-
 
 # Get the du-discordbot dependencies inside the container.
 RUN go get github.com/bwmarrin/discordgo

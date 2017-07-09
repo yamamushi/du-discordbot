@@ -14,7 +14,7 @@ default_now_playing = "InDev"
 command_prefix = "~"
 
 # Total number of minutes to wait in between each rss fetch (per run, not per feed) Setting this too low may result
-# In sites blocking your requests.
+# In sites blocking your requests. It is not recommended to set this below 3.
 rss_fetch_timeout = 15
 
 # The total number of things to list per page (used for <command list> command)
