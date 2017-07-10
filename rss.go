@@ -7,10 +7,12 @@ import (
 	"strings"
 
 	"github.com/yamamushi/gofeed"
+	"sync"
 )
 
 type RSS struct {
 	db		*DBHandler
+	querylocker sync.RWMutex
 }
 
 
@@ -65,6 +67,9 @@ func (h *RSS) Validate (url string) error {
 
 
 func (h *RSS) AddToDB(rssfeed RSSFeed) (err error){
+	h.querylocker.Lock()
+	defer h.querylocker.Unlock()
+
 	db := h.db.rawdb.From("RSS")
 	err = db.Save(&rssfeed)
 	return err
@@ -72,6 +77,9 @@ func (h *RSS) AddToDB(rssfeed RSSFeed) (err error){
 
 
 func (h *RSS) RemoveFromDB(rssfeed RSSFeed) (err error){
+	h.querylocker.Lock()
+	defer h.querylocker.Unlock()
+
 	db := h.db.rawdb.From("RSS")
 	err = db.Remove(&rssfeed)
 	return err
@@ -79,6 +87,8 @@ func (h *RSS) RemoveFromDB(rssfeed RSSFeed) (err error){
 
 
 func (h *RSS) GetFromDB(url string, channel string) (rssfeed RSSFeed, err error){
+	h.querylocker.Lock()
+	defer h.querylocker.Unlock()
 
 	db := h.db.rawdb.From("RSS")
 	rssfeeds := []RSSFeed{}
@@ -100,6 +110,9 @@ func (h *RSS) GetFromDB(url string, channel string) (rssfeed RSSFeed, err error)
 }
 
 func (h *RSS) GetDB() (rssfeeds []RSSFeed, err error){
+	h.querylocker.Lock()
+	defer h.querylocker.Unlock()
+
 	db := h.db.rawdb.From("RSS")
 	err = db.All(&rssfeeds)
 	if err != nil{
@@ -109,6 +122,8 @@ func (h *RSS) GetDB() (rssfeeds []RSSFeed, err error){
 }
 
 func (h *RSS) GetChannel(channel string) (rssfeeds []RSSFeed, err error){
+	h.querylocker.Lock()
+	defer h.querylocker.Unlock()
 
 	db := h.db.rawdb.From("RSS")
 	err = db.Find("ChannelID", channel, &rssfeeds)
@@ -312,6 +327,8 @@ func (h *RSS) Unsubscribe(url string, channel string) (err error) {
 
 
 func (h *RSS) UpdateLastRun(lasttime time.Time, rssfeed RSSFeed) (err error){
+	h.querylocker.Lock()
+	defer h.querylocker.Unlock()
 
 	rssfeed.LastRun = lasttime
 
@@ -325,6 +342,8 @@ func (h *RSS) UpdateLastRun(lasttime time.Time, rssfeed RSSFeed) (err error){
 
 
 func (h *RSS) UpdatePosts(rssfeed RSSFeed) (err error) {
+	h.querylocker.Lock()
+	defer h.querylocker.Unlock()
 
 	lastitem := rssfeed.LastItem
 

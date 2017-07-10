@@ -38,6 +38,8 @@ type ChannelRecord struct {
 	IsBotLog	bool
 	IsPermissionLog	bool
 	IsBankLog	bool
+	IsMusicRoom	bool
+	IsMusicAudio bool
 
 	HQ	bool
 }
@@ -90,6 +92,7 @@ func (h *ChannelDB) RemoveChannel(record ChannelRecord) (err error) {
 func (h *ChannelDB) GetDB() (records []ChannelRecord, err error) {
 	commandrecords := []ChannelRecord{}
 	db := h.db.rawdb.From("Channels")
+
 	err = db.All(&commandrecords)
 	if err != nil{
 		return records, err
@@ -167,6 +170,7 @@ func (h *ChannelDB) GetGroups(channelid string) (groups []string, err error){
 }
 
 
+// Bot Log
 func (h *ChannelDB) SetBotLog(channelid string) (err error){
 
 	err = h.CreateIfNotExists(channelid)
@@ -213,7 +217,6 @@ func (h *ChannelDB) GetBotLog() (channelid string, err error) {
 	return "", errors.New("Bot Log Channel Not Found")
 }
 
-
 func (h *ChannelDB) RemoveBotLog() (err error){
 
 	channelrecords, err := h.GetDB()
@@ -236,7 +239,6 @@ func (h *ChannelDB) RemoveBotLog() (err error){
 
 
 // Promotion Log
-
 func (h *ChannelDB) SetPermissionLog(channelid string) (err error){
 
 	err = h.CreateIfNotExists(channelid)
@@ -283,7 +285,6 @@ func (h *ChannelDB) GetPermissionLog() (channelid string, err error) {
 	return "", errors.New("Permission Log Channel Not Found")
 }
 
-
 func (h *ChannelDB) RemovePermissionLog() (err error){
 
 	channelrecords, err := h.GetDB()
@@ -307,8 +308,6 @@ func (h *ChannelDB) RemovePermissionLog() (err error){
 
 
 // Bank Log
-
-
 func (h *ChannelDB) SetBankLog(channelid string) (err error){
 
 	err = h.CreateIfNotExists(channelid)
@@ -354,7 +353,6 @@ func (h *ChannelDB) GetBankLog() (channelid string, err error) {
 	}
 	return "", errors.New("Bank Log Channel Not Found")
 }
-
 
 func (h *ChannelDB) RemoveBankLog() (err error){
 
@@ -424,7 +422,6 @@ func (h *ChannelDB) GetHQ() (channelid string, err error) {
 	return "", errors.New("HQ Channel Not Found")
 }
 
-
 func (h *ChannelDB) RemoveHQ() (err error){
 
 	channelrecords, err := h.GetDB()
@@ -443,4 +440,140 @@ func (h *ChannelDB) RemoveHQ() (err error){
 		}
 	}
 	return errors.New("HQ Channel Not Found")
+}
+
+
+// MusicRoom
+func (h *ChannelDB) SetMusicRoom(channelid string) (err error){
+
+	err = h.CreateIfNotExists(channelid)
+	if err != nil {
+		return err
+	}
+
+	channelrecords, err := h.GetDB()
+	if err != nil {
+		return err
+	}
+
+	for _, record := range channelrecords {
+		if record.IsMusicRoom {
+			return errors.New("MusicRoom already assigned")
+		}
+	}
+
+	channelrecord, err := h.GetChannel(channelid)
+	if err != nil{
+		return err
+	}
+
+	channelrecord.IsMusicRoom = true
+	err = h.SaveChannel(channelrecord)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (h *ChannelDB) GetMusicRoom() (channelid string, err error) {
+	channelrecords, err := h.GetDB()
+	if err != nil {
+		return "", err
+	}
+
+	for _, record := range channelrecords {
+		if record.IsMusicRoom {
+			return record.ID, nil
+		}
+	}
+	return "", errors.New("Music Room Not Found")
+}
+
+func (h *ChannelDB) RemoveMusicRoom() (err error){
+
+	channelrecords, err := h.GetDB()
+	if err != nil {
+		return err
+	}
+
+	for _, record := range channelrecords {
+		if record.IsMusicRoom {
+			record.IsMusicRoom = false
+			err := h.SaveChannel(record)
+			if err != nil{
+				return err
+			}
+			return nil
+		}
+	}
+	return errors.New("Music Room Not Found")
+}
+
+
+// MusicAudio
+func (h *ChannelDB) SetMusicAudio(channelid string) (err error){
+
+	err = h.CreateIfNotExists(channelid)
+	if err != nil {
+		return err
+	}
+
+	channelrecords, err := h.GetDB()
+	if err != nil {
+		return err
+	}
+
+	for _, record := range channelrecords {
+		if record.IsMusicAudio {
+			return errors.New("MusicAudio already assigned")
+		}
+	}
+
+	channelrecord, err := h.GetChannel(channelid)
+	if err != nil{
+		return err
+	}
+
+	channelrecord.IsMusicAudio = true
+	err = h.SaveChannel(channelrecord)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (h *ChannelDB) GetMusicAudio() (channelid string, err error) {
+	channelrecords, err := h.GetDB()
+	if err != nil {
+		return "", err
+	}
+
+	for _, record := range channelrecords {
+		if record.IsMusicAudio {
+			return record.ID, nil
+		}
+	}
+	return "", errors.New("Music Audio Channel Not Found")
+}
+
+func (h *ChannelDB) RemoveMusicAudio() (err error){
+
+	channelrecords, err := h.GetDB()
+	if err != nil {
+		return err
+	}
+
+	for _, record := range channelrecords {
+		if record.IsMusicAudio {
+			record.IsMusicAudio = false
+			err := h.SaveChannel(record)
+			if err != nil{
+				return err
+			}
+			return nil
+		}
+	}
+	return errors.New("Music Audio Channel Not Found")
 }

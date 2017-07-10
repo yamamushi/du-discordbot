@@ -37,6 +37,19 @@ func main() {
 
 	fmt.Println("\n\n|| Starting du-discordbot ||\n")
 
+	// Setup our tmp directory
+	_, err := os.Stat("tmp")
+	if err != nil {
+		if os.IsNotExist(err){
+			err = os.Mkdir("tmp", os.FileMode(0777))
+			if err != nil {
+				fmt.Println("Could not make tmp directory! " + err.Error())
+				return
+			}
+		}
+	}
+
+
 	// Verify we can actually read our config file
 	conf, err := ReadConfig(ConfPath)
 	if err != nil {
@@ -131,7 +144,7 @@ func main() {
 	// Now we create and initialize our main handler
 	fmt.Println("\n|| Initializing Main Handler ||\n")
 	handler := MainHandler{db: &dbhandler, conf: &conf, dg: dg, callback: &callbackhandler, perm: &permissionshandler,
-		command: &commandhandler, logchan: logchannel, bankhandler: &bankhandler, user: &userhandler}
+		command: &commandhandler, logchan: logchannel, bankhandler: &bankhandler, user: &userhandler, channel: &channelhandler}
 	err = handler.Init()
 	if err != nil {
 		fmt.Println("error in mainHandler.init", err)

@@ -119,7 +119,9 @@ func (h *ChannelHandler) Info(payload []string, s *discordgo.Session, m *discord
 	if channelrecord.IsPermissionLog {
 		box = box + "Is Permission Log\n"
 	}
-
+	if channelrecord.IsMusicRoom {
+		box = box + "Is Music Room\n"
+	}
 
 	var formattedgroups string
 	for i, group := range channelrecord.Groups {
@@ -207,7 +209,27 @@ func (h *ChannelHandler) Set(payload []string, s *discordgo.Session, m *discordg
 			s.ChannelMessageSend(m.ChannelID, "HQ has been assigned to <#"+dgchannel.ID+">")
 			return
 		}
-		s.ChannelMessageSend(m.ChannelID, payload[0] + " is not a valid log type")
+		if payload[0] == "musicroom"{
+			user, err := h.user.GetUser(m.Author.ID)
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, err.Error())
+				return
+			}
+
+			if !user.Owner {
+				s.ChannelMessageSend(m.ChannelID, "http://i.imgur.com/eYcGQ5t.gif")
+				return
+			}
+
+			err = h.channeldb.SetMusicRoom(channelid)
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, err.Error())
+				return
+			}
+			s.ChannelMessageSend(m.ChannelID, "Music Room has been assigned to <#"+dgchannel.ID+">")
+			return
+		}
+		s.ChannelMessageSend(m.ChannelID, payload[0] + " is not a valid room type")
 		return
 	}
 	if len(payload) > 1 {
@@ -271,7 +293,27 @@ func (h *ChannelHandler) Set(payload []string, s *discordgo.Session, m *discordg
 			s.ChannelMessageSend(m.ChannelID, "HQ has been assigned to <#"+dgchannel.ID+">")
 			return
 		}
-		s.ChannelMessageSend(m.ChannelID, payload[0] + " is not a valid log type")
+		if payload[0] == "musicroom"{
+			user, err := h.user.GetUser(m.Author.ID)
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, err.Error())
+				return
+			}
+
+			if !user.Owner {
+				s.ChannelMessageSend(m.ChannelID, "http://i.imgur.com/eYcGQ5t.gif")
+				return
+			}
+
+			err = h.channeldb.SetMusicRoom(dgchannel.ID)
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, err.Error())
+				return
+			}
+			s.ChannelMessageSend(m.ChannelID, "Music Room has been assigned to <#"+dgchannel.ID+">")
+			return
+		}
+		s.ChannelMessageSend(m.ChannelID, payload[0] + " is not a valid room type")
 	}
 }
 
@@ -332,7 +374,27 @@ func (h *ChannelHandler) Unset(payload []string, s *discordgo.Session, m *discor
 		s.ChannelMessageSend(m.ChannelID, "HQ has been unassigned")
 		return
 	}
-	s.ChannelMessageSend(m.ChannelID, payload[0] + " is not a valid log type")
+	if payload[0] == "musicroom"{
+		user, err := h.user.GetUser(m.Author.ID)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, err.Error())
+			return
+		}
+
+		if !user.Owner {
+			s.ChannelMessageSend(m.ChannelID, "http://i.imgur.com/eYcGQ5t.gif")
+			return
+		}
+
+		err = h.channeldb.RemoveMusicRoom()
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, err.Error())
+			return
+		}
+		s.ChannelMessageSend(m.ChannelID, "Music Room has been unassigned")
+		return
+	}
+	s.ChannelMessageSend(m.ChannelID, payload[0] + " is not a valid room type")
 	return
 
 }
@@ -349,6 +411,15 @@ func (h *ChannelHandler) GetPermissionLogChannel() (channelid string, err error)
 func (h *ChannelHandler) GetBankLogChannel() (channelid string, err error){
 	return h.channeldb.GetBankLog()
 }
+
+func (h *ChannelHandler) GetHQChannel() (channelid string, err error){
+	return h.channeldb.GetHQ()
+}
+
+func (h *ChannelHandler) GetMusicRoomChannel() (channelid string, err error){
+	return h.channeldb.GetMusicRoom()
+}
+
 
 func (h *ChannelHandler) ReadGroup(payload []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 

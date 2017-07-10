@@ -5,7 +5,7 @@ package main
 import (
 	"github.com/bwmarrin/discordgo"
 	"strings"
-//	"fmt"
+	"fmt"
 )
 
 
@@ -174,4 +174,31 @@ func OwnerName(conf *Config, s *discordgo.Session, m *discordgo.MessageCreate) (
 	}
 
 	return user.Username, nil
+}
+
+
+func IsVoiceChannelEmpty(s *discordgo.Session, channelid string, botid string)(bool){
+
+	channel, err := s.Channel(channelid)
+	if err != nil {
+		fmt.Println(err.Error())
+		return false
+	}
+
+	guild, err := s.Guild(channel.GuildID)
+	if err != nil{
+		fmt.Println(err.Error())
+		return false
+	}
+
+	if len(guild.VoiceStates) > 0 {
+		for _, state := range guild.VoiceStates {
+			if state.ChannelID == channelid  && state.UserID != botid{
+				return false
+			}
+		}
+		return true
+	} else {
+		return true
+	}
 }

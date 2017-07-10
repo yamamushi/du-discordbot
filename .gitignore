@@ -20,6 +20,8 @@ gh-md-toc
 
 #
 notes
+deploy.sh
+tmp/
 
 # OS-Specific
 

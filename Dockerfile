@@ -8,6 +8,9 @@ ADD . /go/src/github.com/yamamushi/du-discordbot
 # Create our shared volume
 RUN mkdir /du-bot
 
+# Run our dependency installation for Opus Encoding/Decoding
+RUN sudo apt-get install libav-tools opus-tools -f
+
 # Get the du-discordbot dependencies inside the container.
 RUN go get github.com/bwmarrin/discordgo
 RUN go get github.com/BurntSushi/toml
@@ -17,6 +20,8 @@ RUN go get github.com/satori/go.uuid
 RUN go get github.com/anaskhan96/soup
 RUN go get github.com/lunixbochs/vtclean
 RUN go get github.com/yuin/gopher-lua
+RUN go get github.com/jonas747/ogg
+RUN go get -u github.com/rylio/ytdl/...
 
 # This is a fork of gofeed that allows for custom user-agent strings in requests to work with sites that filter these
 RUN go get github.com/yamamushi/gofeed

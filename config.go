@@ -32,7 +32,7 @@ type dubotConfig struct {
 	PerPageCount int  `toml:"per_page_count"`
 	LuaTimeout int `toml:"lua_timeout"`
 	Profiler bool `toml:"enable_profiler"`
-
+	MaxAudioDuration int `toml:"max_audio_duration"`
 
 }
 

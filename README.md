@@ -30,24 +30,32 @@ A Dual Universe bot being developed for the [unofficial Dual Universe discord](h
 
 ## Features
 
+**Completed** 
+
 - [X] Embedded Database
 - [X] Docker Support
 - [X] Internal User Permissions System
 - [X] Internal Command Permissions System
 - [X] Internal Channels System
+- [X] RSS Subscriptions
+- [X] Currency System
+- [X] Chess with selectable piece and board styles
+- [X] Display Current Phase of Earth's Moon
+- [X] A Discord Lua Interpreter (is this the first discord lua parser?)
+
+
+**Planned**
+
 - [ ] Dual Universe Wiki Integration
 - [ ] Dual Universe Resource Guide
 - [ ] Dual Universe Forum Integration (half working with rss)
-- [X] RSS Subscriptions
 - [ ] Twitter Subscriptions (semi-working, needs polishing)
-- [X] Currency System
+- [ ] YouTube Music Player
 - [ ] Bank System with Loans (bank works, no loans yet!)
 - [ ] A Casino
-- [X] Chess with selectable piece and board styles
 - [ ] More Games!
 - [ ] A Prize system for spending the credits from winning games
 - [ ] Reminders / Notifications 
-- [X] A Discord Lua Interpreter (is this the first discord lua parser?)
 - [ ] MyCroft.ai Integration
 - [ ] Random Utilities (too many to list here)
 

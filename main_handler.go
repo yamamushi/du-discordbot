@@ -18,6 +18,7 @@ type MainHandler struct {
 	registry *CommandRegistry
 	logchan		chan string
 	bankhandler *BankHandler
+	channel	*ChannelHandler
 }
 
 func (h *MainHandler) Init() error {
@@ -51,6 +52,14 @@ func (h *MainHandler) Init() error {
 	fmt.Println("Adding Lua Handler")
 	luahandler := LuaHandler{db: h.db, conf: h.conf, user: h.user, registry: h.command.registry}
 	h.dg.AddHandler(luahandler.Read)
+
+
+	fmt.Println("Adding Music Handler")
+	musichandler := MusicHandler{db: h.db, user: h.user, registry: h.command.registry,
+		wallet: h.bankhandler.wallet, channel: h.channel, conf: h.conf}
+	musichandler.Init()
+	h.dg.AddHandler(musichandler.Read)
+
 
 	// Open a websocket connection to Discord and begin listening.
 	fmt.Println("Opening Connection to Discord")

@@ -25,6 +25,10 @@ per_page_count = 5
 # Max number of seconds to run a lua script before terminating
 lua_timeout = 10
 
+# This setting determines the max length of a youtube video to download and convert in minutes
+# 120 minutes is 2 hours, which may be excessive for your use case.
+max_audio_duration = 120
+
 enable_profiler = false
 
 
