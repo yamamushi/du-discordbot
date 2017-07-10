@@ -672,7 +672,13 @@ func (h *MusicHandler) StateManager(vc *discordgo.VoiceConnection, s *discordgo.
 				return
 			}
 			s.ChannelMessageSend(musicchan, "If a bot talks in an empty channel and nobody is around to hear it, does it still make a sound?")
-			h.interrupt <- "disconnect"
+			if h.songlive {
+				h.interrupt <- "disconnect"
+			} else {
+				h.DisconnectVoice()
+				h.UnSetNowPlaying()
+			}
+
 			return
 		}
 
