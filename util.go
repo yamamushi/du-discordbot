@@ -193,7 +193,7 @@ func IsVoiceChannelEmpty(s *discordgo.Session, channelid string, botid string)(b
 
 	if len(guild.VoiceStates) > 0 {
 		for _, state := range guild.VoiceStates {
-			if state.ChannelID == channelid  && state.UserID != botid{
+			if state.ChannelID == channelid && state.UserID != botid{
 				return false
 			}
 		}
