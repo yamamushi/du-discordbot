@@ -15,12 +15,14 @@ Loan logic is also included here
 
 */
 
+// Bank struct
 type Bank struct {
 	db   *DBHandler
 	conf *Config
 	user *UserHandler
 }
 
+// BankRecord struct
 type BankRecord struct {
 	ID           string `storm:"id"`
 	Pin          string
@@ -28,6 +30,7 @@ type BankRecord struct {
 	LoansEnabled bool
 }
 
+// AccountRecord struct
 type AccountRecord struct {
 	ID         string `storm:"id"`
 	Pin        string
@@ -36,6 +39,7 @@ type AccountRecord struct {
 	ActiveLoan bool `storm:"index"`
 }
 
+// Init function
 func (h *Bank) Init() {
 
 	if h.conf.BankConfig.Reset {
@@ -58,6 +62,7 @@ func (h *Bank) Init() {
 	}
 }
 
+// CreateBank function
 func (h *Bank) CreateBank() (err error) {
 
 	_, err = h.GetMainBankAccount()
@@ -84,6 +89,7 @@ func (h *Bank) CreateBank() (err error) {
 	return nil
 }
 
+// ResetBank function
 func (h *Bank) ResetBank() (err error) {
 	account, err := h.GetMainBankAccount()
 	if err != nil {
@@ -100,6 +106,7 @@ func (h *Bank) ResetBank() (err error) {
 	return h.CreateBank()
 }
 
+// SaveBank function
 func (h *Bank) SaveBank() (err error) {
 	account, err := h.GetMainBankAccount()
 	if err != nil {
@@ -120,6 +127,7 @@ func (h *Bank) SaveBank() (err error) {
 	return nil
 }
 
+// BankInitialized function
 func (h *Bank) BankInitialized() bool {
 
 	_, err := h.GetMainBankAccount()
@@ -129,6 +137,7 @@ func (h *Bank) BankInitialized() bool {
 	return true
 }
 
+// GetMainBankAccount function
 func (h *Bank) GetMainBankAccount() (account BankRecord, err error) {
 
 	db := h.db.rawdb.From("Bank")
@@ -141,6 +150,7 @@ func (h *Bank) GetMainBankAccount() (account BankRecord, err error) {
 	return account, nil
 }
 
+// GetAccountForUser function
 func (h *Bank) GetAccountForUser(userid string) (account AccountRecord, err error) {
 
 	if !h.CheckUserAccount(userid) {
@@ -158,6 +168,7 @@ func (h *Bank) GetAccountForUser(userid string) (account AccountRecord, err erro
 	return record, nil
 }
 
+// GetAccountByAccountID function
 func (h *Bank) GetAccountByAccountID(accountid string) (account AccountRecord, err error) {
 
 	bankdb := h.db.rawdb.From("Bank")
@@ -171,6 +182,7 @@ func (h *Bank) GetAccountByAccountID(accountid string) (account AccountRecord, e
 	return account, nil
 }
 
+// CheckUserAccount function
 func (h *Bank) CheckUserAccount(userid string) bool {
 
 	bankdb := h.db.rawdb.From("Bank")
@@ -186,6 +198,7 @@ func (h *Bank) CheckUserAccount(userid string) bool {
 	return true
 }
 
+// CreateUserAccount function
 func (h *Bank) CreateUserAccount(userid string) (err error) {
 
 	bankdb := h.db.rawdb.From("Bank")
@@ -194,7 +207,7 @@ func (h *Bank) CreateUserAccount(userid string) (err error) {
 	account := AccountRecord{}
 	err = accountdb.One("UserID", userid, &account)
 	if err == nil {
-		return errors.New("User Account Already Exists!")
+		return errors.New("User Account Already Exists")
 	}
 
 	account.ID = GetUUID()
@@ -210,6 +223,7 @@ func (h *Bank) CreateUserAccount(userid string) (err error) {
 	return nil
 }
 
+// SaveUserAccount function
 func (h *Bank) SaveUserAccount(account AccountRecord) (err error) {
 
 	bankdb := h.db.rawdb.From("Bank")

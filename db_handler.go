@@ -5,11 +5,13 @@ import (
 	"github.com/asdine/storm"
 )
 
+// DBHandler struct
 type DBHandler struct {
 	rawdb *storm.DB
 	conf  *Config
 }
 
+// FirstTimeSetup function
 func (h *DBHandler) FirstTimeSetup() error {
 
 	var user User
@@ -50,6 +52,7 @@ func (h *DBHandler) FirstTimeSetup() error {
 	return nil
 }
 
+// Insert function
 func (h *DBHandler) Insert(object interface{}) error {
 
 	err := h.rawdb.Save(object)
@@ -61,6 +64,7 @@ func (h *DBHandler) Insert(object interface{}) error {
 	return nil
 }
 
+// Find function
 func (h *DBHandler) Find(first string, second string, object interface{}) error {
 
 	err := h.rawdb.One(first, second, object)
@@ -70,6 +74,7 @@ func (h *DBHandler) Find(first string, second string, object interface{}) error 
 	return nil
 }
 
+// Update function
 func (h *DBHandler) Update(object interface{}) error {
 	err := h.rawdb.Update(object)
 	if err != nil {
@@ -78,6 +83,7 @@ func (h *DBHandler) Update(object interface{}) error {
 	return nil
 }
 
+// GetUser function
 func (h *DBHandler) GetUser(uid string) (user User, err error) {
 
 	userdb := h.rawdb.From("Users")

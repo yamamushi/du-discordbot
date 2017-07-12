@@ -10,11 +10,13 @@ import (
 	"sync"
 )
 
+// RSS struct
 type RSS struct {
 	db          *DBHandler
 	querylocker sync.RWMutex
 }
 
+// RSSFeed struct
 type RSSFeed struct {
 	ID          string `storm:"id"`
 	Title       string
@@ -36,6 +38,7 @@ type RSSFeed struct {
 	Posts       []string // List of Posted URL's
 }
 
+// RSSItem struct
 type RSSItem struct {
 	Title       string
 	Author      string
@@ -50,6 +53,7 @@ type RSSItem struct {
 	Update      bool
 }
 
+// Validate function
 func (h *RSS) Validate(url string) error {
 
 	fp := gofeed.NewParser()
@@ -61,6 +65,7 @@ func (h *RSS) Validate(url string) error {
 	return nil
 }
 
+// AddToDB function
 func (h *RSS) AddToDB(rssfeed RSSFeed) (err error) {
 	h.querylocker.Lock()
 	defer h.querylocker.Unlock()
@@ -70,6 +75,7 @@ func (h *RSS) AddToDB(rssfeed RSSFeed) (err error) {
 	return err
 }
 
+// RemoveFromDB function
 func (h *RSS) RemoveFromDB(rssfeed RSSFeed) (err error) {
 	h.querylocker.Lock()
 	defer h.querylocker.Unlock()
@@ -79,6 +85,7 @@ func (h *RSS) RemoveFromDB(rssfeed RSSFeed) (err error) {
 	return err
 }
 
+// GetFromDB function
 func (h *RSS) GetFromDB(url string, channel string) (rssfeed RSSFeed, err error) {
 	h.querylocker.Lock()
 	defer h.querylocker.Unlock()
@@ -102,6 +109,7 @@ func (h *RSS) GetFromDB(url string, channel string) (rssfeed RSSFeed, err error)
 	return rssfeed, errors.New("No record found")
 }
 
+// GetDB function
 func (h *RSS) GetDB() (rssfeeds []RSSFeed, err error) {
 	h.querylocker.Lock()
 	defer h.querylocker.Unlock()
@@ -114,6 +122,7 @@ func (h *RSS) GetDB() (rssfeeds []RSSFeed, err error) {
 	return rssfeeds, nil
 }
 
+// GetChannel function
 func (h *RSS) GetChannel(channel string) (rssfeeds []RSSFeed, err error) {
 	h.querylocker.Lock()
 	defer h.querylocker.Unlock()
@@ -130,6 +139,7 @@ func (h *RSS) GetChannel(channel string) (rssfeeds []RSSFeed, err error) {
 	return rssfeeds, nil
 }
 
+// CheckDB function
 func (h *RSS) CheckDB(url string, channel string) bool {
 
 	_, err := h.GetFromDB(url, channel)
@@ -140,6 +150,7 @@ func (h *RSS) CheckDB(url string, channel string) bool {
 	return false
 }
 
+// GetTitle function
 func (h *RSS) GetTitle(url string, channel string) (title string, err error) {
 
 	rssfeed, err := h.GetFromDB(url, channel)
@@ -160,6 +171,7 @@ func (h *RSS) GetTitle(url string, channel string) (title string, err error) {
 
 }
 
+// GetDescription function
 func (h *RSS) GetDescription(url string, channel string) (description string, err error) {
 
 	rssfeed, err := h.GetFromDB(url, channel)
@@ -180,6 +192,7 @@ func (h *RSS) GetDescription(url string, channel string) (description string, er
 
 }
 
+// GetUpdated function
 func (h *RSS) GetUpdated(url string, channel string) (updated string, err error) {
 
 	rssfeed, err := h.GetFromDB(url, channel)
@@ -200,6 +213,7 @@ func (h *RSS) GetUpdated(url string, channel string) (updated string, err error)
 
 }
 
+// GetPublished function
 func (h *RSS) GetPublished(url string, channel string) (published string, err error) {
 
 	rssfeed, err := h.GetFromDB(url, channel)
@@ -241,6 +255,7 @@ func (h *RSS) GetAuthor(url string, channel string) (author string, err error){
 }
 */
 
+// Subscribe function
 func (h *RSS) Subscribe(url string, title string, channel string, repeatposts bool) (err error) {
 
 	if !h.CheckDB(url, channel) {
@@ -296,6 +311,7 @@ func (h *RSS) Subscribe(url string, title string, channel string, repeatposts bo
 	return nil
 }
 
+// Unsubscribe function
 func (h *RSS) Unsubscribe(url string, channel string) (err error) {
 
 	rssfeed, err := h.GetFromDB(url, channel)
@@ -313,6 +329,7 @@ func (h *RSS) Unsubscribe(url string, channel string) (err error) {
 	return nil
 }
 
+// UpdateLastRun function
 func (h *RSS) UpdateLastRun(lasttime time.Time, rssfeed RSSFeed) (err error) {
 	h.querylocker.Lock()
 	defer h.querylocker.Unlock()
@@ -327,6 +344,7 @@ func (h *RSS) UpdateLastRun(lasttime time.Time, rssfeed RSSFeed) (err error) {
 	return nil
 }
 
+// UpdatePosts function
 func (h *RSS) UpdatePosts(rssfeed RSSFeed) (err error) {
 	h.querylocker.Lock()
 	defer h.querylocker.Unlock()
@@ -350,6 +368,7 @@ func (h *RSS) UpdatePosts(rssfeed RSSFeed) (err error) {
 	return nil
 }
 
+// GetLatestItem function
 func (h *RSS) GetLatestItem(url string, channel string) (rssitem RSSItem, err error) {
 
 	rssfeed, err := h.GetFromDB(url, channel)

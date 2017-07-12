@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+// PermissionsHandler struct
 type PermissionsHandler struct {
 	db       *DBHandler
 	conf     *Config
@@ -16,6 +17,7 @@ type PermissionsHandler struct {
 	logchan  chan string
 }
 
+// Read function
 func (h *PermissionsHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	// Ignore all messages created by the bot itself
@@ -77,7 +79,7 @@ func (h *PermissionsHandler) Read(s *discordgo.Session, m *discordgo.MessageCrea
 	return
 }
 
-// The promote command runs using our commands array to get the promotion settings
+// ReadPromote The promote command runs using our commands array to get the promotion settings
 func (h *PermissionsHandler) ReadPromote(commands []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if len(commands) < 3 {
@@ -106,29 +108,29 @@ func (h *PermissionsHandler) ReadPromote(commands []string, s *discordgo.Session
 			s.ChannelMessageSend(m.ChannelID, m.Author.Mention()+" https://www.youtube.com/watch?v=fmz-K2hLwSI ")
 			h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run promote to owner"
 			return
-		} else {
-			s.ChannelMessageSend(m.ChannelID, "This group cannot be assigned through the promote command.")
-			h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run promote to owner"
-			return
 		}
+		s.ChannelMessageSend(m.ChannelID, "This group cannot be assigned through the promote command.")
+		h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run promote to owner"
+		return
+
 	}
 	if group == "admin" {
 		if !user.Owner {
 			s.ChannelMessageSend(m.ChannelID, "You do not have permission to assign this group")
 			h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run promote to admin"
 			return
-		} else {
-			err = h.Promote(target, group)
-			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
-				h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run promote to admin || " +
-					target + "||" + group + "||" + err.Error()
-				return
-			}
-			s.ChannelMessageSend(m.ChannelID, m.Mentions[0].Mention()+" has been added to the "+group+" group.")
-			h.logchan <- "Permissions " + m.Mentions[0].Mention() + " has been added to the " + group + " group by " + m.Author.Mention()
+		}
+		err = h.Promote(target, group)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
+			h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run promote to admin || " +
+				target + "||" + group + "||" + err.Error()
 			return
 		}
+		s.ChannelMessageSend(m.ChannelID, m.Mentions[0].Mention()+" has been added to the "+group+" group.")
+		h.logchan <- "Permissions " + m.Mentions[0].Mention() + " has been added to the " + group + " group by " + m.Author.Mention()
+		return
+
 	}
 	if group == "smoderator" {
 
@@ -136,18 +138,18 @@ func (h *PermissionsHandler) ReadPromote(commands []string, s *discordgo.Session
 			s.ChannelMessageSend(m.ChannelID, "You do not have permission to assign this group")
 			h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run promote to smoderator"
 			return
-		} else {
-			err = h.Promote(target, group)
-			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
-				h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run promote to smoderator || " +
-					m.Mentions[0].Mention() + "||" + group + "||" + err.Error()
-				return
-			}
-			s.ChannelMessageSend(m.ChannelID, m.Mentions[0].Mention()+" has been added to the "+group+" group.")
-			h.logchan <- "Permissions " + m.Mentions[0].Mention() + " has been added to the " + group + " group by " + m.Author.Mention()
+		}
+		err = h.Promote(target, group)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
+			h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run promote to smoderator || " +
+				m.Mentions[0].Mention() + "||" + group + "||" + err.Error()
 			return
 		}
+		s.ChannelMessageSend(m.ChannelID, m.Mentions[0].Mention()+" has been added to the "+group+" group.")
+		h.logchan <- "Permissions " + m.Mentions[0].Mention() + " has been added to the " + group + " group by " + m.Author.Mention()
+		return
+
 	}
 	if group == "moderator" {
 
@@ -155,19 +157,19 @@ func (h *PermissionsHandler) ReadPromote(commands []string, s *discordgo.Session
 			s.ChannelMessageSend(m.ChannelID, "You do not have permission to assign this group")
 			h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run promote to moderator"
 			return
-		} else {
-			err = h.Promote(target, group)
-			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
-				h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run promote to moderator || " +
-					target + "||" + group + "||" + err.Error()
+		}
+		err = h.Promote(target, group)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
+			h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run promote to moderator || " +
+				target + "||" + group + "||" + err.Error()
 
-				return
-			}
-			s.ChannelMessageSend(m.ChannelID, m.Mentions[0].Mention()+" has been added to the "+group+" group.")
-			h.logchan <- "Permissions " + m.Mentions[0].Mention() + " has been added to the " + group + " group by " + m.Author.Mention()
 			return
 		}
+		s.ChannelMessageSend(m.ChannelID, m.Mentions[0].Mention()+" has been added to the "+group+" group.")
+		h.logchan <- "Permissions " + m.Mentions[0].Mention() + " has been added to the " + group + " group by " + m.Author.Mention()
+		return
+
 	}
 	if group == "editor" {
 
@@ -175,18 +177,18 @@ func (h *PermissionsHandler) ReadPromote(commands []string, s *discordgo.Session
 			s.ChannelMessageSend(m.ChannelID, "You do not have permission to assign this group")
 			h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run promote to editor"
 			return
-		} else {
-			err = h.Promote(target, group)
-			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
-				h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run promote to editor || " +
-					target + "||" + group + "||" + err.Error()
-				return
-			}
-			s.ChannelMessageSend(m.ChannelID, m.Mentions[0].Mention()+" has been added to the "+group+" group.")
-			h.logchan <- "Permissions " + m.Mentions[0].Mention() + " has been added to the " + group + " group by " + m.Author.Mention()
+		}
+		err = h.Promote(target, group)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
+			h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run promote to editor || " +
+				target + "||" + group + "||" + err.Error()
 			return
 		}
+		s.ChannelMessageSend(m.ChannelID, m.Mentions[0].Mention()+" has been added to the "+group+" group.")
+		h.logchan <- "Permissions " + m.Mentions[0].Mention() + " has been added to the " + group + " group by " + m.Author.Mention()
+		return
+
 	}
 	if group == "agora" {
 
@@ -194,18 +196,18 @@ func (h *PermissionsHandler) ReadPromote(commands []string, s *discordgo.Session
 			s.ChannelMessageSend(m.ChannelID, "You do not have permission to assign this group")
 			h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run promote to agora"
 			return
-		} else {
-			err = h.Promote(target, group)
-			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
-				h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run promote to agora || " +
-					target + "||" + group + "||" + err.Error()
-				return
-			}
-			s.ChannelMessageSend(m.ChannelID, m.Mentions[0].Mention()+" has been added to the "+group+" group.")
-			h.logchan <- "Permissions " + m.Mentions[0].Mention() + " has been added to the " + group + " group by " + m.Author.Mention()
+		}
+		err = h.Promote(target, group)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
+			h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run promote to agora || " +
+				target + "||" + group + "||" + err.Error()
 			return
 		}
+		s.ChannelMessageSend(m.ChannelID, m.Mentions[0].Mention()+" has been added to the "+group+" group.")
+		h.logchan <- "Permissions " + m.Mentions[0].Mention() + " has been added to the " + group + " group by " + m.Author.Mention()
+		return
+
 	}
 	if group == "streamer" {
 
@@ -213,18 +215,18 @@ func (h *PermissionsHandler) ReadPromote(commands []string, s *discordgo.Session
 			s.ChannelMessageSend(m.ChannelID, "You do not have permission to assign this group")
 			h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run promote to streamer"
 			return
-		} else {
-			err = h.Promote(target, group)
-			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
-				h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run promote to streamer || " +
-					target + "||" + group + "||" + err.Error()
-				return
-			}
-			s.ChannelMessageSend(m.ChannelID, m.Mentions[0].Mention()+" has been added to the "+group+" group.")
-			h.logchan <- "Permissions " + m.Mentions[0].Mention() + " has been added to the " + group + " group by " + m.Author.Mention()
+		}
+		err = h.Promote(target, group)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
+			h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run promote to streamer || " +
+				target + "||" + group + "||" + err.Error()
 			return
 		}
+		s.ChannelMessageSend(m.ChannelID, m.Mentions[0].Mention()+" has been added to the "+group+" group.")
+		h.logchan <- "Permissions " + m.Mentions[0].Mention() + " has been added to the " + group + " group by " + m.Author.Mention()
+		return
+
 	}
 	if group == "recruiter" {
 
@@ -232,27 +234,27 @@ func (h *PermissionsHandler) ReadPromote(commands []string, s *discordgo.Session
 			s.ChannelMessageSend(m.ChannelID, "You do not have permission to assign this group")
 			h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run promote to recruiter"
 			return
-		} else {
-			err = h.Promote(target, group)
-			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
-				h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run promote to recruiter || " +
-					target + "||" + group + "||" + err.Error()
-				return
-			}
-			s.ChannelMessageSend(m.ChannelID, m.Mentions[0].Mention()+" has been added to the "+group+" group.")
-			h.logchan <- "Permissions " + m.Mentions[0].Mention() + " has been added to the " + group + " group by " + m.Author.Mention()
+		}
+		err = h.Promote(target, group)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
+			h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run promote to recruiter || " +
+				target + "||" + group + "||" + err.Error()
 			return
 		}
-	} else {
-		s.ChannelMessageSend(m.ChannelID, group+" is not a valid group!")
-		h.logchan <- "Permissions " + m.Author.Mention() + " attempted to promote " + m.Mentions[0].Mention() +
-			" to " + group + " which does not exist"
+		s.ChannelMessageSend(m.ChannelID, m.Mentions[0].Mention()+" has been added to the "+group+" group.")
+		h.logchan <- "Permissions " + m.Mentions[0].Mention() + " has been added to the " + group + " group by " + m.Author.Mention()
 		return
+
 	}
+	s.ChannelMessageSend(m.ChannelID, group+" is not a valid group!")
+	h.logchan <- "Permissions " + m.Author.Mention() + " attempted to promote " + m.Mentions[0].Mention() +
+		" to " + group + " which does not exist"
+	return
+
 }
 
-// Set the given role on a user, and save the changes in the database
+// Promote Set the given role on a user, and save the changes in the database
 func (h *PermissionsHandler) Promote(userid string, group string) (err error) {
 
 	// Get user from the database using the userid
@@ -277,7 +279,7 @@ func (h *PermissionsHandler) Promote(userid string, group string) (err error) {
 	return nil
 }
 
-// The promote command runs using our commands array to get the promotion settings
+// ReadDemote The promote command runs using our commands array to get the promotion settings
 func (h *PermissionsHandler) ReadDemote(commands []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if len(commands) < 3 {
@@ -306,29 +308,29 @@ func (h *PermissionsHandler) ReadDemote(commands []string, s *discordgo.Session,
 			s.ChannelMessageSend(m.ChannelID, m.Author.Mention()+" https://www.youtube.com/watch?v=7qnd-hdmgfk ")
 			h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run demote to owner"
 			return
-		} else {
-			s.ChannelMessageSend(m.ChannelID, "This group cannot be assigned through the promote command.")
-			h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run demote to owner"
-			return
 		}
+		s.ChannelMessageSend(m.ChannelID, "This group cannot be assigned through the promote command.")
+		h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run demote to owner"
+		return
+
 	}
 	if group == "admin" {
 		if !user.Owner {
 			s.ChannelMessageSend(m.ChannelID, "You do not have permission to assign this group")
 			h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run demote to admin"
 			return
-		} else {
-			err = h.Demote(target, group)
-			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
-				h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run demote to admin || " +
-					target + "||" + group + "||" + err.Error()
-				return
-			}
-			s.ChannelMessageSend(m.ChannelID, m.Mentions[0].Mention()+" has been set to the "+group+" group.")
-			h.logchan <- "Permissions " + m.Mentions[0].Mention() + " has been demoted to the " + group + " group by " + m.Author.Mention()
+		}
+		err = h.Demote(target, group)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
+			h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run demote to admin || " +
+				target + "||" + group + "||" + err.Error()
 			return
 		}
+		s.ChannelMessageSend(m.ChannelID, m.Mentions[0].Mention()+" has been set to the "+group+" group.")
+		h.logchan <- "Permissions " + m.Mentions[0].Mention() + " has been demoted to the " + group + " group by " + m.Author.Mention()
+		return
+
 	}
 	if group == "smoderator" {
 
@@ -336,18 +338,18 @@ func (h *PermissionsHandler) ReadDemote(commands []string, s *discordgo.Session,
 			s.ChannelMessageSend(m.ChannelID, "You do not have permission to assign this group")
 			h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run demote to smoderator"
 			return
-		} else {
-			err = h.Demote(target, group)
-			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
-				h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run demote to smoderator || " +
-					target + "||" + group + "||" + err.Error()
-				return
-			}
-			s.ChannelMessageSend(m.ChannelID, m.Mentions[0].Mention()+" has been set to the "+group+" group.")
-			h.logchan <- "Permissions " + m.Mentions[0].Mention() + " has been demoted to the " + group + " group by " + m.Author.Mention()
+		}
+		err = h.Demote(target, group)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
+			h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run demote to smoderator || " +
+				target + "||" + group + "||" + err.Error()
 			return
 		}
+		s.ChannelMessageSend(m.ChannelID, m.Mentions[0].Mention()+" has been set to the "+group+" group.")
+		h.logchan <- "Permissions " + m.Mentions[0].Mention() + " has been demoted to the " + group + " group by " + m.Author.Mention()
+		return
+
 	}
 	if group == "moderator" {
 
@@ -355,18 +357,18 @@ func (h *PermissionsHandler) ReadDemote(commands []string, s *discordgo.Session,
 			s.ChannelMessageSend(m.ChannelID, "You do not have permission to assign this group")
 			h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run promote to moderator"
 			return
-		} else {
-			err = h.Demote(target, group)
-			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
-				h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run demote to moderator || " +
-					target + "||" + group + "||" + err.Error()
-				return
-			}
-			s.ChannelMessageSend(m.ChannelID, m.Mentions[0].Mention()+" has been set to the "+group+" group.")
-			h.logchan <- "Permissions " + m.Mentions[0].Mention() + " has been demoted to the " + group + " group by " + m.Author.Mention()
+		}
+		err = h.Demote(target, group)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
+			h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run demote to moderator || " +
+				target + "||" + group + "||" + err.Error()
 			return
 		}
+		s.ChannelMessageSend(m.ChannelID, m.Mentions[0].Mention()+" has been set to the "+group+" group.")
+		h.logchan <- "Permissions " + m.Mentions[0].Mention() + " has been demoted to the " + group + " group by " + m.Author.Mention()
+		return
+
 	}
 	if group == "editor" {
 
@@ -374,18 +376,18 @@ func (h *PermissionsHandler) ReadDemote(commands []string, s *discordgo.Session,
 			s.ChannelMessageSend(m.ChannelID, "You do not have permission to assign this group")
 			h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run demote to editor"
 			return
-		} else {
-			err = h.Demote(target, group)
-			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
-				h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run demote to editor || " +
-					target + "||" + group + "||" + err.Error()
-				return
-			}
-			s.ChannelMessageSend(m.ChannelID, m.Mentions[0].Mention()+" has been removed from the "+group+" group.")
-			h.logchan <- "Permissions " + m.Mentions[0].Mention() + " has been removed from the " + group + " group by " + m.Author.Mention()
+		}
+		err = h.Demote(target, group)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
+			h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run demote to editor || " +
+				target + "||" + group + "||" + err.Error()
 			return
 		}
+		s.ChannelMessageSend(m.ChannelID, m.Mentions[0].Mention()+" has been removed from the "+group+" group.")
+		h.logchan <- "Permissions " + m.Mentions[0].Mention() + " has been removed from the " + group + " group by " + m.Author.Mention()
+		return
+
 	}
 	if group == "agora" {
 
@@ -393,18 +395,18 @@ func (h *PermissionsHandler) ReadDemote(commands []string, s *discordgo.Session,
 			s.ChannelMessageSend(m.ChannelID, "You do not have permission to assign this group")
 			h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run demote to agora"
 			return
-		} else {
-			err = h.Demote(target, group)
-			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
-				h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run demote to agora || " +
-					target + "||" + group + "||" + err.Error()
-				return
-			}
-			s.ChannelMessageSend(m.ChannelID, m.Mentions[0].Mention()+" has been removed from the "+group+" group.")
-			h.logchan <- "Permissions " + m.Mentions[0].Mention() + " has been removed from the " + group + " group by " + m.Author.Mention()
+		}
+		err = h.Demote(target, group)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
+			h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run demote to agora || " +
+				target + "||" + group + "||" + err.Error()
 			return
 		}
+		s.ChannelMessageSend(m.ChannelID, m.Mentions[0].Mention()+" has been removed from the "+group+" group.")
+		h.logchan <- "Permissions " + m.Mentions[0].Mention() + " has been removed from the " + group + " group by " + m.Author.Mention()
+		return
+
 	}
 	if group == "streamer" {
 
@@ -412,18 +414,18 @@ func (h *PermissionsHandler) ReadDemote(commands []string, s *discordgo.Session,
 			s.ChannelMessageSend(m.ChannelID, "You do not have permission to assign this group")
 			h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run demote to streamer"
 			return
-		} else {
-			err = h.Demote(target, group)
-			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
-				h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run demote to streamer || " +
-					target + "||" + group + "||" + err.Error()
-				return
-			}
-			s.ChannelMessageSend(m.ChannelID, m.Mentions[0].Mention()+" has been removed from the "+group+" group.")
-			h.logchan <- "Permissions " + m.Mentions[0].Mention() + " has been removed from the " + group + " group by " + m.Author.Mention()
+		}
+		err = h.Demote(target, group)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
+			h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run demote to streamer || " +
+				target + "||" + group + "||" + err.Error()
 			return
 		}
+		s.ChannelMessageSend(m.ChannelID, m.Mentions[0].Mention()+" has been removed from the "+group+" group.")
+		h.logchan <- "Permissions " + m.Mentions[0].Mention() + " has been removed from the " + group + " group by " + m.Author.Mention()
+		return
+
 	}
 	if group == "recruiter" {
 
@@ -431,28 +433,31 @@ func (h *PermissionsHandler) ReadDemote(commands []string, s *discordgo.Session,
 			s.ChannelMessageSend(m.ChannelID, "You do not have permission to assign this group")
 			h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run demote to recruiter"
 			return
-		} else {
-			err = h.Demote(target, group)
-			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
-				h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run demote to recruiter || " +
-					target + "||" + group + "||" + err.Error()
-				return
-			}
-			s.ChannelMessageSend(m.ChannelID, m.Mentions[0].Mention()+" has been removed from the "+group+" group.")
-			h.logchan <- "Permissions " + m.Mentions[0].Mention() + " has been removed from the " + group + " group by " + m.Author.Mention()
+		}
+
+		err = h.Demote(target, group)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
+			h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run demote to recruiter || " +
+				target + "||" + group + "||" + err.Error()
 			return
 		}
-	} else {
-		s.ChannelMessageSend(m.ChannelID, group+" is not a valid group!")
-		h.logchan <- "Permissions " + m.Author.Mention() + " attempted to demote " + m.Mentions[0].Mention() +
-			" to " + group + " which does not exist"
+		s.ChannelMessageSend(m.ChannelID, m.Mentions[0].Mention()+" has been removed from the "+group+" group.")
+		h.logchan <- "Permissions " + m.Mentions[0].Mention() + " has been removed from the " + group + " group by " + m.Author.Mention()
 		return
+
 	}
+	s.ChannelMessageSend(m.ChannelID, group+" is not a valid group!")
+	h.logchan <- "Permissions " + m.Author.Mention() + " attempted to demote " + m.Mentions[0].Mention() +
+		" to " + group + " which does not exist"
+	return
+
 }
 
 // Set the given role on a user, and remove all promotions above the group
 // If it is the lowest tier of group, that group is removed from the user
+
+// Demote function
 func (h *PermissionsHandler) Demote(userid string, group string) (err error) {
 
 	// Open the "Users" bucket in the database

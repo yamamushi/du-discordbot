@@ -14,13 +14,16 @@ This WILL NOT post to the forums, it will only READ from the publicly available 
 
 */
 
+// ForumIntegration struct
 type ForumIntegration struct{}
 
+// FollowUser function
 func (h *ForumIntegration) FollowUser(user string) (err error) {
 
 	return nil
 }
 
+// Scrape function
 func (h *ForumIntegration) Scrape(url string) (response string, err error) {
 
 	resp, err := soup.Get(url)
@@ -38,6 +41,7 @@ func (h *ForumIntegration) Scrape(url string) (response string, err error) {
 	return resp, nil
 }
 
+// GetLatestCommentForThread function
 func (h *ForumIntegration) GetLatestCommentForThread(url string) (username string, comment string, commenturl string, err error) {
 
 	resp, err := soup.Get(url + "/&page=1000") // Append page=1000 so we get the last page
@@ -75,5 +79,5 @@ func (h *ForumIntegration) GetLatestCommentForThread(url string) (username strin
 		return username, truncatedcomment, latestcommentlink, nil
 	}
 
-	return "", "", "", errors.New("Could not find comment id!")
+	return "", "", "", errors.New("Could not find comment id")
 }

@@ -4,86 +4,107 @@ package main
 Some quick helper functions for getting color ints
 */
 
+// ColorDefault function
 func ColorDefault() int {
 	return 0
 }
 
+// ColorTeal function
 func ColorTeal() int {
 	return 0x1abc9c
 }
 
-func ColorDark_Teal() int {
+// ColorDarkTeal function
+func ColorDarkTeal() int {
 	return 0x11806a
 }
 
+// ColorGreen function
 func ColorGreen() int {
 	return 0x2ecc71
 }
 
-func ColorDark_Green() int {
+// ColorDarkGreen function
+func ColorDarkGreen() int {
 	return 0x1f8b4c
 }
 
+// ColorBlue function
 func ColorBlue() int {
 	return 0x3498db
 }
 
-func ColorDark_Blue() int {
+// ColorDarkBlue function
+func ColorDarkBlue() int {
 	return 0x206694
 }
 
+// ColorPurple function
 func ColorPurple() int {
 	return 0x9b59b6
 }
 
-func ColorDark_Purple() int {
+// ColorDarkPurple function
+func ColorDarkPurple() int {
 	return 0x71368a
 }
 
+// ColorMagenta function
 func ColorMagenta() int {
 	return 0xe91e63
 }
 
-func ColorDark_Magenta() int {
+// ColorDarkMagenta function
+func ColorDarkMagenta() int {
 	return 0xad1457
 }
 
+// ColorGold function
 func ColorGold() int {
 	return 0xf1c40f
 }
 
-func ColorDark_Gold() int {
+// ColorDarkGold function
+func ColorDarkGold() int {
 	return 0xc27c0e
 }
 
+// ColorOrange function
 func ColorOrange() int {
 	return 0xe67e22
 }
 
-func ColorDark_Orange() int {
+// ColorDarkOrange function
+func ColorDarkOrange() int {
 	return 0xa84300
 }
 
+// ColorRed function
 func ColorRed() int {
 	return 0xe74c3c
 }
 
-func ColorDark_Red() int {
+// ColorDarkRed function
+func ColorDarkRed() int {
 	return 0x992d22
 }
 
-func ColorLighter_Grey() int {
+// ColorLighterGrey function
+func ColorLighterGrey() int {
 	return 0x95a5a6
 }
 
-func ColorDark_Grey() int {
+// ColorDarkGrey function
+func ColorDarkGrey() int {
 	return 0x607d8b
 }
 
-func ColorLight_Grey() int {
+// ColorLightGrey function
+func ColorLightGrey() int {
 	return 0x979c9f
 }
 
-func ColorDarker_Grey() int {
+// ColorDarkerGrey function
+func ColorDarkerGrey() int {
 	return 0x546e7a
 }

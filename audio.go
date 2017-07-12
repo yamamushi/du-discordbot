@@ -16,6 +16,7 @@ These functions help with audio conversion and prepare files for transmission
 
 */
 
+// MakeAudioBuffer will return a [][]byte for the provided ogg/opus path
 func MakeAudioBuffer(path string) (output [][]byte, err error) {
 	reader, err := os.Open(path)
 	defer reader.Close()
@@ -34,6 +35,8 @@ func MakeAudioBuffer(path string) (output [][]byte, err error) {
 	}
 }
 
+// ToOpus will convert the provided file (which always comes out of "./tmp") to an opus/ogg file for buffering.
+// Note that this function merely splits the pathname (file.mp4 to "file") and passes it to ConvertAudio for the rest.
 func ToOpus(path string) (err error) {
 
 	args := strings.Split(path, ".")
@@ -48,6 +51,7 @@ func ToOpus(path string) (err error) {
 	return nil
 }
 
+// ConvertAudio will convert the provided file (typically in mp4 format) to opus
 func ConvertAudio(from string, to string) (err error) {
 
 	avconv := exec.Command("avconv", "-i", from, "-f", "wav", "-")

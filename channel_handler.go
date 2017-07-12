@@ -5,6 +5,7 @@ import (
 	"strconv"
 )
 
+// ChannelHandler struct
 type ChannelHandler struct {
 	db        *DBHandler
 	conf      *Config
@@ -14,6 +15,7 @@ type ChannelHandler struct {
 	logchan   chan string
 }
 
+// Init function
 func (h *ChannelHandler) Init() {
 
 	h.channeldb = new(ChannelDB)
@@ -21,6 +23,7 @@ func (h *ChannelHandler) Init() {
 
 }
 
+// Read function
 func (h *ChannelHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	// Check for safety
@@ -43,6 +46,7 @@ func (h *ChannelHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) 
 	}
 }
 
+// ReadCommand function
 func (h *ChannelHandler) ReadCommand(message []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if len(message) < 1 {
@@ -71,6 +75,7 @@ func (h *ChannelHandler) ReadCommand(message []string, s *discordgo.Session, m *
 	}
 }
 
+// Info function
 func (h *ChannelHandler) Info(payload []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	var channelid string
@@ -141,6 +146,7 @@ func (h *ChannelHandler) Info(payload []string, s *discordgo.Session, m *discord
 	s.ChannelMessageSend(m.ChannelID, formattedoutput)
 }
 
+// Set function
 func (h *ChannelHandler) Set(payload []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	var channelid string
@@ -312,6 +318,7 @@ func (h *ChannelHandler) Set(payload []string, s *discordgo.Session, m *discordg
 	}
 }
 
+// Unset function
 func (h *ChannelHandler) Unset(payload []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if len(payload) < 1 {
@@ -391,26 +398,32 @@ func (h *ChannelHandler) Unset(payload []string, s *discordgo.Session, m *discor
 
 }
 
+// GetBotLogChannel function
 func (h *ChannelHandler) GetBotLogChannel() (channelid string, err error) {
 	return h.channeldb.GetBotLog()
 }
 
+// GetPermissionLogChannel function
 func (h *ChannelHandler) GetPermissionLogChannel() (channelid string, err error) {
 	return h.channeldb.GetPermissionLog()
 }
 
+// GetBankLogChannel function
 func (h *ChannelHandler) GetBankLogChannel() (channelid string, err error) {
 	return h.channeldb.GetBankLog()
 }
 
+// GetHQChannel function
 func (h *ChannelHandler) GetHQChannel() (channelid string, err error) {
 	return h.channeldb.GetHQ()
 }
 
+// GetMusicRoomChannel function
 func (h *ChannelHandler) GetMusicRoomChannel() (channelid string, err error) {
 	return h.channeldb.GetMusicRoom()
 }
 
+// ReadGroup function
 func (h *ChannelHandler) ReadGroup(payload []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if len(payload) < 1 {
@@ -434,6 +447,7 @@ func (h *ChannelHandler) ReadGroup(payload []string, s *discordgo.Session, m *di
 	}
 }
 
+// RemoveGroup function
 func (h *ChannelHandler) RemoveGroup(payload []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if len(payload) < 2 {
@@ -462,6 +476,7 @@ func (h *ChannelHandler) RemoveGroup(payload []string, s *discordgo.Session, m *
 	s.ChannelMessageSend(m.ChannelID, formattedchannel+" was removed from the "+payload[0]+" group.")
 }
 
+// AddGroup function
 func (h *ChannelHandler) AddGroup(payload []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if len(payload) < 2 {
@@ -491,6 +506,7 @@ func (h *ChannelHandler) AddGroup(payload []string, s *discordgo.Session, m *dis
 
 }
 
+// CheckPermission function
 func (h *ChannelHandler) CheckPermission(channelid string, user *User) bool {
 
 	record, err := h.channeldb.GetChannel(channelid)

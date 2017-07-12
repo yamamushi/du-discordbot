@@ -12,12 +12,14 @@ import (
 	"fmt"
 )
 
+// CommandRegistry struct
 type CommandRegistry struct {
 	db   *DBHandler
 	conf *Config
 	user *UserHandler
 }
 
+// CommandRecord struct
 type CommandRecord struct {
 	Command     string   `storm:"id"`
 	Groups      []string `storm:"index"`
@@ -27,6 +29,7 @@ type CommandRecord struct {
 	Usage       string
 }
 
+// Register function
 // Does the same thing as Create Command without a return value
 func (h *CommandRegistry) Register(command string, description string, usage string) {
 
@@ -51,6 +54,7 @@ func (h *CommandRegistry) Register(command string, description string, usage str
 	return
 }
 
+// CreateCommand function
 func (h *CommandRegistry) CreateCommand(command string) (err error) {
 
 	db := h.db.rawdb.From("Commands")
@@ -71,6 +75,7 @@ func (h *CommandRegistry) CreateCommand(command string) (err error) {
 	return nil
 }
 
+// SaveCommand function
 func (h *CommandRegistry) SaveCommand(record CommandRecord) (err error) {
 	db := h.db.rawdb.From("Commands")
 	err = db.DeleteStruct(&record)
@@ -78,6 +83,7 @@ func (h *CommandRegistry) SaveCommand(record CommandRecord) (err error) {
 	return err
 }
 
+// RemoveCommand function
 func (h *CommandRegistry) RemoveCommand(record CommandRecord) (err error) {
 
 	db := h.db.rawdb.From("Commands")
@@ -85,6 +91,7 @@ func (h *CommandRegistry) RemoveCommand(record CommandRecord) (err error) {
 	return err
 }
 
+// GetCommand function
 func (h *CommandRegistry) GetCommand(command string) (record CommandRecord, err error) {
 
 	db := h.db.rawdb.From("Commands")
@@ -98,6 +105,7 @@ func (h *CommandRegistry) GetCommand(command string) (record CommandRecord, err 
 	return record, nil
 }
 
+// AddGroup function
 func (h *CommandRegistry) AddGroup(command string, group string) (err error) {
 
 	record, err := h.GetCommand(command)
@@ -116,6 +124,7 @@ func (h *CommandRegistry) AddGroup(command string, group string) (err error) {
 	return nil
 }
 
+// RemoveGroup function
 func (h *CommandRegistry) RemoveGroup(command string, group string) (err error) {
 
 	record, err := h.GetCommand(command)
@@ -134,6 +143,7 @@ func (h *CommandRegistry) RemoveGroup(command string, group string) (err error) 
 	return errors.New("Command does not belong to group " + group)
 }
 
+// GetGroups function
 func (h *CommandRegistry) GetGroups(command string) (groups []string, err error) {
 
 	record, err := h.GetCommand(command)
@@ -144,6 +154,7 @@ func (h *CommandRegistry) GetGroups(command string) (groups []string, err error)
 	return record.Groups, nil
 }
 
+// AddChannel function
 func (h *CommandRegistry) AddChannel(command string, channel string) (err error) {
 
 	record, err := h.GetCommand(command)
@@ -162,6 +173,7 @@ func (h *CommandRegistry) AddChannel(command string, channel string) (err error)
 	return nil
 }
 
+// RemoveChannel function
 func (h *CommandRegistry) RemoveChannel(command string, channel string) (err error) {
 	record, err := h.GetCommand(command)
 	if err != nil {
@@ -179,6 +191,7 @@ func (h *CommandRegistry) RemoveChannel(command string, channel string) (err err
 	return errors.New("Command does not belong to channel " + channel)
 }
 
+// GetChannels function
 func (h *CommandRegistry) GetChannels(command string) (channels []string, err error) {
 
 	record, err := h.GetCommand(command)
@@ -189,6 +202,7 @@ func (h *CommandRegistry) GetChannels(command string) (channels []string, err er
 	return record.Channels, nil
 }
 
+// CheckChannel function
 func (h *CommandRegistry) CheckChannel(command string, channel string) bool {
 
 	channels, err := h.GetChannels(command)
@@ -205,6 +219,7 @@ func (h *CommandRegistry) CheckChannel(command string, channel string) bool {
 	return false
 }
 
+// CheckGroup function
 func (h *CommandRegistry) CheckGroup(command string, group string) bool {
 
 	groups, err := h.GetGroups(command)
@@ -221,6 +236,7 @@ func (h *CommandRegistry) CheckGroup(command string, group string) bool {
 	return false
 }
 
+// CheckUserGroups function
 func (h *CommandRegistry) CheckUserGroups(command string, user User) bool {
 
 	groups, err := h.GetGroups(command)
@@ -244,6 +260,7 @@ func (h *CommandRegistry) CheckUserGroups(command string, user User) bool {
 	return false
 }
 
+// AddUser function
 func (h *CommandRegistry) AddUser(command string, user string) (err error) {
 
 	record, err := h.GetCommand(command)
@@ -262,6 +279,7 @@ func (h *CommandRegistry) AddUser(command string, user string) (err error) {
 	return nil
 }
 
+// RemoveUser function
 func (h *CommandRegistry) RemoveUser(command string, user string) (err error) {
 	record, err := h.GetCommand(command)
 	if err != nil {
@@ -279,6 +297,7 @@ func (h *CommandRegistry) RemoveUser(command string, user string) (err error) {
 	return errors.New(user + " does not have permission to use " + command)
 }
 
+// GetUsers function
 func (h *CommandRegistry) GetUsers(command string) (users []string, err error) {
 
 	record, err := h.GetCommand(command)
@@ -289,6 +308,7 @@ func (h *CommandRegistry) GetUsers(command string) (users []string, err error) {
 	return record.Users, nil
 }
 
+// CheckUser function
 func (h *CommandRegistry) CheckUser(command string, user string) bool {
 
 	users, err := h.GetUsers(command)
@@ -305,6 +325,7 @@ func (h *CommandRegistry) CheckUser(command string, user string) bool {
 	return false
 }
 
+// CheckPermission function
 func (h *CommandRegistry) CheckPermission(command string, channel string, user User) bool {
 
 	userpermission := false
@@ -326,6 +347,7 @@ func (h *CommandRegistry) CheckPermission(command string, channel string, user U
 	return false
 }
 
+// ChannelList function
 func (h *CommandRegistry) ChannelList(command string) (channels []string, err error) {
 	// Check Channels
 	cmd, err := h.GetCommand(command)
@@ -340,6 +362,7 @@ func (h *CommandRegistry) ChannelList(command string) (channels []string, err er
 	return channels, nil
 }
 
+// UserList function
 func (h *CommandRegistry) UserList(command string) (users []string, err error) {
 	// Check Users
 	cmd, err := h.GetCommand(command)
@@ -353,6 +376,7 @@ func (h *CommandRegistry) UserList(command string) (users []string, err error) {
 	return users, nil
 }
 
+// GroupList function
 func (h *CommandRegistry) GroupList(command string) (groups []string, err error) {
 
 	// Check Groups
@@ -367,6 +391,7 @@ func (h *CommandRegistry) GroupList(command string) (groups []string, err error)
 	return groups, nil
 }
 
+// CommandsForChannel function
 func (h *CommandRegistry) CommandsForChannel(page int, channel string) (records []CommandRecord, err error) {
 
 	db := h.db.rawdb.From("Commands")
@@ -412,6 +437,7 @@ func (h *CommandRegistry) CommandsForChannel(page int, channel string) (records 
 	return records, nil
 }
 
+// CommandsForChannelCount function
 func (h *CommandRegistry) CommandsForChannelCount(channel string) (count int, err error) {
 	db := h.db.rawdb.From("Commands")
 
@@ -430,6 +456,7 @@ func (h *CommandRegistry) CommandsForChannelCount(channel string) (count int, er
 	return count, nil
 }
 
+// CommandsForChannelPageCount function
 func (h *CommandRegistry) CommandsForChannelPageCount(channel string) (pages int, err error) {
 	// Check Groups
 	db := h.db.rawdb.From("Commands")
@@ -456,6 +483,7 @@ func (h *CommandRegistry) CommandsForChannelPageCount(channel string) (pages int
 	return pages, nil
 }
 
+// SetDescription function
 func (h *CommandRegistry) SetDescription(command string, description string) (err error) {
 
 	record, err := h.GetCommand(command)
@@ -473,6 +501,7 @@ func (h *CommandRegistry) SetDescription(command string, description string) (er
 	return nil
 }
 
+// GetDescription function
 func (h *CommandRegistry) GetDescription(command string) (description string, err error) {
 
 	record, err := h.GetCommand(command)
@@ -484,6 +513,7 @@ func (h *CommandRegistry) GetDescription(command string) (description string, er
 	return description, nil
 }
 
+// SetUsage function
 func (h *CommandRegistry) SetUsage(command string, usage string) (err error) {
 
 	record, err := h.GetCommand(command)
@@ -501,6 +531,7 @@ func (h *CommandRegistry) SetUsage(command string, usage string) (err error) {
 	return nil
 }
 
+// GetUsage function
 func (h *CommandRegistry) GetUsage(command string) (usage string, err error) {
 
 	record, err := h.GetCommand(command)

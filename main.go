@@ -139,7 +139,7 @@ func main() {
 
 	// Now we create and initialize our main handler
 	fmt.Println("\n|| Initializing Main Handler ||\n")
-	handler := MainHandler{db: &dbhandler, conf: &conf, dg: dg, callback: &callbackhandler, perm: &permissionshandler,
+	handler := PrimaryHandler{db: &dbhandler, conf: &conf, dg: dg, callback: &callbackhandler, perm: &permissionshandler,
 		command: &commandhandler, logchan: logchannel, bankhandler: &bankhandler, user: &userhandler, channel: &channelhandler}
 	err = handler.Init()
 	if err != nil {

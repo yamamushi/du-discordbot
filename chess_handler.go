@@ -8,6 +8,7 @@ import (
 	"strings"
 )
 
+// ChessHandler struct
 type ChessHandler struct {
 	db      *DBHandler
 	logchan chan string
@@ -19,6 +20,7 @@ type ChessHandler struct {
 	user    *UserHandler
 }
 
+// Init function
 func (h *ChessHandler) Init() (err error) {
 	h.chess = &ChessGame{db: h.db}
 	h.chess.Init()
@@ -34,6 +36,7 @@ func (h *ChessHandler) Init() (err error) {
 	return nil
 }
 
+// Read function
 func (h *ChessHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if !SafeInput(s, m, h.conf) {
@@ -205,6 +208,7 @@ func (h *ChessHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 }
 
+// NewGame function
 func (h *ChessHandler) NewGame(color string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if color != "white" && color != "White" && color != "black" && color != "Black" {
@@ -262,6 +266,7 @@ func (h *ChessHandler) NewGame(color string, s *discordgo.Session, m *discordgo.
 	}
 }
 
+// SendBoard function
 func (h *ChessHandler) SendBoard(s *discordgo.Session, m *discordgo.MessageCreate) {
 	message, err := h.chess.GetBoard(m.Author.ID, "default", "default")
 	if err != nil {
@@ -273,6 +278,7 @@ func (h *ChessHandler) SendBoard(s *discordgo.Session, m *discordgo.MessageCreat
 
 }
 
+// BotMoveCallback function
 func (h *ChessHandler) BotMoveCallback(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	responsechannel := make(chan string)
@@ -376,6 +382,7 @@ func (h *ChessHandler) BotMoveCallback(s *discordgo.Session, m *discordgo.Messag
 
 }
 
+// DisplayHelp function
 func (h *ChessHandler) DisplayHelp(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	prompt := new(discordgo.MessageEmbed)
@@ -393,7 +400,7 @@ func (h *ChessHandler) DisplayHelp(s *discordgo.Session, m *discordgo.MessageCre
 	prompt.Description = "Commands for <chess> \n :rotating_light:|| Curent Prize Pool - " +
 		strconv.Itoa(chessbalance/8) + " Credits! ||:rotating_light:"
 	prompt.Timestamp = ""
-	prompt.Color = ColorDark_Red()
+	prompt.Color = ColorDarkRed()
 
 	footer := new(discordgo.MessageEmbedFooter)
 	footer.Text = "When you see a good move, look for a better one - (Emanuel Lasker)"
@@ -500,6 +507,7 @@ func (h *ChessHandler) DisplayHelp(s *discordgo.Session, m *discordgo.MessageCre
 
 }
 
+// DisplayInfo function
 func (h *ChessHandler) DisplayInfo(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	message := string("|| DU-DiscordBot Chess Help || \n" + "```" + "\n")
@@ -514,6 +522,7 @@ func (h *ChessHandler) DisplayInfo(s *discordgo.Session, m *discordgo.MessageCre
 
 }
 
+// DisplayStyleMenu function
 func (h *ChessHandler) DisplayStyleMenu(payload []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if len(payload) < 1 {
@@ -628,6 +637,7 @@ func (h *ChessHandler) DisplayStyleMenu(payload []string, s *discordgo.Session, 
 	}
 }
 
+// ChangePieceStyle function
 func (h *ChessHandler) ChangePieceStyle(piece string, style string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if piece != "white" && piece != "black" {
@@ -696,6 +706,7 @@ func (h *ChessHandler) ChangePieceStyle(piece string, style string, s *discordgo
 	return
 }
 
+// DisplayStylesByList function
 func (h *ChessHandler) DisplayStylesByList(stylelist []string) (message string) {
 
 	listmessage := ":"
@@ -719,6 +730,7 @@ func (h *ChessHandler) DisplayStylesByList(stylelist []string) (message string) 
 	return listmessage
 }
 
+// DisplayProfile  function
 func (h *ChessHandler) DisplayProfile(userid string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	record, err := h.chess.GetRecordFromDB(userid)
@@ -740,7 +752,7 @@ func (h *ChessHandler) DisplayProfile(userid string, s *discordgo.Session, m *di
 	prompt.Title = "Chess Profile"
 	prompt.Description = "Player Record for " + userstate.Mention()
 	prompt.Timestamp = ""
-	prompt.Color = ColorDark_Red()
+	prompt.Color = ColorDarkRed()
 
 	//footer := new(discordgo.MessageEmbedFooter)
 	//footer.Text = strconv.Itoa(record.Games)
@@ -871,6 +883,7 @@ func (h *ChessHandler) DisplayProfile(userid string, s *discordgo.Session, m *di
 
 }
 
+// ProcessWin function
 func (h *ChessHandler) ProcessWin(userid string) (err error) {
 	err = h.chess.ProcessWin(userid)
 	if err != nil {
@@ -890,6 +903,7 @@ func (h *ChessHandler) ProcessWin(userid string) (err error) {
 	return nil
 }
 
+// PayUser function
 func (h *ChessHandler) PayUser(amount int, userid string) (err error) {
 
 	wallet, err := h.wallet.GetWallet(userid)
@@ -901,6 +915,7 @@ func (h *ChessHandler) PayUser(amount int, userid string) (err error) {
 	return err
 }
 
+// ChargeUser function
 func (h *ChessHandler) ChargeUser(amount int, userid string) (err error) {
 
 	wallet, err := h.wallet.GetWallet(userid)

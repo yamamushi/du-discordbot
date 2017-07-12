@@ -13,6 +13,7 @@ import (
 	"strconv"
 )
 
+// CommandHandler struct
 type CommandHandler struct {
 	callback *CallbackHandler
 	conf     *Config
@@ -25,6 +26,7 @@ type CommandHandler struct {
 	logchan  chan string
 }
 
+// Init function
 func (h *CommandHandler) Init(channelhandler *ChannelHandler) {
 
 	// Setup our Channel Handler
@@ -44,6 +46,7 @@ func (h *CommandHandler) Init(channelhandler *ChannelHandler) {
 
 }
 
+// Read function
 func (h *CommandHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	// Check for safety
@@ -67,6 +70,7 @@ func (h *CommandHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) 
 	}
 }
 
+// ReadCommand function
 func (h *CommandHandler) ReadCommand(message []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if len(message) < 1 {
@@ -145,6 +149,7 @@ func (h *CommandHandler) ReadCommand(message []string, s *discordgo.Session, m *
 	}
 }
 
+// ReadList function
 func (h *CommandHandler) ReadList(message []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	// list
@@ -190,6 +195,7 @@ func (h *CommandHandler) ReadList(message []string, s *discordgo.Session, m *dis
 	}
 }
 
+// ReadGroups function
 func (h *CommandHandler) ReadGroups(message []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 	command := message[0]
 	payload := RemoveStringFromSlice(message, command)
@@ -257,6 +263,7 @@ func (h *CommandHandler) ReadGroups(message []string, s *discordgo.Session, m *d
 	}
 }
 
+// ReadUsers function
 func (h *CommandHandler) ReadUsers(message []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 	command := message[0]
 	payload := RemoveStringFromSlice(message, command)
@@ -338,6 +345,7 @@ func (h *CommandHandler) ReadUsers(message []string, s *discordgo.Session, m *di
 	}
 }
 
+// ReadChannels function
 func (h *CommandHandler) ReadChannels(message []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 	command := message[0]
 	payload := RemoveStringFromSlice(message, command)
@@ -444,6 +452,7 @@ func (h *CommandHandler) ReadChannels(message []string, s *discordgo.Session, m 
 	}
 }
 
+// EnableCommand function
 func (h *CommandHandler) EnableCommand(message []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if len(message) == 1 {
@@ -481,6 +490,7 @@ func (h *CommandHandler) EnableCommand(message []string, s *discordgo.Session, m
 	return
 }
 
+// DisableCommand function
 func (h *CommandHandler) DisableCommand(message []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if len(message) == 1 {
@@ -519,6 +529,7 @@ func (h *CommandHandler) DisableCommand(message []string, s *discordgo.Session, 
 
 }
 
+// DisplayUsage function
 func (h *CommandHandler) DisplayUsage(message []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	command, err := h.registry.GetCommand(message[0])
@@ -536,6 +547,7 @@ func (h *CommandHandler) DisplayUsage(message []string, s *discordgo.Session, m 
 	return
 }
 
+// DisplayDescription function
 func (h *CommandHandler) DisplayDescription(message []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	command, err := h.registry.GetCommand(message[0])
@@ -553,6 +565,7 @@ func (h *CommandHandler) DisplayDescription(message []string, s *discordgo.Sessi
 	return
 }
 
+// ListCommands function
 func (h *CommandHandler) ListCommands(channelid string, page int, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if channelid == "" {
@@ -582,6 +595,7 @@ func (h *CommandHandler) ListCommands(channelid string, page int, s *discordgo.S
 	return
 }
 
+// FormatCommands function
 func (h *CommandHandler) FormatCommands(recordlist []CommandRecord) (formattedlist string) {
 
 	formattedmessage := ":\n" + " Command list for this channel (see command <description> or command <usage> if table is too small)\n"

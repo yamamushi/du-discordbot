@@ -1,5 +1,6 @@
 package main
 
+// User struct
 type User struct {
 	ID string `storm:"id"` // primary key
 
@@ -14,11 +15,13 @@ type User struct {
 	Citizen    bool `storm:"index"`
 }
 
+// Init function
 func (u *User) Init() {
 	ClearRoles(u)
 	CitizenRole(u)
 }
 
+// SetRole function
 func (u *User) SetRole(role string) {
 
 	switch role {
@@ -58,6 +61,7 @@ func (u *User) SetRole(role string) {
 	}
 }
 
+// RemoveRole function
 func (u *User) RemoveRole(role string) {
 
 	switch role {
@@ -92,6 +96,7 @@ func (u *User) RemoveRole(role string) {
 	}
 }
 
+// CheckRole function
 func (u *User) CheckRole(role string) bool {
 
 	switch role {

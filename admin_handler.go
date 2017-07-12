@@ -5,11 +5,13 @@ import (
 	"strings"
 )
 
+// AdminHandler struct
 type AdminHandler struct {
 	conf *Config
 	db   *DBHandler
 }
 
+// Read
 func (h *AdminHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	cp := h.conf.DUBotConfig.CP

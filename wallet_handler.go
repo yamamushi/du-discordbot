@@ -7,6 +7,7 @@ import (
 	"strconv"
 )
 
+// WalletHandler struct
 type WalletHandler struct {
 	db      *DBHandler
 	user    *UserHandler
@@ -14,6 +15,7 @@ type WalletHandler struct {
 	conf    *Config
 }
 
+// Read function
 func (h *WalletHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if !SafeInput(s, m, h.conf) {
@@ -90,6 +92,7 @@ func (h *WalletHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 	//}
 }
 
+// GetWallet function
 func (h *WalletHandler) GetWallet(ID string) (Wallet, error) {
 
 	db := h.db.rawdb.From("Users").From("Wallets")
@@ -105,6 +108,7 @@ func (h *WalletHandler) GetWallet(ID string) (Wallet, error) {
 	return wallet, nil
 }
 
+// SaveWallet function
 func (h *WalletHandler) SaveWallet(wallet Wallet) (err error) {
 
 	db := h.db.rawdb.From("Users").From("Wallets")
@@ -118,6 +122,7 @@ func (h *WalletHandler) SaveWallet(wallet Wallet) (err error) {
 	return nil
 }
 
+// Transfer function
 func (h *WalletHandler) Transfer(message []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	db := h.db.rawdb.From("Users").From("Wallets")
@@ -179,6 +184,7 @@ func (h *WalletHandler) Transfer(message []string, s *discordgo.Session, m *disc
 
 }
 
+// AddBalance function
 func (h *WalletHandler) AddBalance(message []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	db := h.db.rawdb.From("Users").From("Wallets")
@@ -207,14 +213,15 @@ func (h *WalletHandler) AddBalance(message []string, s *discordgo.Session, m *di
 	return
 }
 
+// GetBalance function
 func (h *WalletHandler) GetBalance(ID string) (string, error) {
 
 	h.user.CheckUser(ID)
 
 	wallet, err := h.GetWallet(ID)
 	if err != nil {
-		fmt.Println("Could not retrieve wallet for user! ")
-		return "", errors.New("Could not retrieve wallet for user!")
+		fmt.Println("Could not retrieve wallet for user")
+		return "", errors.New("Could not retrieve wallet for user")
 	}
 
 	return strconv.Itoa(wallet.Balance), nil

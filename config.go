@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// Config struct
 type Config struct {
 	DiscordConfig discordConfig  `toml:"discord"`
 	DBConfig      databaseConfig `toml:"database"`
@@ -14,15 +15,18 @@ type Config struct {
 	CasinoConfig  casinoConfig   `toml:"casino"`
 }
 
+// discordConfig struct
 type discordConfig struct {
 	Token   string `toml:"bot_token"`
 	AdminID string `toml:"admin_id"`
 }
 
+// databaseConfig struct
 type databaseConfig struct {
 	DBFile string `toml:"filename"`
 }
 
+// dubotConfig struct
 type dubotConfig struct {
 
 	// Command Prefix
@@ -35,6 +39,7 @@ type dubotConfig struct {
 	MaxAudioDuration int           `toml:"max_audio_duration"`
 }
 
+// bankConfig struct
 type bankConfig struct {
 	BankName               string `toml:"bank_name"`
 	BankURL                string `toml:"bank_url"`
@@ -47,6 +52,7 @@ type bankConfig struct {
 	BankMenuSlogan         string `toml:"bank_menu_slogan"`
 }
 
+// casinoConfig struct
 type casinoConfig struct {
 	CasinoName string `toml:"casino_name"`
 	Pin        string `toml:"casino_pin"`
@@ -54,6 +60,7 @@ type casinoConfig struct {
 	SeedWallet int    `toml:"starting_casino_wallet_value"`
 }
 
+// ReadConfig function
 func ReadConfig(path string) (config Config, err error) {
 
 	var conf Config

@@ -10,6 +10,7 @@ import (
 	"time"
 )
 
+// MusicHandler struct
 type MusicHandler struct {
 	youtube      *YoutubeInterface
 	db           *DBHandler
@@ -43,6 +44,7 @@ type MusicHandler struct {
 	initialized  bool
 }
 
+// Init function
 // Initializes our Music Handler
 func (h *MusicHandler) Init() {
 	h.youtube = &YoutubeInterface{db: h.db, conf: h.conf}
@@ -50,7 +52,7 @@ func (h *MusicHandler) Init() {
 	h.currentsongdetails = make(chan string)
 }
 
-// Reads our commands and passes them to the appropriate handlers
+// Read Reads our commands and passes them to the appropriate handlers
 func (h *MusicHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if !h.initialized {
@@ -134,6 +136,7 @@ func (h *MusicHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 }
 
+// HandlePlay function
 func (h *MusicHandler) HandlePlay(payload []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if h.paused {
@@ -200,6 +203,8 @@ func (h *MusicHandler) HandlePlay(payload []string, s *discordgo.Session, m *dis
 // Playback Setup Functions
 
 // Downloads the given video and converts it for playback.
+
+// RetrieveVideo function
 func (h *MusicHandler) RetrieveVideo(playlist string, videoid string) (retrievedid string, err error) {
 
 	playlistdb, err := h.youtube.GetDB(playlist)
@@ -247,7 +252,7 @@ func (h *MusicHandler) RetrieveVideo(playlist string, videoid string) (retrieved
 	return "", errors.New("No matching video found in selected playlist")
 }
 
-// Sets up a new session. This will disconnect an active session, as it should only be called when no active session exists.
+// SetupPlayback Sets up a new session. This will disconnect an active session, as it should only be called when no active session exists.
 func (h *MusicHandler) SetupPlayback(s *discordgo.Session, m *discordgo.MessageCreate) (err error) {
 
 	if h.broadcasting {
@@ -265,7 +270,7 @@ func (h *MusicHandler) SetupPlayback(s *discordgo.Session, m *discordgo.MessageC
 
 	// Check to see if our voice channel is empty or not
 	if IsVoiceChannelEmpty(s, audioroom, s.State.User.ID) {
-		return errors.New("Channel is empty!")
+		return errors.New("Channel is empty")
 	}
 	h.voicechannel = audioroom
 
@@ -281,7 +286,7 @@ func (h *MusicHandler) SetupPlayback(s *discordgo.Session, m *discordgo.MessageC
 	return nil
 }
 
-// Get Channel/Guild
+// GetGuildID Get Channel/Guild
 func (h *MusicHandler) GetGuildID(s *discordgo.Session, m *discordgo.MessageCreate) (guildid string, err error) {
 
 	channel, err := s.State.Channel(m.ChannelID)
@@ -296,7 +301,7 @@ func (h *MusicHandler) GetGuildID(s *discordgo.Session, m *discordgo.MessageCrea
 	return guild.ID, nil
 }
 
-// Connects our bot to a voice channel and returns an error if anything goes wrong
+// ConnectVoice Connects our bot to a voice channel and returns an error if anything goes wrong
 func (h *MusicHandler) ConnectVoice(audiochannel string, s *discordgo.Session, m *discordgo.MessageCreate) (err error) {
 
 	guildid, err := h.GetGuildID(s, m)
@@ -318,7 +323,7 @@ func (h *MusicHandler) ConnectVoice(audiochannel string, s *discordgo.Session, m
 	return nil
 }
 
-// Disconects our voice channel connect
+// DisconnectVoice Disconects our voice channel connect
 func (h *MusicHandler) DisconnectVoice() {
 
 	if h.vc == nil {
@@ -333,6 +338,7 @@ func (h *MusicHandler) DisconnectVoice() {
 	h.isSetup = false
 }
 
+// SetNowPlaying function
 func (h *MusicHandler) SetNowPlaying(videoid string, playlist string) {
 	vid, err := h.youtube.GetVideoObject(videoid)
 	if err != nil {
@@ -350,6 +356,7 @@ func (h *MusicHandler) SetNowPlaying(videoid string, playlist string) {
 	h.currentsongduration = vid.Duration
 }
 
+// UnSetNowPlaying function
 func (h *MusicHandler) UnSetNowPlaying() {
 
 	h.nowplaying = "Nothing currently playing"
@@ -359,6 +366,7 @@ func (h *MusicHandler) UnSetNowPlaying() {
 	h.currentsongid = "nil"
 }
 
+// PrepareBuffer function
 func (h *MusicHandler) PrepareBuffer(videoid string) (err error) {
 
 	h.bufferlocker.Lock()
@@ -370,14 +378,14 @@ func (h *MusicHandler) PrepareBuffer(videoid string) (err error) {
 	}
 
 	// Flush the next buffer
-	for i, _ := range h.nextbuffer {
+	for i := range h.nextbuffer {
 		h.nextbuffer[i] = nil
 	}
 
 	h.nextbuffer = make([][]byte, len(buffer))
 	copy(h.nextbuffer, buffer)
 
-	for i, _ := range buffer {
+	for i := range buffer {
 		buffer[i] = nil
 	}
 
@@ -387,6 +395,8 @@ func (h *MusicHandler) PrepareBuffer(videoid string) (err error) {
 // This is typically what we'll be calling when we start a new song.
 // Sets up our playback loop (buffer unpacking) and catches signals from the MusicHandler.interrupt channel.
 // This expects a video that has already been processed, so DO NOT call it before retrieving and verifying there are no errors.
+
+// StartPlayback function
 func (h *MusicHandler) StartPlayback(videoid string, playlist string, restore bool, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if h.nextbuffer == nil {
@@ -427,7 +437,7 @@ func (h *MusicHandler) StartPlayback(videoid string, playlist string, restore bo
 				h.songlive = false
 				h.restoresong = true
 				h.lastblockpos = i
-				for y, _ := range currentbuffer {
+				for y := range currentbuffer {
 					currentbuffer[y] = nil
 				}
 				s.ChannelMessageSend(m.ChannelID, "Playback Stopped")
@@ -438,7 +448,7 @@ func (h *MusicHandler) StartPlayback(videoid string, playlist string, restore bo
 				h.songlive = false
 				h.restoresong = true
 				h.lastblockpos = i
-				for y, _ := range currentbuffer {
+				for y := range currentbuffer {
 					currentbuffer[y] = nil
 				}
 				s.ChannelMessageSend(m.ChannelID, "Playback Stopped")
@@ -448,7 +458,7 @@ func (h *MusicHandler) StartPlayback(videoid string, playlist string, restore bo
 				h.songlive = false
 				h.restoresong = false
 				// Flush the buffer before returning
-				for y, _ := range currentbuffer {
+				for y := range currentbuffer {
 					currentbuffer[y] = nil
 				}
 				return
@@ -470,7 +480,7 @@ func (h *MusicHandler) StartPlayback(videoid string, playlist string, restore bo
 						h.paused = false
 						h.restoresong = true
 						h.lastblockpos = i
-						for y, _ := range currentbuffer {
+						for y := range currentbuffer {
 							currentbuffer[y] = nil
 						}
 						s.ChannelMessageSend(m.ChannelID, "Playback Stopped")
@@ -482,7 +492,7 @@ func (h *MusicHandler) StartPlayback(videoid string, playlist string, restore bo
 						h.paused = false
 						h.restoresong = true
 						h.lastblockpos = i
-						for y, _ := range currentbuffer {
+						for y := range currentbuffer {
 							currentbuffer[y] = nil
 						}
 						s.ChannelMessageSend(m.ChannelID, "Playback Stopped")
@@ -493,7 +503,7 @@ func (h *MusicHandler) StartPlayback(videoid string, playlist string, restore bo
 						h.paused = false
 						h.restoresong = false
 						// Flush the buffer before returning
-						for y, _ := range currentbuffer {
+						for y := range currentbuffer {
 							currentbuffer[y] = nil
 						}
 						return
@@ -507,11 +517,11 @@ func (h *MusicHandler) StartPlayback(videoid string, playlist string, restore bo
 
 	h.bufferlocker.Lock()
 	// Flush the next buffer
-	for i, _ := range h.nextbuffer {
+	for i := range h.nextbuffer {
 		h.nextbuffer[i] = nil
 	}
 	h.bufferlocker.Unlock()
-	for y, _ := range currentbuffer {
+	for y := range currentbuffer {
 		currentbuffer[y] = nil
 	}
 	// If we got here our song ended and we don't need to unset anything but the fact that we have no live song.
@@ -520,6 +530,7 @@ func (h *MusicHandler) StartPlayback(videoid string, playlist string, restore bo
 	return
 }
 
+// CurrentSongStatus function
 func (h *MusicHandler) CurrentSongStatus(s *discordgo.Session) (status string) {
 
 	if !h.songlive {
@@ -558,6 +569,7 @@ func (h *MusicHandler) CurrentSongStatus(s *discordgo.Session) (status string) {
 	return output
 }
 
+// PlayNext function
 func (h *MusicHandler) PlayNext(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// Send our command to skip the currently playing song
 	if h.vc == nil {
@@ -606,11 +618,12 @@ func (h *MusicHandler) PlayNext(s *discordgo.Session, m *discordgo.MessageCreate
 	return
 }
 
+// PlayShuffle function
 func (h *MusicHandler) PlayShuffle(audioroom string, videoid string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 }
 
-// Adds the item to the given playlist using argument syntax "playlist: genre: "
+// HandleAdd Adds the item to the given playlist using argument syntax "playlist: genre: "
 func (h *MusicHandler) HandleAdd(userid string, payload []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	// If we didn't provide arguments, put it into the default playlist with no genre
@@ -673,7 +686,7 @@ func (h *MusicHandler) HandleAdd(userid string, payload []string, s *discordgo.S
 
 }
 
-// Used for setting up the voice channel that we broadcast to.
+// SetVoiceChannel Used for setting up the voice channel that we broadcast to.
 func (h *MusicHandler) SetVoiceChannel(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	channel, err := s.State.Channel(m.ChannelID)
@@ -702,7 +715,7 @@ func (h *MusicHandler) SetVoiceChannel(s *discordgo.Session, m *discordgo.Messag
 	return
 }
 
-// Go routine launched when we start audio playback to make sure we don't play to an empty room
+// StateManager Go routine launched when we start audio playback to make sure we don't play to an empty room
 func (h *MusicHandler) StateManager(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	BotID := s.State.User.ID

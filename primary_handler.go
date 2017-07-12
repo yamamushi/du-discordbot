@@ -6,7 +6,8 @@ import (
 	"strings"
 )
 
-type MainHandler struct {
+// PrimaryHandler struct
+type PrimaryHandler struct {
 	db          *DBHandler
 	conf        *Config
 	dg          *discordgo.Session
@@ -20,7 +21,8 @@ type MainHandler struct {
 	channel     *ChannelHandler
 }
 
-func (h *MainHandler) Init() error {
+// Init function
+func (h *PrimaryHandler) Init() error {
 	// DO NOT add anything above this line!!
 	// Add our main handler -
 	h.dg.AddHandler(h.Read)
@@ -73,9 +75,9 @@ func (h *MainHandler) Init() error {
 	return nil
 }
 
+// PostInit function
 // Just some quick things to run after our websocket has been setup and opened
-
-func (h *MainHandler) PostInit(dg *discordgo.Session) error {
+func (h *PrimaryHandler) PostInit(dg *discordgo.Session) error {
 	fmt.Println("Running Post-Init")
 
 	// Update our default playing status
@@ -94,7 +96,9 @@ func (h *MainHandler) PostInit(dg *discordgo.Session) error {
 
 // This function will be called (due to AddHandler above) every time a new
 // message is created on any channel that the autenticated bot has access to.
-func (h *MainHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
+
+// Read function
+func (h *PrimaryHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// very important to set this first!
 	cp := h.conf.DUBotConfig.CP
 
@@ -162,7 +166,8 @@ func (h *MainHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 }
 
-func (h *MainHandler) RegisterCommands() (err error) {
+// RegisterCommands function
+func (h *PrimaryHandler) RegisterCommands() (err error) {
 
 	h.registry.Register("follow", "Follow a DU forum user. Updates will be sent via pm", "follow <forum name>")
 	h.registry.Register("ping", "Ping command", "ping")

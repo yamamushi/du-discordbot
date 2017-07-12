@@ -6,12 +6,14 @@ import (
 	"reflect"
 )
 
+// CallbackHandler struct
 type CallbackHandler struct {
 	WatchList list.List
 	dg        *discordgo.Session
 	logger    *Logger
 }
 
+// WatchUser struct
 type WatchUser struct {
 	User      string
 	ChannelID string
@@ -20,13 +22,14 @@ type WatchUser struct {
 	Args      string
 }
 
-// We want to accept callback handlers
+// AddHandler function
 func (c *CallbackHandler) AddHandler(h interface{}) {
 	// Important to note here, that this will only run once
 	// We don't want to leave the handler running stale
 	c.dg.AddHandlerOnce(h)
 }
 
+// Watch function
 func (c *CallbackHandler) Watch(Handler func(string, *discordgo.Session, *discordgo.MessageCreate),
 	MessageID string, Args string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
@@ -35,6 +38,7 @@ func (c *CallbackHandler) Watch(Handler func(string, *discordgo.Session, *discor
 
 }
 
+// UnWatch function
 func (c *CallbackHandler) UnWatch(User string, ChannelID string, MessageID string) {
 
 	// Clear user element by iterating
@@ -43,26 +47,27 @@ func (c *CallbackHandler) UnWatch(User string, ChannelID string, MessageID strin
 		next = e.Next()
 
 		r := reflect.ValueOf(e.Value)
-		r_user := reflect.Indirect(r).FieldByName("User")
-		r_channel := reflect.Indirect(r).FieldByName("ChannelID")
-		r_messageid := reflect.Indirect(r).FieldByName("MessageID")
+		user := reflect.Indirect(r).FieldByName("User")
+		channel := reflect.Indirect(r).FieldByName("ChannelID")
+		messageid := reflect.Indirect(r).FieldByName("MessageID")
 
-		if r_user.String() == User && r_channel.String() == ChannelID && r_messageid.String() == MessageID {
+		if user.String() == User && channel.String() == ChannelID && messageid.String() == MessageID {
 			c.WatchList.Remove(e)
 		}
 	}
 }
 
+// Read function
 func (c *CallbackHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	var next *list.Element
 	for e := c.WatchList.Front(); e != nil; e = next {
 
 		r := reflect.ValueOf(e.Value)
-		r_user := reflect.Indirect(r).FieldByName("User")
-		r_channelid := reflect.Indirect(r).FieldByName("ChannelID")
+		user := reflect.Indirect(r).FieldByName("User")
+		channelid := reflect.Indirect(r).FieldByName("ChannelID")
 
-		if m.Author.ID == r_user.String() && m.ChannelID == r_channelid.String() {
+		if m.Author.ID == user.String() && m.ChannelID == channelid.String() {
 
 			// We get the handler interface from our "Handler" field
 			handler := reflect.Indirect(r).FieldByName("Handler")

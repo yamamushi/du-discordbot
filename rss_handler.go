@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+// RSSHandler struct
 type RSSHandler struct {
 	db         *DBHandler
 	conf       *Config
@@ -16,12 +17,14 @@ type RSSHandler struct {
 	foruminteg *ForumIntegration
 }
 
+// Init function
 func (h *RSSHandler) Init() {
 	h.RegisterCommands()
 	h.foruminteg = &ForumIntegration{}
 
 }
 
+// RegisterCommands function
 func (h *RSSHandler) RegisterCommands() (err error) {
 
 	h.registry.Register("rss", "Manage the current channel's RSS Subscriptions", "rss add|remove|list")
@@ -30,6 +33,7 @@ func (h *RSSHandler) RegisterCommands() (err error) {
 
 }
 
+// Read function
 func (h *RSSHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	cp := h.conf.DUBotConfig.CP
@@ -64,6 +68,7 @@ func (h *RSSHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 }
 
+// ParseCommand function
 func (h *RSSHandler) ParseCommand(command []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if len(command) < 2 {
@@ -121,6 +126,7 @@ func (h *RSSHandler) ParseCommand(command []string, s *discordgo.Session, m *dis
 	}
 }
 
+// UpdateRSSFeeds function
 func (h *RSSHandler) UpdateRSSFeeds(s *discordgo.Session) {
 
 	for true {
@@ -188,6 +194,7 @@ func (h *RSSHandler) UpdateRSSFeeds(s *discordgo.Session) {
 	}
 }
 
+// FormatRSSItem function
 func (h *RSSHandler) FormatRSSItem(url string, rssitem RSSItem, feedtitle string) (formatted string) {
 
 	if rssitem.Twitter {
@@ -234,6 +241,7 @@ func (h *RSSHandler) FormatRSSItem(url string, rssitem RSSItem, feedtitle string
 	return formatted
 }
 
+// GetAllLatest function
 // This will send, beware of that.
 func (h *RSSHandler) GetAllLatest(s *discordgo.Session, m *discordgo.MessageCreate) (err error) {
 
@@ -257,6 +265,7 @@ func (h *RSSHandler) GetAllLatest(s *discordgo.Session, m *discordgo.MessageCrea
 	return nil
 }
 
+// GetLatestItem function
 func (h *RSSHandler) GetLatestItem(channel string, url string) (formatted string, err error) {
 	rss := RSS{db: h.db}
 
@@ -270,6 +279,7 @@ func (h *RSSHandler) GetLatestItem(channel string, url string) (formatted string
 	return formatted, nil
 }
 
+// GetRSSList function
 func (h *RSSHandler) GetRSSList(channel string) (formatted string) {
 
 	rss := RSS{db: h.db}
@@ -289,6 +299,7 @@ func (h *RSSHandler) GetRSSList(channel string) (formatted string) {
 
 }
 
+// AddRSS function
 func (h *RSSHandler) AddRSS(command string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	// In this handler we don't do anything with the command string, instead we grab the response from m.Content
@@ -312,6 +323,7 @@ func (h *RSSHandler) AddRSS(command string, s *discordgo.Session, m *discordgo.M
 
 }
 
+// ConfirmAddRSS function
 func (h *RSSHandler) ConfirmAddRSS(url string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	cp := h.conf.DUBotConfig.CP
@@ -346,6 +358,7 @@ func (h *RSSHandler) ConfirmAddRSS(url string, s *discordgo.Session, m *discordg
 	s.ChannelMessageSend(m.ChannelID, "RSS Add Cancelled")
 }
 
+// RemoveRSS function
 func (h *RSSHandler) RemoveRSS(command string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	// In this handler we don't do anything with the command string, instead we grab the response from m.Content
@@ -369,6 +382,7 @@ func (h *RSSHandler) RemoveRSS(command string, s *discordgo.Session, m *discordg
 
 }
 
+// ConfirmRemoveRSS function
 func (h *RSSHandler) ConfirmRemoveRSS(url string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	cp := h.conf.DUBotConfig.CP

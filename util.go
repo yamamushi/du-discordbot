@@ -8,6 +8,7 @@ import (
 	"strings"
 )
 
+// RemoveStringFromSlice function
 func RemoveStringFromSlice(s []string, r string) []string {
 	for i, v := range s {
 		if v == r {
@@ -17,6 +18,7 @@ func RemoveStringFromSlice(s []string, r string) []string {
 	return s
 }
 
+// SafeInput function
 func SafeInput(s *discordgo.Session, m *discordgo.MessageCreate, conf *Config) bool {
 	// Ignore all messages created by the bot itself
 	if m.Author.ID == s.State.User.ID {
@@ -41,6 +43,7 @@ func SafeInput(s *discordgo.Session, m *discordgo.MessageCreate, conf *Config) b
 	return true
 }
 
+// CleanCommand function
 func CleanCommand(input string, conf *Config) (command string, message []string) {
 
 	// Set our command prefix to the default one within our config file
@@ -56,6 +59,7 @@ func CleanCommand(input string, conf *Config) (command string, message []string)
 
 }
 
+// SplitPayload function
 func SplitPayload(input []string) (command string, message []string) {
 
 	// Remove the prefix from our command
@@ -66,11 +70,13 @@ func SplitPayload(input []string) (command string, message []string) {
 
 }
 
-func RemoveFromMessage(s []string, i int) []string {
+// RemoveFromString function
+func RemoveFromString(s []string, i int) []string {
 	s[len(s)-1], s[i] = s[i], s[len(s)-1]
 	return s[:len(s)-1]
 }
 
+// CleanChannel function
 func CleanChannel(mention string) string {
 
 	mention = strings.TrimPrefix(mention, "<#")
@@ -79,6 +85,7 @@ func CleanChannel(mention string) string {
 
 }
 
+// MentionChannel function
 func MentionChannel(channelid string, s *discordgo.Session) (mention string, err error) {
 	dgchannel, err := s.Channel(channelid)
 	if err != nil {
@@ -88,6 +95,7 @@ func MentionChannel(channelid string, s *discordgo.Session) (mention string, err
 	return "<#" + dgchannel.ID + ">", nil
 }
 
+// CheckPermissions function
 func CheckPermissions(command string, channelid string, user *User, s *discordgo.Session, com *CommandHandler) bool {
 
 	usergroups, err := com.user.GetGroups(user.ID)
@@ -151,6 +159,7 @@ func CheckPermissions(command string, channelid string, user *User, s *discordgo
 	return false
 }
 
+// MentionOwner function
 func MentionOwner(conf *Config, s *discordgo.Session, m *discordgo.MessageCreate) (mention string, err error) {
 	user, err := s.User(conf.DiscordConfig.AdminID)
 	if err != nil {
@@ -160,6 +169,7 @@ func MentionOwner(conf *Config, s *discordgo.Session, m *discordgo.MessageCreate
 	return user.Mention(), nil
 }
 
+// OwnerName function
 func OwnerName(conf *Config, s *discordgo.Session, m *discordgo.MessageCreate) (name string, err error) {
 	user, err := s.User(conf.DiscordConfig.AdminID)
 	if err != nil {
@@ -169,6 +179,7 @@ func OwnerName(conf *Config, s *discordgo.Session, m *discordgo.MessageCreate) (
 	return user.Username, nil
 }
 
+// IsVoiceChannelEmpty function
 func IsVoiceChannelEmpty(s *discordgo.Session, channelid string, botid string) bool {
 
 	channel, err := s.Channel(channelid)
@@ -190,7 +201,8 @@ func IsVoiceChannelEmpty(s *discordgo.Session, channelid string, botid string) b
 			}
 		}
 		return true
-	} else {
-		return true
 	}
+
+	return true
+
 }

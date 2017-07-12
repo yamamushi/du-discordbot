@@ -11,6 +11,7 @@ import (
 	"strings"
 )
 
+// UtilitiesHandler struct
 type UtilitiesHandler struct {
 	user     *UserHandler
 	db       *DBHandler
@@ -19,10 +20,12 @@ type UtilitiesHandler struct {
 	logchan  chan string
 }
 
-type ShortUrlResponse struct {
+// ShortURLResponse struct
+type ShortURLResponse struct {
 	Short map[string]string `json:"/short"`
 }
 
+// Read function
 func (h *UtilitiesHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if !SafeInput(s, m, h.conf) {
@@ -69,6 +72,7 @@ func (h *UtilitiesHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate
 
 }
 
+// UnfoldURL function
 func (h *UtilitiesHandler) UnfoldURL(input string) (output string, err error) {
 
 	// The first step is to use golang’s http module to get the response:
@@ -87,7 +91,7 @@ func (h *UtilitiesHandler) UnfoldURL(input string) (output string, err error) {
 	}
 
 	// Unmarshal our response to a json type
-	var unmarshalledresponse = new(ShortUrlResponse)
+	var unmarshalledresponse = new(ShortURLResponse)
 	err = json.Unmarshal(body, &unmarshalledresponse)
 	if err != nil {
 		return output, err
@@ -103,6 +107,7 @@ func (h *UtilitiesHandler) UnfoldURL(input string) (output string, err error) {
 
 }
 
+// GetMoon function
 func (h *UtilitiesHandler) GetMoon() (output string, err error) {
 
 	client := &http.Client{}

@@ -6,6 +6,7 @@ import (
 	"strings"
 )
 
+// UserHandler struct
 type UserHandler struct {
 	conf    *Config
 	db      *DBHandler
@@ -13,10 +14,12 @@ type UserHandler struct {
 	logchan chan string
 }
 
+// Init function
 func (h *UserHandler) Init() {
 	h.cp = h.conf.DUBotConfig.CP
 }
 
+// Read function
 func (h *UserHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	cp := h.conf.DUBotConfig.CP
@@ -81,6 +84,7 @@ func (h *UserHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 	return
 }
 
+// GetUser function
 func (h *UserHandler) GetUser(userid string) (user User, err error) {
 
 	// Make sure user is in the database before we pull it out!
@@ -95,6 +99,7 @@ func (h *UserHandler) GetUser(userid string) (user User, err error) {
 	return user, nil
 }
 
+// CheckUser function
 func (h *UserHandler) CheckUser(ID string) {
 
 	db := h.db.rawdb.From("Users")
@@ -133,6 +138,7 @@ func (h *UserHandler) CheckUser(ID string) {
 	}
 }
 
+// GetGroups function
 func (h *UserHandler) GetGroups(ID string) (groups []string, err error) {
 
 	h.CheckUser(ID)
@@ -171,6 +177,7 @@ func (h *UserHandler) GetGroups(ID string) (groups []string, err error) {
 	return groups, nil
 }
 
+// FormatGroups function
 func (h *UserHandler) FormatGroups(groups []string) (formatted string) {
 	for i, group := range groups {
 		if i == len(groups)-1 {

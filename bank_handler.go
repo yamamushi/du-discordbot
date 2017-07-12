@@ -8,6 +8,7 @@ import (
 	"strings"
 )
 
+// BankHandler struct
 type BankHandler struct {
 	conf     *Config
 	db       *DBHandler
@@ -19,6 +20,7 @@ type BankHandler struct {
 	wallet   *WalletHandler
 }
 
+// Read function
 func (h *BankHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if !SafeInput(s, m, h.conf) {
@@ -59,6 +61,7 @@ func (h *BankHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 }
 
+// Prompt function
 func (h *BankHandler) Prompt(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	var payload string
@@ -187,6 +190,7 @@ func (h *BankHandler) Prompt(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 // Bank Terminal Functions
 
+// ReadPrompt function
 func (h *BankHandler) ReadPrompt(channelid string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	/*
@@ -243,6 +247,7 @@ func (h *BankHandler) ReadPrompt(channelid string, s *discordgo.Session, m *disc
 
 }
 
+// InitBank function
 func (h *BankHandler) InitBank(channelid string, s *discordgo.Session, m *discordgo.MessageCreate) {
 	user, err := h.user.GetUser(m.Author.ID)
 	if err != nil {
@@ -261,6 +266,7 @@ func (h *BankHandler) InitBank(channelid string, s *discordgo.Session, m *discor
 	s.ChannelMessageSend(channelid, "Bank Has Been Initialized")
 }
 
+// ReadDeposit function
 func (h *BankHandler) ReadDeposit(payload []string, channelid string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if !h.bank.BankInitialized() {
@@ -306,6 +312,7 @@ func (h *BankHandler) ReadDeposit(payload []string, channelid string, s *discord
 	}
 }
 
+// ReadWithdraw function
 func (h *BankHandler) ReadWithdraw(payload []string, channelid string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if !h.bank.BankInitialized() {
@@ -351,6 +358,7 @@ func (h *BankHandler) ReadWithdraw(payload []string, channelid string, s *discor
 	}
 }
 
+// ReadBalance function
 func (h *BankHandler) ReadBalance(payload []string, channelid string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if !h.bank.BankInitialized() {
@@ -420,6 +428,7 @@ func (h *BankHandler) ReadBalance(payload []string, channelid string, s *discord
 	}
 }
 
+// ReadTransfer function
 func (h *BankHandler) ReadTransfer(payload []string, channelid string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if !h.bank.BankInitialized() {
@@ -463,16 +472,19 @@ func (h *BankHandler) ReadTransfer(payload []string, channelid string, s *discor
 
 }
 
+// ReadRewards function
 func (h *BankHandler) ReadRewards(payload []string, channelid string, s *discordgo.Session, m *discordgo.MessageCreate) {
 	s.ChannelMessageSend(channelid, "Not yet implemented.")
 	return
 }
 
+// ReadLoans function
 func (h *BankHandler) ReadLoans(payload []string, channelid string, s *discordgo.Session, m *discordgo.MessageCreate) {
 	s.ChannelMessageSend(channelid, "Not yet implemented.")
 	return
 }
 
+// Deposit function
 func (h *BankHandler) Deposit(amount int, userid string, wallet Wallet) (err error) {
 
 	account, err := h.bank.GetAccountForUser(userid)
@@ -498,6 +510,7 @@ func (h *BankHandler) Deposit(amount int, userid string, wallet Wallet) (err err
 
 }
 
+// Withdraw function
 func (h *BankHandler) Withdraw(amount int, userid string, wallet Wallet) (err error) {
 	account, err := h.bank.GetAccountForUser(userid)
 	if err != nil {
@@ -520,14 +533,15 @@ func (h *BankHandler) Withdraw(amount int, userid string, wallet Wallet) (err er
 	return nil
 }
 
+// TransferToAccount function
 func (h *BankHandler) TransferToAccount(amount int, fromAccountID string, toAccountID string) (err error) {
 
 	if amount < 1 {
-		return errors.New("Cannot transfer a negative value!")
+		return errors.New("Cannot transfer a negative value")
 	}
 
 	if fromAccountID == toAccountID {
-		return errors.New("Invalid Bank Account ID Supplied!")
+		return errors.New("Invalid Bank Account ID Supplied")
 	}
 
 	fromAccount, err := h.bank.GetAccountByAccountID(fromAccountID)
@@ -553,6 +567,7 @@ func (h *BankHandler) TransferToAccount(amount int, fromAccountID string, toAcco
 	return nil
 }
 
+// LoanRequest function
 func (h *BankHandler) LoanRequest(amount int, accountID string) (response bool) {
 
 	return false

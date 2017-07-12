@@ -11,6 +11,7 @@ import (
 	"time"
 )
 
+// LuaHandler struct
 type LuaHandler struct {
 	conf     *Config
 	user     *UserHandler
@@ -18,6 +19,7 @@ type LuaHandler struct {
 	registry *CommandRegistry
 }
 
+// Read function
 func (h *LuaHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if !SafeInput(s, m, h.conf) {
@@ -48,6 +50,7 @@ func (h *LuaHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 }
 
+// ReadLua function
 func (h *LuaHandler) ReadLua(payload []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if len(payload) < 1 {
@@ -84,6 +87,7 @@ func (h *LuaHandler) ReadLua(payload []string, s *discordgo.Session, m *discordg
 
 }
 
+// RunReadLuaInput function
 func (h *LuaHandler) RunReadLuaInput(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	message := m.Content
@@ -108,6 +112,7 @@ func (h *LuaHandler) RunReadLuaInput(s *discordgo.Session, m *discordgo.MessageC
 	return
 }
 
+// RunLua function
 func (h *LuaHandler) RunLua(script string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	old := os.Stdout     // keep backup of the real stdout
