@@ -1,12 +1,11 @@
 package main
 
-
 /*
 The command registry adds the ability for commands to be "protected" by permissions.
 
  Now I use quotes because there are no guarantees that a command may inadvertently kick off a process if permissions aren't checked properly.
 
- */
+*/
 
 import (
 	"errors"
@@ -14,23 +13,18 @@ import (
 )
 
 type CommandRegistry struct {
-
-	db *DBHandler
+	db   *DBHandler
 	conf *Config
 	user *UserHandler
-
 }
 
-
 type CommandRecord struct {
-
-	Command string `storm:"id"`
-	Groups []string `storm:"index"`
-	Channels []string `storm:"index"`
-	Users []string `storm:"index"`
+	Command     string   `storm:"id"`
+	Groups      []string `storm:"index"`
+	Channels    []string `storm:"index"`
+	Users       []string `storm:"index"`
 	Description string
-	Usage string
-
+	Usage       string
 }
 
 // Does the same thing as Create Command without a return value
@@ -91,7 +85,7 @@ func (h *CommandRegistry) RemoveCommand(record CommandRecord) (err error) {
 	return err
 }
 
-func (h *CommandRegistry) GetCommand(command string) (record CommandRecord, err error){
+func (h *CommandRegistry) GetCommand(command string) (record CommandRecord, err error) {
 
 	db := h.db.rawdb.From("Commands")
 	record = CommandRecord{}
@@ -104,7 +98,7 @@ func (h *CommandRegistry) GetCommand(command string) (record CommandRecord, err 
 	return record, nil
 }
 
-func (h *CommandRegistry) AddGroup(command string, group string) (err error){
+func (h *CommandRegistry) AddGroup(command string, group string) (err error) {
 
 	record, err := h.GetCommand(command)
 	if err != nil {
@@ -122,7 +116,7 @@ func (h *CommandRegistry) AddGroup(command string, group string) (err error){
 	return nil
 }
 
-func (h *CommandRegistry) RemoveGroup(command string, group string) (err error){
+func (h *CommandRegistry) RemoveGroup(command string, group string) (err error) {
 
 	record, err := h.GetCommand(command)
 	if err != nil {
@@ -140,7 +134,7 @@ func (h *CommandRegistry) RemoveGroup(command string, group string) (err error){
 	return errors.New("Command does not belong to group " + group)
 }
 
-func (h *CommandRegistry) GetGroups(command string) (groups []string, err error){
+func (h *CommandRegistry) GetGroups(command string) (groups []string, err error) {
 
 	record, err := h.GetCommand(command)
 	if err != nil {
@@ -150,8 +144,7 @@ func (h *CommandRegistry) GetGroups(command string) (groups []string, err error)
 	return record.Groups, nil
 }
 
-
-func (h *CommandRegistry) AddChannel(command string, channel string) (err error){
+func (h *CommandRegistry) AddChannel(command string, channel string) (err error) {
 
 	record, err := h.GetCommand(command)
 	if err != nil {
@@ -169,7 +162,7 @@ func (h *CommandRegistry) AddChannel(command string, channel string) (err error)
 	return nil
 }
 
-func (h *CommandRegistry) RemoveChannel(command string, channel string) (err error){
+func (h *CommandRegistry) RemoveChannel(command string, channel string) (err error) {
 	record, err := h.GetCommand(command)
 	if err != nil {
 		return err
@@ -196,8 +189,7 @@ func (h *CommandRegistry) GetChannels(command string) (channels []string, err er
 	return record.Channels, nil
 }
 
-
-func (h *CommandRegistry) CheckChannel(command string, channel string) (bool) {
+func (h *CommandRegistry) CheckChannel(command string, channel string) bool {
 
 	channels, err := h.GetChannels(command)
 	if err != nil {
@@ -213,8 +205,7 @@ func (h *CommandRegistry) CheckChannel(command string, channel string) (bool) {
 	return false
 }
 
-
-func (h *CommandRegistry) CheckGroup(command string, group string) (bool) {
+func (h *CommandRegistry) CheckGroup(command string, group string) bool {
 
 	groups, err := h.GetGroups(command)
 	if err != nil {
@@ -230,8 +221,7 @@ func (h *CommandRegistry) CheckGroup(command string, group string) (bool) {
 	return false
 }
 
-
-func (h *CommandRegistry) CheckUserGroups(command string, user User) (bool) {
+func (h *CommandRegistry) CheckUserGroups(command string, user User) bool {
 
 	groups, err := h.GetGroups(command)
 	if err != nil {
@@ -254,7 +244,7 @@ func (h *CommandRegistry) CheckUserGroups(command string, user User) (bool) {
 	return false
 }
 
-func (h *CommandRegistry) AddUser(command string, user string) (err error){
+func (h *CommandRegistry) AddUser(command string, user string) (err error) {
 
 	record, err := h.GetCommand(command)
 	if err != nil {
@@ -272,7 +262,7 @@ func (h *CommandRegistry) AddUser(command string, user string) (err error){
 	return nil
 }
 
-func (h *CommandRegistry) RemoveUser(command string, user string) (err error){
+func (h *CommandRegistry) RemoveUser(command string, user string) (err error) {
 	record, err := h.GetCommand(command)
 	if err != nil {
 		return err
@@ -289,7 +279,6 @@ func (h *CommandRegistry) RemoveUser(command string, user string) (err error){
 	return errors.New(user + " does not have permission to use " + command)
 }
 
-
 func (h *CommandRegistry) GetUsers(command string) (users []string, err error) {
 
 	record, err := h.GetCommand(command)
@@ -300,8 +289,7 @@ func (h *CommandRegistry) GetUsers(command string) (users []string, err error) {
 	return record.Users, nil
 }
 
-
-func (h *CommandRegistry) CheckUser(command string, user string) (bool) {
+func (h *CommandRegistry) CheckUser(command string, user string) bool {
 
 	users, err := h.GetUsers(command)
 	if err != nil {
@@ -317,18 +305,18 @@ func (h *CommandRegistry) CheckUser(command string, user string) (bool) {
 	return false
 }
 
-func (h *CommandRegistry) CheckPermission(command string, channel string, user User) (bool) {
+func (h *CommandRegistry) CheckPermission(command string, channel string, user User) bool {
 
 	userpermission := false
-	if h.CheckUser(command, user.ID){
+	if h.CheckUser(command, user.ID) {
 		userpermission = true
 	}
 	channelpermission := false
-	if h.CheckChannel(command, channel){
+	if h.CheckChannel(command, channel) {
 		channelpermission = true
 	}
 
-	if h.CheckUserGroups(command, user){
+	if h.CheckUserGroups(command, user) {
 		userpermission = true
 	}
 
@@ -338,54 +326,54 @@ func (h *CommandRegistry) CheckPermission(command string, channel string, user U
 	return false
 }
 
-func (h *CommandRegistry) ChannelList(command string) (channels []string, err error){
+func (h *CommandRegistry) ChannelList(command string) (channels []string, err error) {
 	// Check Channels
 	cmd, err := h.GetCommand(command)
-	if err != nil{
+	if err != nil {
 		fmt.Println("Could not get command for channel list")
 		return channels, err
 	}
 
-	for _, channel := range cmd.Channels  {
+	for _, channel := range cmd.Channels {
 		channels = append(channels, channel)
 	}
 	return channels, nil
 }
 
-func (h *CommandRegistry) UserList(command string) (users []string, err error){
+func (h *CommandRegistry) UserList(command string) (users []string, err error) {
 	// Check Users
 	cmd, err := h.GetCommand(command)
-	if err != nil{
+	if err != nil {
 		return users, err
 	}
 
-	for _, user := range cmd.Users  {
+	for _, user := range cmd.Users {
 		users = append(users, user)
 	}
 	return users, nil
 }
 
-func (h *CommandRegistry) GroupList(command string) (groups []string, err error){
+func (h *CommandRegistry) GroupList(command string) (groups []string, err error) {
 
 	// Check Groups
 	cmd, err := h.GetCommand(command)
-	if err != nil{
+	if err != nil {
 		return groups, err
 	}
 
-	for _, group := range cmd.Groups  {
+	for _, group := range cmd.Groups {
 		groups = append(groups, group)
 	}
 	return groups, nil
 }
 
-func (h *CommandRegistry) CommandsForChannel(page int, channel string) (records []CommandRecord, err error){
+func (h *CommandRegistry) CommandsForChannel(page int, channel string) (records []CommandRecord, err error) {
 
 	db := h.db.rawdb.From("Commands")
 
 	// Sanitize our page count
 	pagecount, err := h.CommandsForChannelPageCount(channel)
-	if err != nil{
+	if err != nil {
 		return records, err
 	}
 	if page > pagecount {
@@ -397,28 +385,27 @@ func (h *CommandRegistry) CommandsForChannel(page int, channel string) (records 
 
 	commandrecords := []CommandRecord{}
 	err = db.All(&commandrecords)
-	if err != nil{
+	if err != nil {
 		return records, err
 	}
 
 	recordcount := 0
 	currentrecordcount := 0
-	for _, record := range commandrecords  {
-			for _, channelID := range record.Channels {
-				if channelID == channel {
-					currentrecordcount = currentrecordcount + 1
-					if currentrecordcount > page * h.conf.DUBotConfig.PerPageCount {
-						if recordcount < h.conf.DUBotConfig.PerPageCount {
-							records = append(records, record)
-							recordcount = recordcount + 1
-						}
+	for _, record := range commandrecords {
+		for _, channelID := range record.Channels {
+			if channelID == channel {
+				currentrecordcount = currentrecordcount + 1
+				if currentrecordcount > page*h.conf.DUBotConfig.PerPageCount {
+					if recordcount < h.conf.DUBotConfig.PerPageCount {
+						records = append(records, record)
+						recordcount = recordcount + 1
 					}
 				}
 			}
 		}
+	}
 
-
-	if len(records) < 1{
+	if len(records) < 1 {
 		return records, errors.New("not found")
 	}
 
@@ -430,11 +417,11 @@ func (h *CommandRegistry) CommandsForChannelCount(channel string) (count int, er
 
 	commandrecords := []CommandRecord{}
 	err = db.All(&commandrecords)
-	if err != nil{
+	if err != nil {
 		return 0, err
 	}
-	for _, record := range commandrecords  {
-		for _, channelID:= range record.Channels {
+	for _, record := range commandrecords {
+		for _, channelID := range record.Channels {
 			if channelID == channel {
 				count = count + 1
 			}
@@ -443,9 +430,7 @@ func (h *CommandRegistry) CommandsForChannelCount(channel string) (count int, er
 	return count, nil
 }
 
-
-
-func (h *CommandRegistry) CommandsForChannelPageCount(channel string) (pages int, err error){
+func (h *CommandRegistry) CommandsForChannelPageCount(channel string) (pages int, err error) {
 	// Check Groups
 	db := h.db.rawdb.From("Commands")
 
@@ -453,7 +438,7 @@ func (h *CommandRegistry) CommandsForChannelPageCount(channel string) (pages int
 
 	commandrecords := []CommandRecord{}
 	err = db.All(&commandrecords)
-	if err != nil{
+	if err != nil {
 		return pages, err
 	}
 
@@ -462,7 +447,7 @@ func (h *CommandRegistry) CommandsForChannelPageCount(channel string) (pages int
 		return pages, err
 	}
 
-	if commandCount < 1{
+	if commandCount < 1 {
 		return pages, errors.New("not found")
 	}
 
@@ -471,19 +456,17 @@ func (h *CommandRegistry) CommandsForChannelPageCount(channel string) (pages int
 	return pages, nil
 }
 
-
-
 func (h *CommandRegistry) SetDescription(command string, description string) (err error) {
 
 	record, err := h.GetCommand(command)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 
 	record.Description = description
 
 	err = h.SaveCommand(record)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 
@@ -511,7 +494,7 @@ func (h *CommandRegistry) SetUsage(command string, usage string) (err error) {
 	record.Usage = usage
 
 	err = h.SaveCommand(record)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 

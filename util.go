@@ -3,11 +3,10 @@ package main
 // Utility Functions
 
 import (
+	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"strings"
-	"fmt"
 )
-
 
 func RemoveStringFromSlice(s []string, r string) []string {
 	for i, v := range s {
@@ -17,7 +16,6 @@ func RemoveStringFromSlice(s []string, r string) []string {
 	}
 	return s
 }
-
 
 func SafeInput(s *discordgo.Session, m *discordgo.MessageCreate, conf *Config) bool {
 	// Ignore all messages created by the bot itself
@@ -30,7 +28,7 @@ func SafeInput(s *discordgo.Session, m *discordgo.MessageCreate, conf *Config) b
 		return false
 	}
 
-	if !strings.HasPrefix(m.Content, conf.DUBotConfig.CP){
+	if !strings.HasPrefix(m.Content, conf.DUBotConfig.CP) {
 		return false
 	}
 
@@ -42,7 +40,6 @@ func SafeInput(s *discordgo.Session, m *discordgo.MessageCreate, conf *Config) b
 
 	return true
 }
-
 
 func CleanCommand(input string, conf *Config) (command string, message []string) {
 
@@ -59,7 +56,6 @@ func CleanCommand(input string, conf *Config) (command string, message []string)
 
 }
 
-
 func SplitPayload(input []string) (command string, message []string) {
 
 	// Remove the prefix from our command
@@ -75,7 +71,7 @@ func RemoveFromMessage(s []string, i int) []string {
 	return s[:len(s)-1]
 }
 
-func CleanChannel(mention string) (string){
+func CleanChannel(mention string) string {
 
 	mention = strings.TrimPrefix(mention, "<#")
 	mention = strings.TrimSuffix(mention, ">")
@@ -83,46 +79,44 @@ func CleanChannel(mention string) (string){
 
 }
 
-
-func MentionChannel(channelid string, s *discordgo.Session) (mention string, err error){
+func MentionChannel(channelid string, s *discordgo.Session) (mention string, err error) {
 	dgchannel, err := s.Channel(channelid)
-	if err != nil{
+	if err != nil {
 		return "", err
 	}
 
-	return "<#"+dgchannel.ID+">", nil
+	return "<#" + dgchannel.ID + ">", nil
 }
-
 
 func CheckPermissions(command string, channelid string, user *User, s *discordgo.Session, com *CommandHandler) bool {
 
 	usergroups, err := com.user.GetGroups(user.ID)
-	if err != nil{
+	if err != nil {
 		//fmt.Println("Error Retrieving User Groups for " + user.ID)
 		return false
 	}
 
 	commandgroups, err := com.registry.GetGroups(command)
-	if err != nil{
+	if err != nil {
 		//fmt.Println("Error Retrieving Registry Groups for " + command)
 		return false
 	}
 
 	commandchannels, err := com.registry.GetChannels(command)
-	if err != nil{
+	if err != nil {
 		//fmt.Println("Error Retrieving Channels for " + command)
 		return false
 	}
 
 	commandusers, err := com.registry.GetUsers(command)
-	if err != nil{
+	if err != nil {
 		//fmt.Println("Error Retrieving Users for " + command)
 		return false
 	}
 
 	// Verify our channel is valid
 	_, err = s.Channel(channelid)
-	if err != nil{
+	if err != nil {
 		return false
 	}
 
@@ -157,7 +151,6 @@ func CheckPermissions(command string, channelid string, user *User, s *discordgo
 	return false
 }
 
-
 func MentionOwner(conf *Config, s *discordgo.Session, m *discordgo.MessageCreate) (mention string, err error) {
 	user, err := s.User(conf.DiscordConfig.AdminID)
 	if err != nil {
@@ -176,8 +169,7 @@ func OwnerName(conf *Config, s *discordgo.Session, m *discordgo.MessageCreate) (
 	return user.Username, nil
 }
 
-
-func IsVoiceChannelEmpty(s *discordgo.Session, channelid string, botid string)(bool){
+func IsVoiceChannelEmpty(s *discordgo.Session, channelid string, botid string) bool {
 
 	channel, err := s.Channel(channelid)
 	if err != nil {
@@ -186,14 +178,14 @@ func IsVoiceChannelEmpty(s *discordgo.Session, channelid string, botid string)(b
 	}
 
 	guild, err := s.Guild(channel.GuildID)
-	if err != nil{
+	if err != nil {
 		fmt.Println(err.Error())
 		return false
 	}
 
 	if len(guild.VoiceStates) > 0 {
 		for _, state := range guild.VoiceStates {
-			if state.ChannelID == channelid && state.UserID != botid{
+			if state.ChannelID == channelid && state.UserID != botid {
 				return false
 			}
 		}

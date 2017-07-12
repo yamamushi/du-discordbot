@@ -50,7 +50,6 @@ func StreamerRole(u *User) {
 	u.Streamer = true
 }
 
-
 func RecruiterRole(u *User) {
 	u.Recruiter = true
 }

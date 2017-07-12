@@ -1,60 +1,56 @@
 package main
 
 import (
-	"time"
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/yamamushi/gofeed"
 	"sync"
 )
 
 type RSS struct {
-	db		*DBHandler
+	db          *DBHandler
 	querylocker sync.RWMutex
 }
 
-
 type RSSFeed struct {
-	ID	string `storm:"id"`
-	Title 	string
-	URL   string `storm:"index"`
-	LastRun time.Time // Not particularly needed, but may become useful
-	Created string
+	ID          string `storm:"id"`
+	Title       string
+	URL         string    `storm:"index"`
+	LastRun     time.Time // Not particularly needed, but may become useful
+	Created     string
 	Description string
-	Author string
-	Updated string
-	Published string
-	ChannelID string `storm:"index"`// Limit our feeds per channel
-	Link string
-	Twitter bool `storm:"index"`
-	Reddit bool
-	Youtube bool
-	Forum bool
-	LastItem string // URL of last item
+	Author      string
+	Updated     string
+	Published   string
+	ChannelID   string `storm:"index"` // Limit our feeds per channel
+	Link        string
+	Twitter     bool `storm:"index"`
+	Reddit      bool
+	Youtube     bool
+	Forum       bool
+	LastItem    string // URL of last item
 	RepeatPosts bool
-	Posts []string // List of Posted URL's
+	Posts       []string // List of Posted URL's
 }
 
 type RSSItem struct {
-
-	Title string
-	Author string
-	Content string
+	Title       string
+	Author      string
+	Content     string
 	Description string
-	Published string
-	Link string
-	Twitter bool
-	Reddit bool
-	Youtube bool
-	Forum bool
-	Update bool
-
+	Published   string
+	Link        string
+	Twitter     bool
+	Reddit      bool
+	Youtube     bool
+	Forum       bool
+	Update      bool
 }
 
-
-func (h *RSS) Validate (url string) error {
+func (h *RSS) Validate(url string) error {
 
 	fp := gofeed.NewParser()
 	_, err := fp.ParseURL(url)
@@ -65,8 +61,7 @@ func (h *RSS) Validate (url string) error {
 	return nil
 }
 
-
-func (h *RSS) AddToDB(rssfeed RSSFeed) (err error){
+func (h *RSS) AddToDB(rssfeed RSSFeed) (err error) {
 	h.querylocker.Lock()
 	defer h.querylocker.Unlock()
 
@@ -75,8 +70,7 @@ func (h *RSS) AddToDB(rssfeed RSSFeed) (err error){
 	return err
 }
 
-
-func (h *RSS) RemoveFromDB(rssfeed RSSFeed) (err error){
+func (h *RSS) RemoveFromDB(rssfeed RSSFeed) (err error) {
 	h.querylocker.Lock()
 	defer h.querylocker.Unlock()
 
@@ -85,8 +79,7 @@ func (h *RSS) RemoveFromDB(rssfeed RSSFeed) (err error){
 	return err
 }
 
-
-func (h *RSS) GetFromDB(url string, channel string) (rssfeed RSSFeed, err error){
+func (h *RSS) GetFromDB(url string, channel string) (rssfeed RSSFeed, err error) {
 	h.querylocker.Lock()
 	defer h.querylocker.Unlock()
 
@@ -109,19 +102,19 @@ func (h *RSS) GetFromDB(url string, channel string) (rssfeed RSSFeed, err error)
 	return rssfeed, errors.New("No record found")
 }
 
-func (h *RSS) GetDB() (rssfeeds []RSSFeed, err error){
+func (h *RSS) GetDB() (rssfeeds []RSSFeed, err error) {
 	h.querylocker.Lock()
 	defer h.querylocker.Unlock()
 
 	db := h.db.rawdb.From("RSS")
 	err = db.All(&rssfeeds)
-	if err != nil{
+	if err != nil {
 		return rssfeeds, err
 	}
 	return rssfeeds, nil
 }
 
-func (h *RSS) GetChannel(channel string) (rssfeeds []RSSFeed, err error){
+func (h *RSS) GetChannel(channel string) (rssfeeds []RSSFeed, err error) {
 	h.querylocker.Lock()
 	defer h.querylocker.Unlock()
 
@@ -137,8 +130,7 @@ func (h *RSS) GetChannel(channel string) (rssfeeds []RSSFeed, err error){
 	return rssfeeds, nil
 }
 
-
-func (h *RSS) CheckDB (url string, channel string) bool {
+func (h *RSS) CheckDB(url string, channel string) bool {
 
 	_, err := h.GetFromDB(url, channel)
 	if err != nil {
@@ -148,9 +140,7 @@ func (h *RSS) CheckDB (url string, channel string) bool {
 	return false
 }
 
-
-
-func (h *RSS) GetTitle(url string, channel string) (title string, err error){
+func (h *RSS) GetTitle(url string, channel string) (title string, err error) {
 
 	rssfeed, err := h.GetFromDB(url, channel)
 	if err != nil {
@@ -170,13 +160,13 @@ func (h *RSS) GetTitle(url string, channel string) (title string, err error){
 
 }
 
-func (h *RSS) GetDescription(url string, channel string) (description string, err error){
+func (h *RSS) GetDescription(url string, channel string) (description string, err error) {
 
 	rssfeed, err := h.GetFromDB(url, channel)
 	if err != nil {
-		 if rssfeed.URL == url {
-			 return rssfeed.Description, nil
-		 }
+		if rssfeed.URL == url {
+			return rssfeed.Description, nil
+		}
 	} // If we don't error, that could mean we don't have it in the database yet, so keep going...
 
 	fp := gofeed.NewParser()
@@ -190,7 +180,7 @@ func (h *RSS) GetDescription(url string, channel string) (description string, er
 
 }
 
-func (h *RSS) GetUpdated(url string, channel string) (updated string, err error){
+func (h *RSS) GetUpdated(url string, channel string) (updated string, err error) {
 
 	rssfeed, err := h.GetFromDB(url, channel)
 	if err != nil {
@@ -208,10 +198,9 @@ func (h *RSS) GetUpdated(url string, channel string) (updated string, err error)
 	updated = feed.Updated
 	return updated, nil
 
-
 }
 
-func (h *RSS) GetPublished(url string, channel string) (published string, err error){
+func (h *RSS) GetPublished(url string, channel string) (published string, err error) {
 
 	rssfeed, err := h.GetFromDB(url, channel)
 	if err != nil {
@@ -252,9 +241,9 @@ func (h *RSS) GetAuthor(url string, channel string) (author string, err error){
 }
 */
 
-func (h *RSS) Subscribe(url string, title string, channel string, repeatposts bool) (err error){
+func (h *RSS) Subscribe(url string, title string, channel string, repeatposts bool) (err error) {
 
-	if !h.CheckDB(url, channel){
+	if !h.CheckDB(url, channel) {
 		return errors.New("Already Subscribed to: " + url)
 	}
 
@@ -276,23 +265,23 @@ func (h *RSS) Subscribe(url string, title string, channel string, repeatposts bo
 	}
 
 	isTwitter := false
-	if strings.HasPrefix( url, "https://twitrss.me/") {
+	if strings.HasPrefix(url, "https://twitrss.me/") {
 		author = strings.TrimPrefix(feed.Link, "https://twitter.com/")
 		isTwitter = true
 	}
 
 	isReddit := false
-	if strings.HasPrefix( url, "https://www.reddit.com/r/") || strings.HasPrefix(url, "http://www.reddit.com/r/") {
+	if strings.HasPrefix(url, "https://www.reddit.com/r/") || strings.HasPrefix(url, "http://www.reddit.com/r/") {
 		isReddit = true
 	}
 
 	isYoutube := false
-	if strings.HasPrefix( url, "https://www.youtube.com") || strings.HasPrefix(url, "http://www.youtube.com") {
+	if strings.HasPrefix(url, "https://www.youtube.com") || strings.HasPrefix(url, "http://www.youtube.com") {
 		isYoutube = true
 	}
 
 	isForum := false
-	if strings.HasPrefix( url, "https://board.dualthegame.com") || strings.HasPrefix(url, "http://board.dualthegame.com") {
+	if strings.HasPrefix(url, "https://board.dualthegame.com") || strings.HasPrefix(url, "http://board.dualthegame.com") {
 		isForum = true
 	}
 
@@ -306,7 +295,6 @@ func (h *RSS) Subscribe(url string, title string, channel string, repeatposts bo
 	h.AddToDB(rssfeed)
 	return nil
 }
-
 
 func (h *RSS) Unsubscribe(url string, channel string) (err error) {
 
@@ -325,8 +313,7 @@ func (h *RSS) Unsubscribe(url string, channel string) (err error) {
 	return nil
 }
 
-
-func (h *RSS) UpdateLastRun(lasttime time.Time, rssfeed RSSFeed) (err error){
+func (h *RSS) UpdateLastRun(lasttime time.Time, rssfeed RSSFeed) (err error) {
 	h.querylocker.Lock()
 	defer h.querylocker.Unlock()
 
@@ -339,7 +326,6 @@ func (h *RSS) UpdateLastRun(lasttime time.Time, rssfeed RSSFeed) (err error){
 	}
 	return nil
 }
-
 
 func (h *RSS) UpdatePosts(rssfeed RSSFeed) (err error) {
 	h.querylocker.Lock()
@@ -364,7 +350,6 @@ func (h *RSS) UpdatePosts(rssfeed RSSFeed) (err error) {
 	return nil
 }
 
-
 func (h *RSS) GetLatestItem(url string, channel string) (rssitem RSSItem, err error) {
 
 	rssfeed, err := h.GetFromDB(url, channel)
@@ -378,7 +363,6 @@ func (h *RSS) GetLatestItem(url string, channel string) (rssitem RSSItem, err er
 		return rssitem, err
 	}
 
-
 	if len(feed.Items) > 0 {
 
 		if rssfeed.Twitter {
@@ -387,14 +371,14 @@ func (h *RSS) GetLatestItem(url string, channel string) (rssitem RSSItem, err er
 
 			for _, item := range feed.Items {
 
-				author := strings.Split(strings.TrimPrefix(item.Link,"https://twitter.com/"), "/")[0]
+				author := strings.Split(strings.TrimPrefix(item.Link, "https://twitter.com/"), "/")[0]
 
 				if author == feedAuthor {
 					rssitem.Twitter = true
 					rssitem.Reddit = false
 					rssitem.Youtube = false
 					rssitem.Forum = false
-					rssitem.Author = "@"+feedAuthor
+					rssitem.Author = "@" + feedAuthor
 					rssitem.Link = item.Link
 					rssitem.Title = item.Title
 					rssitem.Published = item.Published
@@ -466,7 +450,6 @@ func (h *RSS) GetLatestItem(url string, channel string) (rssitem RSSItem, err er
 
 			return rssitem, nil
 		}
-
 
 		item := feed.Items[0]
 		rssitem.Twitter = false

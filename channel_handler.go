@@ -1,21 +1,18 @@
 package main
 
 import (
-
 	"github.com/bwmarrin/discordgo"
 	"strconv"
 )
 
 type ChannelHandler struct {
-
-	db *DBHandler
-	conf *Config
-	registry *CommandRegistry
+	db        *DBHandler
+	conf      *Config
+	registry  *CommandRegistry
 	channeldb *ChannelDB
-	user *UserHandler
-	logchan chan string
+	user      *UserHandler
+	logchan   chan string
 }
-
 
 func (h *ChannelHandler) Init() {
 
@@ -24,11 +21,10 @@ func (h *ChannelHandler) Init() {
 
 }
 
-
 func (h *ChannelHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	// Check for safety
-	if !SafeInput(s, m, h.conf){
+	if !SafeInput(s, m, h.conf) {
 		return
 	}
 
@@ -36,7 +32,7 @@ func (h *ChannelHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) 
 	if err != nil {
 		return
 	}
-	if !user.CheckRole("admin"){
+	if !user.CheckRole("admin") {
 		return
 	}
 
@@ -47,8 +43,7 @@ func (h *ChannelHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) 
 	}
 }
 
-
-func (h *ChannelHandler) ReadCommand(message []string, s *discordgo.Session, m *discordgo.MessageCreate ) {
+func (h *ChannelHandler) ReadCommand(message []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if len(message) < 1 {
 		s.ChannelMessageSend(m.ChannelID, "<channel> requires an argument")
@@ -58,15 +53,15 @@ func (h *ChannelHandler) ReadCommand(message []string, s *discordgo.Session, m *
 	command := message[0]
 	payload := RemoveStringFromSlice(message, command)
 
-	if command == "info"{
+	if command == "info" {
 		h.Info(payload, s, m)
 		return
 	}
-	if command == "set"{
+	if command == "set" {
 		h.Set(payload, s, m)
 		return
 	}
-	if command == "unset"{
+	if command == "unset" {
 		h.Unset(payload, s, m)
 		return
 	}
@@ -86,20 +81,20 @@ func (h *ChannelHandler) Info(payload []string, s *discordgo.Session, m *discord
 	if len(payload) > 0 {
 		channelid = CleanChannel(payload[0])
 		_, err := strconv.Atoi(channelid)
-		if err != nil{
+		if err != nil {
 			s.ChannelMessageSend(m.ChannelID, "Invalid channel selected")
 		}
 	}
 
 	formattedchannel, err := MentionChannel(channelid, s)
-	if err != nil{
+	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, err.Error())
 		return
 	}
 
 	h.channeldb.CreateIfNotExists(channelid)
 	channelrecord, err := h.channeldb.GetChannel(channelid)
-	if err != nil{
+	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, err.Error())
 		return
 	}
@@ -125,7 +120,7 @@ func (h *ChannelHandler) Info(payload []string, s *discordgo.Session, m *discord
 
 	var formattedgroups string
 	for i, group := range channelrecord.Groups {
-		if i == len(channelrecord.Groups)-1{
+		if i == len(channelrecord.Groups)-1 {
 			formattedgroups = formattedgroups + group
 		} else {
 			formattedgroups = formattedgroups + group + ", "
@@ -137,7 +132,7 @@ func (h *ChannelHandler) Info(payload []string, s *discordgo.Session, m *discord
 	}
 
 	if box != "" {
-		formattedoutput = ":\n Info for " + formattedchannel +"\n"
+		formattedoutput = ":\n Info for " + formattedchannel + "\n"
 		formattedoutput = formattedoutput + "```\n" + box + "\n```"
 	} else {
 		formattedoutput = "No information found for " + formattedchannel
@@ -146,23 +141,23 @@ func (h *ChannelHandler) Info(payload []string, s *discordgo.Session, m *discord
 	s.ChannelMessageSend(m.ChannelID, formattedoutput)
 }
 
-func (h *ChannelHandler) Set(payload []string, s *discordgo.Session, m *discordgo.MessageCreate){
+func (h *ChannelHandler) Set(payload []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	var channelid string
 	if len(payload) < 1 {
 		s.ChannelMessageSend(m.ChannelID, "<set> requires an argument")
 		return
 	}
-	if len(payload) == 1{
+	if len(payload) == 1 {
 
 		channelid = m.ChannelID
 		dgchannel, err := s.Channel(channelid)
-		if err != nil{
+		if err != nil {
 			s.ChannelMessageSend(m.ChannelID, err.Error())
 			return
 		}
 
-		if payload[0] == "botlog"{
+		if payload[0] == "botlog" {
 			err := h.channeldb.SetBotLog(channelid)
 			if err != nil {
 				s.ChannelMessageSend(m.ChannelID, err.Error())
@@ -171,7 +166,7 @@ func (h *ChannelHandler) Set(payload []string, s *discordgo.Session, m *discordg
 			s.ChannelMessageSend(m.ChannelID, "<#"+dgchannel.ID+"> has been set to the bot log")
 			return
 		}
-		if payload[0] == "permissionlog"{
+		if payload[0] == "permissionlog" {
 			err := h.channeldb.SetPermissionLog(channelid)
 			if err != nil {
 				s.ChannelMessageSend(m.ChannelID, err.Error())
@@ -180,7 +175,7 @@ func (h *ChannelHandler) Set(payload []string, s *discordgo.Session, m *discordg
 			s.ChannelMessageSend(m.ChannelID, "<#"+dgchannel.ID+"> has been set to the permission log")
 			return
 		}
-		if payload[0] == "banklog"{
+		if payload[0] == "banklog" {
 			err := h.channeldb.SetBankLog(channelid)
 			if err != nil {
 				s.ChannelMessageSend(m.ChannelID, err.Error())
@@ -189,7 +184,7 @@ func (h *ChannelHandler) Set(payload []string, s *discordgo.Session, m *discordg
 			s.ChannelMessageSend(m.ChannelID, "<#"+dgchannel.ID+"> has been set to the bank log")
 			return
 		}
-		if payload[0] == "hq"{
+		if payload[0] == "hq" {
 			user, err := h.user.GetUser(m.Author.ID)
 			if err != nil {
 				s.ChannelMessageSend(m.ChannelID, err.Error())
@@ -209,7 +204,7 @@ func (h *ChannelHandler) Set(payload []string, s *discordgo.Session, m *discordg
 			s.ChannelMessageSend(m.ChannelID, "HQ has been assigned to <#"+dgchannel.ID+">")
 			return
 		}
-		if payload[0] == "musicroom"{
+		if payload[0] == "musicroom" {
 			user, err := h.user.GetUser(m.Author.ID)
 			if err != nil {
 				s.ChannelMessageSend(m.ChannelID, err.Error())
@@ -229,24 +224,24 @@ func (h *ChannelHandler) Set(payload []string, s *discordgo.Session, m *discordg
 			s.ChannelMessageSend(m.ChannelID, "Music Room has been assigned to <#"+dgchannel.ID+">")
 			return
 		}
-		s.ChannelMessageSend(m.ChannelID, payload[0] + " is not a valid room type")
+		s.ChannelMessageSend(m.ChannelID, payload[0]+" is not a valid room type")
 		return
 	}
 	if len(payload) > 1 {
 		channelmention := payload[1]
 		channelid = CleanChannel(channelmention)
 		_, err := strconv.Atoi(channelid)
-		if err != nil{
+		if err != nil {
 			s.ChannelMessageSend(m.ChannelID, "Ivnvalid channel selected")
 		}
 
 		dgchannel, err := s.Channel(channelid)
-		if err != nil{
+		if err != nil {
 
 			s.ChannelMessageSend(m.ChannelID, err.Error())
 			return
 		}
-		if payload[0] == "botlog"{
+		if payload[0] == "botlog" {
 			err := h.channeldb.SetBotLog(dgchannel.ID)
 			if err != nil {
 				s.ChannelMessageSend(m.ChannelID, err.Error())
@@ -255,7 +250,7 @@ func (h *ChannelHandler) Set(payload []string, s *discordgo.Session, m *discordg
 			s.ChannelMessageSend(m.ChannelID, "<#"+dgchannel.ID+"> has been set to the bot log")
 			return
 		}
-		if payload[0] == "permissionlog"{
+		if payload[0] == "permissionlog" {
 			err := h.channeldb.SetPermissionLog(dgchannel.ID)
 			if err != nil {
 				s.ChannelMessageSend(m.ChannelID, err.Error())
@@ -264,7 +259,7 @@ func (h *ChannelHandler) Set(payload []string, s *discordgo.Session, m *discordg
 			s.ChannelMessageSend(m.ChannelID, "<#"+dgchannel.ID+"> has been set to the permission log")
 			return
 		}
-		if payload[0] == "banklog"{
+		if payload[0] == "banklog" {
 			err := h.channeldb.SetBankLog(dgchannel.ID)
 			if err != nil {
 				s.ChannelMessageSend(m.ChannelID, err.Error())
@@ -273,7 +268,7 @@ func (h *ChannelHandler) Set(payload []string, s *discordgo.Session, m *discordg
 			s.ChannelMessageSend(m.ChannelID, "<#"+dgchannel.ID+"> has been set to the bank log")
 			return
 		}
-		if payload[0] == "hq"{
+		if payload[0] == "hq" {
 			user, err := h.user.GetUser(m.Author.ID)
 			if err != nil {
 				s.ChannelMessageSend(m.ChannelID, err.Error())
@@ -293,7 +288,7 @@ func (h *ChannelHandler) Set(payload []string, s *discordgo.Session, m *discordg
 			s.ChannelMessageSend(m.ChannelID, "HQ has been assigned to <#"+dgchannel.ID+">")
 			return
 		}
-		if payload[0] == "musicroom"{
+		if payload[0] == "musicroom" {
 			user, err := h.user.GetUser(m.Author.ID)
 			if err != nil {
 				s.ChannelMessageSend(m.ChannelID, err.Error())
@@ -313,21 +308,18 @@ func (h *ChannelHandler) Set(payload []string, s *discordgo.Session, m *discordg
 			s.ChannelMessageSend(m.ChannelID, "Music Room has been assigned to <#"+dgchannel.ID+">")
 			return
 		}
-		s.ChannelMessageSend(m.ChannelID, payload[0] + " is not a valid room type")
+		s.ChannelMessageSend(m.ChannelID, payload[0]+" is not a valid room type")
 	}
 }
 
-
-
-
-func (h *ChannelHandler) Unset(payload []string, s *discordgo.Session, m *discordgo.MessageCreate){
+func (h *ChannelHandler) Unset(payload []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if len(payload) < 1 {
 		s.ChannelMessageSend(m.ChannelID, "<unset> requires an argument")
 		return
 	}
 
-	if payload[0] == "botlog"{
+	if payload[0] == "botlog" {
 		err := h.channeldb.RemoveBotLog()
 		if err != nil {
 			s.ChannelMessageSend(m.ChannelID, err.Error())
@@ -336,7 +328,7 @@ func (h *ChannelHandler) Unset(payload []string, s *discordgo.Session, m *discor
 		s.ChannelMessageSend(m.ChannelID, "Botlog disabled")
 		return
 	}
-	if payload[0] == "permissionlog"{
+	if payload[0] == "permissionlog" {
 		err := h.channeldb.RemovePermissionLog()
 		if err != nil {
 			s.ChannelMessageSend(m.ChannelID, err.Error())
@@ -345,7 +337,7 @@ func (h *ChannelHandler) Unset(payload []string, s *discordgo.Session, m *discor
 		s.ChannelMessageSend(m.ChannelID, "Permission log disabled")
 		return
 	}
-	if payload[0] == "banklog"{
+	if payload[0] == "banklog" {
 		err := h.channeldb.RemoveBankLog()
 		if err != nil {
 			s.ChannelMessageSend(m.ChannelID, err.Error())
@@ -354,7 +346,7 @@ func (h *ChannelHandler) Unset(payload []string, s *discordgo.Session, m *discor
 		s.ChannelMessageSend(m.ChannelID, "Bank log disabled")
 		return
 	}
-	if payload[0] == "hq"{
+	if payload[0] == "hq" {
 		user, err := h.user.GetUser(m.Author.ID)
 		if err != nil {
 			s.ChannelMessageSend(m.ChannelID, err.Error())
@@ -374,7 +366,7 @@ func (h *ChannelHandler) Unset(payload []string, s *discordgo.Session, m *discor
 		s.ChannelMessageSend(m.ChannelID, "HQ has been unassigned")
 		return
 	}
-	if payload[0] == "musicroom"{
+	if payload[0] == "musicroom" {
 		user, err := h.user.GetUser(m.Author.ID)
 		if err != nil {
 			s.ChannelMessageSend(m.ChannelID, err.Error())
@@ -394,32 +386,30 @@ func (h *ChannelHandler) Unset(payload []string, s *discordgo.Session, m *discor
 		s.ChannelMessageSend(m.ChannelID, "Music Room has been unassigned")
 		return
 	}
-	s.ChannelMessageSend(m.ChannelID, payload[0] + " is not a valid room type")
+	s.ChannelMessageSend(m.ChannelID, payload[0]+" is not a valid room type")
 	return
 
 }
 
-
-func (h *ChannelHandler) GetBotLogChannel() (channelid string, err error){
+func (h *ChannelHandler) GetBotLogChannel() (channelid string, err error) {
 	return h.channeldb.GetBotLog()
 }
 
-func (h *ChannelHandler) GetPermissionLogChannel() (channelid string, err error){
+func (h *ChannelHandler) GetPermissionLogChannel() (channelid string, err error) {
 	return h.channeldb.GetPermissionLog()
 }
 
-func (h *ChannelHandler) GetBankLogChannel() (channelid string, err error){
+func (h *ChannelHandler) GetBankLogChannel() (channelid string, err error) {
 	return h.channeldb.GetBankLog()
 }
 
-func (h *ChannelHandler) GetHQChannel() (channelid string, err error){
+func (h *ChannelHandler) GetHQChannel() (channelid string, err error) {
 	return h.channeldb.GetHQ()
 }
 
-func (h *ChannelHandler) GetMusicRoomChannel() (channelid string, err error){
+func (h *ChannelHandler) GetMusicRoomChannel() (channelid string, err error) {
 	return h.channeldb.GetMusicRoom()
 }
-
 
 func (h *ChannelHandler) ReadGroup(payload []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
@@ -431,7 +421,7 @@ func (h *ChannelHandler) ReadGroup(payload []string, s *discordgo.Session, m *di
 	command, message := SplitPayload(payload)
 
 	if len(message) < 1 {
-		s.ChannelMessageSend(m.ChannelID, "<" + command + "> requires an argument")
+		s.ChannelMessageSend(m.ChannelID, "<"+command+"> requires an argument")
 		return
 	}
 	if command == "add" {
@@ -453,7 +443,7 @@ func (h *ChannelHandler) RemoveGroup(payload []string, s *discordgo.Session, m *
 
 	channelid := CleanChannel(payload[1])
 	_, err := strconv.Atoi(channelid)
-	if err != nil{
+	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, "Invalid channel selected")
 		return
 	}
@@ -469,9 +459,8 @@ func (h *ChannelHandler) RemoveGroup(payload []string, s *discordgo.Session, m *
 		return
 	}
 
-	s.ChannelMessageSend(m.ChannelID, formattedchannel + " was removed from the " + payload[0] + " group.")
+	s.ChannelMessageSend(m.ChannelID, formattedchannel+" was removed from the "+payload[0]+" group.")
 }
-
 
 func (h *ChannelHandler) AddGroup(payload []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
@@ -482,7 +471,7 @@ func (h *ChannelHandler) AddGroup(payload []string, s *discordgo.Session, m *dis
 
 	channelid := CleanChannel(payload[1])
 	_, err := strconv.Atoi(channelid)
-	if err != nil{
+	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, "Invalid channel selected")
 		return
 	}
@@ -498,10 +487,9 @@ func (h *ChannelHandler) AddGroup(payload []string, s *discordgo.Session, m *dis
 		return
 	}
 
-	s.ChannelMessageSend(m.ChannelID, formattedchannel + " was added to the " + payload[0] + " group.")
+	s.ChannelMessageSend(m.ChannelID, formattedchannel+" was added to the "+payload[0]+" group.")
 
 }
-
 
 func (h *ChannelHandler) CheckPermission(channelid string, user *User) bool {
 
@@ -511,7 +499,7 @@ func (h *ChannelHandler) CheckPermission(channelid string, user *User) bool {
 	}
 
 	for _, channelgroup := range record.Groups {
-		if user.CheckRole(channelgroup){
+		if user.CheckRole(channelgroup) {
 			return true
 		}
 	}

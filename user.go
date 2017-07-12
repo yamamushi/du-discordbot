@@ -1,8 +1,7 @@
 package main
 
 type User struct {
-
-	ID string `storm:"id"`// primary key
+	ID string `storm:"id"` // primary key
 
 	Owner      bool `storm:"index"`
 	Admin      bool `storm:"index"`
@@ -13,7 +12,6 @@ type User struct {
 	Streamer   bool `storm:"index"`
 	Recruiter  bool `storm:"index"`
 	Citizen    bool `storm:"index"`
-
 }
 
 func (u *User) Init() {
@@ -25,34 +23,34 @@ func (u *User) SetRole(role string) {
 
 	switch role {
 
-	case "owner" :
+	case "owner":
 		OwnerRole(u)
 
-	case "admin" :
+	case "admin":
 		AdminRole(u)
 
-	case "smoderator" :
+	case "smoderator":
 		SModeratorRole(u)
 
-	case "moderator" :
+	case "moderator":
 		ModeratorRole(u)
 
-	case "editor" :
+	case "editor":
 		EditorRole(u)
 
-	case "agora" :
+	case "agora":
 		AgoraRole(u)
 
-	case "streamer" :
+	case "streamer":
 		StreamerRole(u)
 
-	case "recruiter" :
+	case "recruiter":
 		RecruiterRole(u)
 
-	case "citizen" :
+	case "citizen":
 		CitizenRole(u)
 
-	case "clear" :
+	case "clear":
 		ClearRoles(u)
 
 	default:
@@ -60,71 +58,69 @@ func (u *User) SetRole(role string) {
 	}
 }
 
-
 func (u *User) RemoveRole(role string) {
 
 	switch role {
 
-	case "owner" :
+	case "owner":
 		u.Owner = false
 
-	case "admin" :
+	case "admin":
 		u.Admin = false
 
-	case "smoderator" :
+	case "smoderator":
 		u.SModerator = false
 
-	case "moderator" :
+	case "moderator":
 		u.Moderator = false
 
-	case "editor" :
+	case "editor":
 		u.Editor = false
 
-	case "agora" :
+	case "agora":
 		u.Agora = false
 
-	case "streamer" :
+	case "streamer":
 		u.Streamer = false
 
-	case "recruiter" :
+	case "recruiter":
 		u.Recruiter = false
 
-	case "citizen" :
+	case "citizen":
 		u.Citizen = false
 
 	}
 }
 
-
 func (u *User) CheckRole(role string) bool {
 
 	switch role {
 
-	case "owner" :
+	case "owner":
 		return u.Owner
 
-	case "admin" :
+	case "admin":
 		return u.Admin
 
-	case "smoderator" :
+	case "smoderator":
 		return u.SModerator
 
-	case "moderator" :
+	case "moderator":
 		return u.Moderator
 
-	case "editor" :
+	case "editor":
 		return u.Editor
 
-	case "agora" :
+	case "agora":
 		return u.Agora
 
-	case "streamer" :
+	case "streamer":
 		return u.Streamer
 
-	case "recruiter" :
+	case "recruiter":
 		return u.Recruiter
 
-	case "citizen" :
+	case "citizen":
 		return u.Citizen
 	}
 

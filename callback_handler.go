@@ -1,29 +1,24 @@
 package main
 
 import (
-
-	"github.com/bwmarrin/discordgo"
 	"container/list"
+	"github.com/bwmarrin/discordgo"
 	"reflect"
 )
 
 type CallbackHandler struct {
-
 	WatchList list.List
-	dg	*discordgo.Session
-	logger *Logger
-
+	dg        *discordgo.Session
+	logger    *Logger
 }
 
 type WatchUser struct {
-
-	User string
+	User      string
 	ChannelID string
 	MessageID string
-	Handler func(string, *discordgo.Session, *discordgo.MessageCreate)
-	Args string
+	Handler   func(string, *discordgo.Session, *discordgo.MessageCreate)
+	Args      string
 }
-
 
 // We want to accept callback handlers
 func (c *CallbackHandler) AddHandler(h interface{}) {
@@ -32,7 +27,6 @@ func (c *CallbackHandler) AddHandler(h interface{}) {
 	c.dg.AddHandlerOnce(h)
 }
 
-
 func (c *CallbackHandler) Watch(Handler func(string, *discordgo.Session, *discordgo.MessageCreate),
 	MessageID string, Args string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
@@ -40,7 +34,6 @@ func (c *CallbackHandler) Watch(Handler func(string, *discordgo.Session, *discor
 	c.WatchList.PushBack(item)
 
 }
-
 
 func (c *CallbackHandler) UnWatch(User string, ChannelID string, MessageID string) {
 
@@ -60,8 +53,7 @@ func (c *CallbackHandler) UnWatch(User string, ChannelID string, MessageID strin
 	}
 }
 
-
-func (c *CallbackHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate){
+func (c *CallbackHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	var next *list.Element
 	for e := c.WatchList.Front(); e != nil; e = next {
@@ -87,7 +79,6 @@ func (c *CallbackHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate)
 			rargs[0] = reflect.ValueOf(command)
 			rargs[1] = reflect.ValueOf(s)
 			rargs[2] = reflect.ValueOf(m)
-
 
 			handler.Call(rargs)
 

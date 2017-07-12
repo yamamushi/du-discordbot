@@ -1,27 +1,26 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"strconv"
-	"errors"
 )
 
 type WalletHandler struct {
-
-	db *DBHandler
-	user *UserHandler
+	db      *DBHandler
+	user    *UserHandler
 	logchan chan string
-	conf *Config
+	conf    *Config
 }
 
-func (h *WalletHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate){
+func (h *WalletHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
-	if !SafeInput(s, m, h.conf){
+	if !SafeInput(s, m, h.conf) {
 		return
 	}
 
-	command, payload :=  CleanCommand(m.Content, h.conf)
+	command, payload := CleanCommand(m.Content, h.conf)
 
 	if command != "wallet" {
 		return
@@ -39,12 +38,12 @@ func (h *WalletHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate){
 	h.user.CheckUser(m.Author.ID)
 
 	user, err := h.db.GetUser(m.Author.ID)
-	if err != nil{
+	if err != nil {
 		//fmt.Println("Error finding user")
 		return
 	}
 
-	if command ==  "addbalance" && user.Owner {
+	if command == "addbalance" && user.Owner {
 		h.AddBalance(payload, s, m)
 		return
 	}
@@ -67,7 +66,7 @@ func (h *WalletHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate){
 	if command == "balance" && len(payload) > 0 {
 		mentions := m.Mentions
 		if len(mentions) < 1 {
-			s.ChannelMessageSend(m.ChannelID, "Invalid User: " + payload[0])
+			s.ChannelMessageSend(m.ChannelID, "Invalid User: "+payload[0])
 			return
 		}
 		// Ignore bots
@@ -100,12 +99,11 @@ func (h *WalletHandler) GetWallet(ID string) (Wallet, error) {
 	var wallet Wallet
 	err := db.One("Account", ID, &wallet)
 	if err != nil {
-		fmt.Println ("Error retrieving sender wallet!")
+		fmt.Println("Error retrieving sender wallet!")
 		return Wallet{}, err
 	}
 	return wallet, nil
 }
-
 
 func (h *WalletHandler) SaveWallet(wallet Wallet) (err error) {
 
@@ -114,12 +112,11 @@ func (h *WalletHandler) SaveWallet(wallet Wallet) (err error) {
 	err = db.DeleteStruct(&wallet)
 	err = db.Save(&wallet)
 	if err != nil {
-		fmt.Println ("Error saving wallet!")
+		fmt.Println("Error saving wallet!")
 		return err
 	}
 	return nil
 }
-
 
 func (h *WalletHandler) Transfer(message []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
@@ -131,20 +128,20 @@ func (h *WalletHandler) Transfer(message []string, s *discordgo.Session, m *disc
 
 	mentions := m.Mentions
 	if len(mentions) < 1 {
-		s.ChannelMessageSend(m.ChannelID, "Invalid Recipient: " + message[1])
+		s.ChannelMessageSend(m.ChannelID, "Invalid Recipient: "+message[1])
 		return
 	}
 
 	// Ignore bots
 	if mentions[0].Bot {
-		s.ChannelMessageSend(m.ChannelID, "Bots don't need money" )
+		s.ChannelMessageSend(m.ChannelID, "Bots don't need money")
 		return
 	}
 
 	mentionedUser := mentions[0]
 
 	sender, err := h.GetWallet(m.Author.ID)
-	if err != nil{
+	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, "Internal error, still in development!")
 	}
 
@@ -157,17 +154,17 @@ func (h *WalletHandler) Transfer(message []string, s *discordgo.Session, m *disc
 
 	amount, err := strconv.Atoi(message[0])
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Invalid value specified!: " + message[0])
+		s.ChannelMessageSend(m.ChannelID, "Invalid value specified!: "+message[0])
 		return
 	}
 
-	receiver,err := h.GetWallet(mentionedUser.ID)
-	if err != nil{
+	receiver, err := h.GetWallet(mentionedUser.ID)
+	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, "Internal error, still in development!")
 	}
 
 	err = sender.SendBalance(&receiver, amount)
-	if err != nil{
+	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, err.Error())
 		return
 	}
@@ -175,16 +172,14 @@ func (h *WalletHandler) Transfer(message []string, s *discordgo.Session, m *disc
 	db.Update(&sender)
 	db.Update(&receiver)
 
-
 	mentionReceiver := mentions[0].Mention()
 	mentionSender := m.Author.Mention()
-	s.ChannelMessageSend(m.ChannelID, mentionReceiver + " received " + message[0] + " from " + mentionSender)
-	h.logchan <- "Bank "+mentionReceiver + " received " + message[0] + " from " + mentionSender
+	s.ChannelMessageSend(m.ChannelID, mentionReceiver+" received "+message[0]+" from "+mentionSender)
+	h.logchan <- "Bank " + mentionReceiver + " received " + message[0] + " from " + mentionSender
 
 }
 
-
-func (h *WalletHandler) AddBalance (message []string, s *discordgo.Session, m *discordgo.MessageCreate) {
+func (h *WalletHandler) AddBalance(message []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	db := h.db.rawdb.From("Users").From("Wallets")
 
@@ -208,12 +203,11 @@ func (h *WalletHandler) AddBalance (message []string, s *discordgo.Session, m *d
 	wallet.AddBalance(i)
 	mention := m.Author.Mention()
 	db.Update(&wallet)
-	s.ChannelMessageSend(m.ChannelID, mention + " Added " + message[0] + " to wallet")
+	s.ChannelMessageSend(m.ChannelID, mention+" Added "+message[0]+" to wallet")
 	return
 }
 
-
-func (h *WalletHandler) GetBalance (ID string) (string, error) {
+func (h *WalletHandler) GetBalance(ID string) (string, error) {
 
 	h.user.CheckUser(ID)
 

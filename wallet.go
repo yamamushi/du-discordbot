@@ -4,15 +4,11 @@ import (
 	"errors"
 )
 
-
 type Wallet struct {
-
 	Account string `storm:"id"`
-	Pin string `storm:"index"`
-	Balance int `storm:"index"`
-
+	Pin     string `storm:"index"`
+	Balance int    `storm:"index"`
 }
-
 
 func (w *Wallet) GetBalance() int {
 	return w.Balance
@@ -28,7 +24,7 @@ func (w *Wallet) RemoveBalance(amount int) {
 
 func (w *Wallet) SendBalance(receiver *Wallet, amount int) error {
 
-	if w.GetBalance() - amount < 0 {
+	if w.GetBalance()-amount < 0 {
 		return errors.New("Insufficient Sender Balance")
 	}
 
@@ -40,4 +36,3 @@ func (w *Wallet) SendBalance(receiver *Wallet, amount int) error {
 	receiver.Balance = receiver.Balance + amount
 	return nil
 }
-

@@ -6,13 +6,11 @@ import (
 )
 
 type AdminHandler struct {
-
 	conf *Config
-	db *DBHandler
-
+	db   *DBHandler
 }
 
-func (h *AdminHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate){
+func (h *AdminHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	cp := h.conf.DUBotConfig.CP
 	db := h.db.rawdb.From("Users")
@@ -36,14 +34,12 @@ func (h *AdminHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate){
 	}
 
 	// grant <user> role
-	if message[0] == cp + "grant" && len(message) < 4 {
+	if message[0] == cp+"grant" && len(message) < 4 {
 		s.ChannelMessageSend(m.ChannelID, "Expected 3 arguments: grant <user> <role>")
 		return
 	}
 
-	if message[0] == cp + "grant" && len(message) > 3 {
-
-
+	if message[0] == cp+"grant" && len(message) > 3 {
 
 	}
 }

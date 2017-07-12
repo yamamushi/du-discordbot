@@ -1,21 +1,14 @@
 package main
 
-
 type LoanCalculator struct {
-
 	bank *Bank
-
 }
-
 
 type LoanRecord struct {
-
-	ID	string `storm:"id"`
-	AccountID	string `storm:"index"`
-
+	ID        string `storm:"id"`
+	AccountID string `storm:"index"`
 }
 
-func (h *LoanCalculator) GetLoanRecords(accountid string){
-
+func (h *LoanCalculator) GetLoanRecords(accountid string) {
 
 }

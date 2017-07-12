@@ -1,59 +1,56 @@
 package main
 
 import (
-	"github.com/bwmarrin/discordgo"
 	"errors"
 	"fmt"
+	"github.com/bwmarrin/discordgo"
 	"strconv"
 	"strings"
 )
 
 type BankHandler struct {
-
-	conf *Config
-	db *DBHandler
-	logchan chan string
-	user *UserHandler
-	com *CommandHandler
+	conf     *Config
+	db       *DBHandler
+	logchan  chan string
+	user     *UserHandler
+	com      *CommandHandler
 	callback *CallbackHandler
-	bank *Bank
-	wallet *WalletHandler
-
+	bank     *Bank
+	wallet   *WalletHandler
 }
-
 
 func (h *BankHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
-	if !SafeInput(s, m, h.conf){
+	if !SafeInput(s, m, h.conf) {
 		return
 	}
 
-	command, payload :=  CleanCommand(m.Content, h.conf)
+	command, payload := CleanCommand(m.Content, h.conf)
 
 	h.user.CheckUser(m.Author.ID)
 
 	user, err := h.db.GetUser(m.Author.ID)
-	if err != nil{
+	if err != nil {
 		//fmt.Println("Error finding user")
 		return
 	}
 	if len(payload) < 1 {
-		if command ==  "bank" && user.Admin {
+		if command == "bank" && user.Admin {
 			h.Prompt(s, m)
 			return
 		}
 	} else {
-		if command ==  "bank" && user.Admin {
+		if command == "bank" && user.Admin {
 			payload = RemoveStringFromSlice(payload, command)
 			channel, err := s.UserChannelCreate(m.Author.ID)
-			if err != nil{
-				fmt.Println("Error creating user channel for " + m.Author.ID + " " + m.Author.Username )
+			if err != nil {
+				fmt.Println("Error creating user channel for " + m.Author.ID + " " + m.Author.Username)
 				return
 			}
-			payload[0] =  h.conf.DUBotConfig.CP+payload[0]
+			payload[0] = h.conf.DUBotConfig.CP + payload[0]
 			var message string
 			for _, content := range payload {
-				message = message+content+" "
+				message = message + content + " "
 			}
 			m.Content = message
 			h.ReadPrompt(channel.ID, s, m)
@@ -62,37 +59,36 @@ func (h *BankHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 }
 
-
-func (h *BankHandler) Prompt(s *discordgo.Session, m *discordgo.MessageCreate){
+func (h *BankHandler) Prompt(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	var payload string
 
 	channel, err := s.UserChannelCreate(m.Author.ID)
-	if err != nil{
-		fmt.Println("Error creating user channel for " + m.Author.ID + " " + m.Author.Username )
+	if err != nil {
+		fmt.Println("Error creating user channel for " + m.Author.ID + " " + m.Author.Username)
 		return
 	}
-/*
-	// An MessageEmbed stores data for message embeds.
-	type MessageEmbed struct {
-		URL         string                 `json:"url,omitempty"`
-		Type        string                 `json:"type,omitempty"`
-		Title       string                 `json:"title,omitempty"`
-		Description string                 `json:"description,omitempty"`
-		Timestamp   string                 `json:"timestamp,omitempty"`
-		Color       int                    `json:"color,omitempty"`
-		Footer      *MessageEmbedFooter    `json:"footer,omitempty"`
-		Image       *MessageEmbedImage     `json:"image,omitempty"`
-		Thumbnail   *MessageEmbedThumbnail `json:"thumbnail,omitempty"`
-		Video       *MessageEmbedVideo     `json:"video,omitempty"`
-		Provider    *MessageEmbedProvider  `json:"provider,omitempty"`
-		Author      *MessageEmbedAuthor    `json:"author,omitempty"`
-		Fields      []*MessageEmbedField   `json:"fields,omitempty"`
-	}
-*/
+	/*
+		// An MessageEmbed stores data for message embeds.
+		type MessageEmbed struct {
+			URL         string                 `json:"url,omitempty"`
+			Type        string                 `json:"type,omitempty"`
+			Title       string                 `json:"title,omitempty"`
+			Description string                 `json:"description,omitempty"`
+			Timestamp   string                 `json:"timestamp,omitempty"`
+			Color       int                    `json:"color,omitempty"`
+			Footer      *MessageEmbedFooter    `json:"footer,omitempty"`
+			Image       *MessageEmbedImage     `json:"image,omitempty"`
+			Thumbnail   *MessageEmbedThumbnail `json:"thumbnail,omitempty"`
+			Video       *MessageEmbedVideo     `json:"video,omitempty"`
+			Provider    *MessageEmbedProvider  `json:"provider,omitempty"`
+			Author      *MessageEmbedAuthor    `json:"author,omitempty"`
+			Fields      []*MessageEmbedField   `json:"fields,omitempty"`
+		}
+	*/
 	useraccount, err := h.bank.GetAccountForUser(m.Author.ID)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Could not load account: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Could not load account: "+err.Error())
 		h.logchan <- "Bank Could not load account: " + err.Error()
 		return
 	}
@@ -109,42 +105,40 @@ func (h *BankHandler) Prompt(s *discordgo.Session, m *discordgo.MessageCreate){
 
 	footer := new(discordgo.MessageEmbedFooter)
 	footer.Text = h.conf.BankConfig.BankMenuSlogan
-//	footer.IconURL = h.conf.BankConfig.BankIconURL
+	//	footer.IconURL = h.conf.BankConfig.BankIconURL
 	prompt.Footer = footer
-/*
-	image := new(discordgo.MessageEmbedImage)
-	image.URL = h.conf.BankConfig.BankIconURL
-	image.Height = 5
-	image.Width = 5
-	prompt.Image = image
+	/*
+		image := new(discordgo.MessageEmbedImage)
+		image.URL = h.conf.BankConfig.BankIconURL
+		image.Height = 5
+		image.Width = 5
+		prompt.Image = image
 
-*/
+	*/
 	thumbnail := new(discordgo.MessageEmbedThumbnail)
 	thumbnail.URL = h.conf.BankConfig.BankIconURL
 	thumbnail.Height = 10
 	thumbnail.Width = 10
 	prompt.Thumbnail = thumbnail
-/*
-	video := new(discordgo.MessageEmbedVideo)
-	video.URL = ""
-	video.Height = 10
-	video.Width = 10
-	prompt.Video = video
+	/*
+		video := new(discordgo.MessageEmbedVideo)
+		video.URL = ""
+		video.Height = 10
+		video.Width = 10
+		prompt.Video = video
 
-	provider := new(discordgo.MessageEmbedProvider)
-	provider.URL = ""
-	provider.Name = ""
-	prompt.Provider = provider
-*/
+		provider := new(discordgo.MessageEmbedProvider)
+		provider.URL = ""
+		provider.Name = ""
+		prompt.Provider = provider
+	*/
 	author := new(discordgo.MessageEmbedAuthor)
 	author.Name = h.conf.BankConfig.BankName
 	author.URL = h.conf.BankConfig.BankURL
-	author.IconURL = "https://discordapp.com/api/users/"+s.State.User.ID+"/avatars/"+s.State.User.Avatar+".jpg"
+	author.IconURL = "https://discordapp.com/api/users/" + s.State.User.ID + "/avatars/" + s.State.User.Avatar + ".jpg"
 	prompt.Author = author
 
-
 	fields := []*discordgo.MessageEmbedField{}
-
 
 	depositfield := discordgo.MessageEmbedField{}
 	depositfield.Name = "deposit"
@@ -182,34 +176,30 @@ func (h *BankHandler) Prompt(s *discordgo.Session, m *discordgo.MessageCreate){
 	redeemfield.Inline = true
 	fields = append(fields, &redeemfield)
 
-
-
 	prompt.Fields = fields
-
 
 	s.ChannelMessageSendEmbed(channel.ID, prompt)
 
 	payload = channel.ID
 	m.ChannelID = channel.ID
-	h.callback.Watch( h.ReadPrompt, GetUUID(), payload, s, m)
+	h.callback.Watch(h.ReadPrompt, GetUUID(), payload, s, m)
 }
-
 
 // Bank Terminal Functions
 
-func (h *BankHandler) ReadPrompt(channelid string, s *discordgo.Session, m *discordgo.MessageCreate){
+func (h *BankHandler) ReadPrompt(channelid string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	/*
-		Going to leave this check out for now, as anyone interacting with the bank through the public channels
-		should realize what they're doing...
+			Going to leave this check out for now, as anyone interacting with the bank through the public channels
+			should realize what they're doing...
 
-	if m.ChannelID != channelid {
-		fmt.Println("channels don't match! " + m.ChannelID + " " + channelid)
-		return
-	}
+		if m.ChannelID != channelid {
+			fmt.Println("channels don't match! " + m.ChannelID + " " + channelid)
+			return
+		}
 	*/
 
-	if !strings.HasPrefix(m.Content, h.conf.DUBotConfig.CP){
+	if !strings.HasPrefix(m.Content, h.conf.DUBotConfig.CP) {
 		s.ChannelMessageSend(channelid, "Invalid Command Received :: Banking Terminal Closed")
 		return
 	}
@@ -247,17 +237,15 @@ func (h *BankHandler) ReadPrompt(channelid string, s *discordgo.Session, m *disc
 		return
 	}
 
-
 	fmt.Println(command)
 	s.ChannelMessageSend(channelid, "Invalid Command Received :: Banking Terminal Closed")
 	return
 
 }
 
-
-func (h *BankHandler) InitBank(channelid string, s *discordgo.Session, m *discordgo.MessageCreate){
+func (h *BankHandler) InitBank(channelid string, s *discordgo.Session, m *discordgo.MessageCreate) {
 	user, err := h.user.GetUser(m.Author.ID)
-	if err != nil{
+	if err != nil {
 		fmt.Println(err.Error())
 		return
 	}
@@ -265,7 +253,7 @@ func (h *BankHandler) InitBank(channelid string, s *discordgo.Session, m *discor
 		return
 	}
 	err = h.bank.CreateBank()
-	if err != nil{
+	if err != nil {
 		s.ChannelMessageSend(channelid, err.Error())
 		return
 	}
@@ -273,8 +261,7 @@ func (h *BankHandler) InitBank(channelid string, s *discordgo.Session, m *discor
 	s.ChannelMessageSend(channelid, "Bank Has Been Initialized")
 }
 
-
-func (h *BankHandler) ReadDeposit (payload []string, channelid string, s *discordgo.Session, m *discordgo.MessageCreate) {
+func (h *BankHandler) ReadDeposit(payload []string, channelid string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if !h.bank.BankInitialized() {
 		h.logchan <- "Bank needs to be initialized!"
@@ -293,34 +280,33 @@ func (h *BankHandler) ReadDeposit (payload []string, channelid string, s *discor
 		return
 	}
 
-	if len(payload) == 1{
+	if len(payload) == 1 {
 
 		account, err := h.bank.GetAccountForUser(m.Author.ID)
-		if err != nil{
-			s.ChannelMessageSend(channelid, "Could not retrieve Bank Account: " + err.Error())
+		if err != nil {
+			s.ChannelMessageSend(channelid, "Could not retrieve Bank Account: "+err.Error())
 			return
 		}
 
 		wallet, err := h.wallet.GetWallet(m.Author.ID)
 		if err != nil {
-			s.ChannelMessageSend(channelid, "Could not retrieve wallet: " + err.Error())
+			s.ChannelMessageSend(channelid, "Could not retrieve wallet: "+err.Error())
 			return
 		}
 
 		err = h.Deposit(amount, account.UserID, wallet)
-		if err != nil{
+		if err != nil {
 			s.ChannelMessageSend(channelid, err.Error())
 			return
 		}
 
-		h.logchan <- "Bank "+ m.Author.Mention() + " Deposited " + payload[0] + " into account " + account.ID
-		s.ChannelMessageSend(channelid, "Deposited " + payload[0] + " into account " + account.ID)
+		h.logchan <- "Bank " + m.Author.Mention() + " Deposited " + payload[0] + " into account " + account.ID
+		s.ChannelMessageSend(channelid, "Deposited "+payload[0]+" into account "+account.ID)
 		return
 	}
 }
 
-
-func (h *BankHandler) ReadWithdraw (payload []string, channelid string, s *discordgo.Session, m *discordgo.MessageCreate) {
+func (h *BankHandler) ReadWithdraw(payload []string, channelid string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if !h.bank.BankInitialized() {
 		h.logchan <- "Bank needs to be initialized!"
@@ -339,34 +325,33 @@ func (h *BankHandler) ReadWithdraw (payload []string, channelid string, s *disco
 		return
 	}
 
-	if len(payload) == 1{
+	if len(payload) == 1 {
 
 		account, err := h.bank.GetAccountForUser(m.Author.ID)
-		if err != nil{
-			s.ChannelMessageSend(channelid, "Could not retrieve Bank Account: " + err.Error())
+		if err != nil {
+			s.ChannelMessageSend(channelid, "Could not retrieve Bank Account: "+err.Error())
 			return
 		}
 
 		wallet, err := h.wallet.GetWallet(m.Author.ID)
 		if err != nil {
-			s.ChannelMessageSend(channelid, "Could not retrieve wallet: " + err.Error())
+			s.ChannelMessageSend(channelid, "Could not retrieve wallet: "+err.Error())
 			return
 		}
 
 		err = h.Withdraw(amount, account.UserID, wallet)
-		if err != nil{
+		if err != nil {
 			s.ChannelMessageSend(channelid, err.Error())
 			return
 		}
 
-		h.logchan <- "Bank "+m.Author.Mention() + " Withdrew " + payload[0] + " from account " + account.ID
-		s.ChannelMessageSend(channelid, "Withdrew " + payload[0] + " from account " + account.ID)
+		h.logchan <- "Bank " + m.Author.Mention() + " Withdrew " + payload[0] + " from account " + account.ID
+		s.ChannelMessageSend(channelid, "Withdrew "+payload[0]+" from account "+account.ID)
 		return
 	}
 }
 
-
-func (h *BankHandler) ReadBalance (payload []string, channelid string, s *discordgo.Session, m *discordgo.MessageCreate){
+func (h *BankHandler) ReadBalance(payload []string, channelid string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if !h.bank.BankInitialized() {
 		h.logchan <- "Bank needs to be initialized!"
@@ -384,29 +369,29 @@ func (h *BankHandler) ReadBalance (payload []string, channelid string, s *discor
 
 		account, err := h.bank.GetAccountForUser(m.Author.ID)
 		if err != nil {
-			s.ChannelMessageSend(channelid, "Could not find Bank Account: " + err.Error())
+			s.ChannelMessageSend(channelid, "Could not find Bank Account: "+err.Error())
 			return
 		}
 		balance := strconv.Itoa(account.Balance)
-		s.ChannelMessageSend(channelid, "Your Account Bank Balance: " + balance + " credits")
+		s.ChannelMessageSend(channelid, "Your Account Bank Balance: "+balance+" credits")
 		return
 	}
 	if len(payload) > 0 {
 
-		if !user.Admin{
+		if !user.Admin {
 			s.ChannelMessageSend(channelid, "You do not have permission to view another Bank Account Balance.")
-			if len(m.Mentions) > 0{
-				h.logchan <- "Bank "+m.Author.Mention() + " attempted to view bank balance for + " + m.Mentions[0].Mention()
+			if len(m.Mentions) > 0 {
+				h.logchan <- "Bank " + m.Author.Mention() + " attempted to view bank balance for + " + m.Mentions[0].Mention()
 				return
 			}
-			h.logchan <- "Bank "+m.Author.Mention() + " attempted to view bank balance for + " + payload[0]
+			h.logchan <- "Bank " + m.Author.Mention() + " attempted to view bank balance for + " + payload[0]
 			return
 		}
 
 		if len(m.Mentions) > 0 {
 			account, err := h.bank.GetAccountForUser(m.Mentions[0].ID)
 			if err != nil {
-				s.ChannelMessageSend(channelid, "Error: Could not Bank Account Balance for " + m.Mentions[0].Mention()+" : "+err.Error())
+				s.ChannelMessageSend(channelid, "Error: Could not Bank Account Balance for "+m.Mentions[0].Mention()+" : "+err.Error())
 				return
 			}
 			balance := strconv.Itoa(account.Balance)
@@ -416,7 +401,7 @@ func (h *BankHandler) ReadBalance (payload []string, channelid string, s *discor
 
 		// Verifies if a user account exists before proceeding, however we don't want to create one if it doesn't exist
 		// Which GetAccountForUser will do.
-		if !h.bank.CheckUserAccount(payload[0]){
+		if !h.bank.CheckUserAccount(payload[0]) {
 			s.ChannelMessageSend(channelid, "Error: Could not Bank Account Balance for "+payload[0])
 			return
 		}
@@ -435,8 +420,7 @@ func (h *BankHandler) ReadBalance (payload []string, channelid string, s *discor
 	}
 }
 
-
-func (h *BankHandler) ReadTransfer (payload []string, channelid string, s *discordgo.Session, m *discordgo.MessageCreate){
+func (h *BankHandler) ReadTransfer(payload []string, channelid string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if !h.bank.BankInitialized() {
 		h.logchan <- "Bank needs to be initialized!"
@@ -457,42 +441,39 @@ func (h *BankHandler) ReadTransfer (payload []string, channelid string, s *disco
 
 	fromAccount, err := h.bank.GetAccountForUser(m.Author.ID)
 	if err != nil {
-		s.ChannelMessageSend(channelid, "Error getting sender user account: " + err.Error())
+		s.ChannelMessageSend(channelid, "Error getting sender user account: "+err.Error())
 		return
 	}
 
 	toAccount, err := h.bank.GetAccountByAccountID(payload[1])
 	if err != nil {
-		s.ChannelMessageSend(channelid, "Error getting target user account: " + err.Error())
+		s.ChannelMessageSend(channelid, "Error getting target user account: "+err.Error())
 		return
 	}
 
 	err = h.TransferToAccount(amount, fromAccount.ID, toAccount.ID)
 	if err != nil {
-		s.ChannelMessageSend(channelid, "Could not transfer funds: " + err.Error())
+		s.ChannelMessageSend(channelid, "Could not transfer funds: "+err.Error())
 		return
 	}
 
-	s.ChannelMessageSend(channelid, payload[0]+" credits transferred to " + payload[1])
-	h.logchan <- "Bank "+payload[0]+" credits transferred to " + payload[1]
+	s.ChannelMessageSend(channelid, payload[0]+" credits transferred to "+payload[1])
+	h.logchan <- "Bank " + payload[0] + " credits transferred to " + payload[1]
 	return
 
 }
 
-
-func (h *BankHandler) ReadRewards (payload []string, channelid string, s *discordgo.Session, m *discordgo.MessageCreate){
+func (h *BankHandler) ReadRewards(payload []string, channelid string, s *discordgo.Session, m *discordgo.MessageCreate) {
 	s.ChannelMessageSend(channelid, "Not yet implemented.")
 	return
 }
 
-
-func (h *BankHandler) ReadLoans (payload []string, channelid string, s *discordgo.Session, m *discordgo.MessageCreate){
+func (h *BankHandler) ReadLoans(payload []string, channelid string, s *discordgo.Session, m *discordgo.MessageCreate) {
 	s.ChannelMessageSend(channelid, "Not yet implemented.")
 	return
 }
 
-
-func (h *BankHandler) Deposit (amount int, userid string, wallet Wallet) (err error){
+func (h *BankHandler) Deposit(amount int, userid string, wallet Wallet) (err error) {
 
 	account, err := h.bank.GetAccountForUser(userid)
 	if err != nil {
@@ -517,8 +498,7 @@ func (h *BankHandler) Deposit (amount int, userid string, wallet Wallet) (err er
 
 }
 
-
-func (h *BankHandler) Withdraw (amount int, userid string, wallet Wallet) (err error){
+func (h *BankHandler) Withdraw(amount int, userid string, wallet Wallet) (err error) {
 	account, err := h.bank.GetAccountForUser(userid)
 	if err != nil {
 		return err
@@ -540,8 +520,7 @@ func (h *BankHandler) Withdraw (amount int, userid string, wallet Wallet) (err e
 	return nil
 }
 
-
-func (h *BankHandler) TransferToAccount (amount int, fromAccountID string, toAccountID string) (err error){
+func (h *BankHandler) TransferToAccount(amount int, fromAccountID string, toAccountID string) (err error) {
 
 	if amount < 1 {
 		return errors.New("Cannot transfer a negative value!")
@@ -574,8 +553,7 @@ func (h *BankHandler) TransferToAccount (amount int, fromAccountID string, toAcc
 	return nil
 }
 
-
-func (h *BankHandler) LoanRequest (amount int, accountID string) (response bool){
+func (h *BankHandler) LoanRequest(amount int, accountID string) (response bool) {
 
 	return false
 

@@ -1,24 +1,23 @@
 package main
 
 import (
-	"github.com/bwmarrin/discordgo"
 	"fmt"
+	"github.com/bwmarrin/discordgo"
 	"strings"
 )
 
 type MainHandler struct {
-
-	db *DBHandler
-	conf *Config
-	dg *discordgo.Session
-	callback *CallbackHandler
-	perm *PermissionsHandler
-	user *UserHandler
-	command *CommandHandler
-	registry *CommandRegistry
-	logchan		chan string
+	db          *DBHandler
+	conf        *Config
+	dg          *discordgo.Session
+	callback    *CallbackHandler
+	perm        *PermissionsHandler
+	user        *UserHandler
+	command     *CommandHandler
+	registry    *CommandRegistry
+	logchan     chan string
 	bankhandler *BankHandler
-	channel	*ChannelHandler
+	channel     *ChannelHandler
 }
 
 func (h *MainHandler) Init() error {
@@ -26,7 +25,6 @@ func (h *MainHandler) Init() error {
 	// Add our main handler -
 	h.dg.AddHandler(h.Read)
 	h.registry = h.command.registry
-
 
 	// Add new handlers below this line //
 	// Create our RSS handler
@@ -36,30 +34,25 @@ func (h *MainHandler) Init() error {
 	h.dg.AddHandler(rss.Read)
 	go rss.UpdateRSSFeeds(h.dg)
 
-
 	fmt.Println("Adding Chess Handler")
-	chess := ChessHandler{db: h. db, conf: h.conf, logchan: h.logchan, wallet: h.bankhandler.wallet,
+	chess := ChessHandler{db: h.db, conf: h.conf, logchan: h.logchan, wallet: h.bankhandler.wallet,
 		bank: h.bankhandler, command: h.command.registry, user: h.user}
 	chess.Init()
 	h.dg.AddHandler(chess.Read)
-
 
 	fmt.Println("Adding Utilities Handler")
 	utilities := UtilitiesHandler{db: h.db, conf: h.conf, user: h.user, registry: h.command.registry, logchan: h.logchan}
 	h.dg.AddHandler(utilities.Read)
 
-
 	fmt.Println("Adding Lua Handler")
 	luahandler := LuaHandler{db: h.db, conf: h.conf, user: h.user, registry: h.command.registry}
 	h.dg.AddHandler(luahandler.Read)
-
 
 	fmt.Println("Adding Music Handler")
 	musichandler := MusicHandler{db: h.db, user: h.user, registry: h.command.registry,
 		wallet: h.bankhandler.wallet, channel: h.channel, conf: h.conf}
 	musichandler.Init()
 	h.dg.AddHandler(musichandler.Read)
-
 
 	// Open a websocket connection to Discord and begin listening.
 	fmt.Println("Opening Connection to Discord")
@@ -70,7 +63,6 @@ func (h *MainHandler) Init() error {
 	}
 	fmt.Println("Connection Established")
 
-
 	err = h.PostInit(h.dg)
 
 	if err != nil {
@@ -80,7 +72,6 @@ func (h *MainHandler) Init() error {
 
 	return nil
 }
-
 
 // Just some quick things to run after our websocket has been setup and opened
 
@@ -119,7 +110,7 @@ func (h *MainHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	user, err := h.db.GetUser(m.Author.ID)
-	if err != nil{
+	if err != nil {
 		//fmt.Println("Error finding user")
 		return
 	}
@@ -133,27 +124,27 @@ func (h *MainHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 	command := message[0]
 
 	// If the message is "ping" reply with "Pong!"
-	if command == cp + "ping" {
-		if CheckPermissions("ping", m.ChannelID, &user, s, h.command){
+	if command == cp+"ping" {
+		if CheckPermissions("ping", m.ChannelID, &user, s, h.command) {
 			s.ChannelMessageSend(m.ChannelID, "Pong!")
 			return
 		}
 	}
 
 	// If the message is "pong" reply with "Ping!"
-	if command == cp + "pong" {
-		if CheckPermissions("pong", m.ChannelID, &user, s, h.command){
+	if command == cp+"pong" {
+		if CheckPermissions("pong", m.ChannelID, &user, s, h.command) {
 			s.ChannelMessageSend(m.ChannelID, "Ping!")
 			return
 		}
 	}
 
-	if command == cp + "help" {
+	if command == cp+"help" {
 		s.ChannelMessageSend(m.ChannelID, "https://github.com/yamamushi/du-discordbot#table-of-contents")
 	}
 
-	if command == cp + "follow" {
-		if CheckPermissions("follow", m.ChannelID, &user, s, h.command){
+	if command == cp+"follow" {
+		if CheckPermissions("follow", m.ChannelID, &user, s, h.command) {
 			s.ChannelMessageSend(m.ChannelID, "Not yet implemented!")
 			return
 		}
@@ -171,13 +162,12 @@ func (h *MainHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 }
 
-
 func (h *MainHandler) RegisterCommands() (err error) {
 
 	h.registry.Register("follow", "Follow a DU forum user. Updates will be sent via pm", "follow <forum name>")
 	h.registry.Register("ping", "Ping command", "ping")
 	h.registry.Register("pong", "Pong command", "pong")
-	h.registry.Register("transfer",	"Transfer credits to another user", "transfer 100 @<user>")
+	h.registry.Register("transfer", "Transfer credits to another user", "transfer 100 @<user>")
 	h.registry.Register("balance", "Display user balance", "balance")
 	h.registry.Register("addbalance", "-?-", "-?-")
 	h.registry.Register("chess", "du-discordbot chess", "chess")

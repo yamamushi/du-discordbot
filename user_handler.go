@@ -1,15 +1,15 @@
 package main
 
 import (
-	"github.com/bwmarrin/discordgo"
 	"fmt"
+	"github.com/bwmarrin/discordgo"
 	"strings"
 )
 
 type UserHandler struct {
-	conf *Config
-	db *DBHandler
-	cp string
+	conf    *Config
+	db      *DBHandler
+	cp      string
 	logchan chan string
 }
 
@@ -39,7 +39,7 @@ func (h *UserHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 	h.CheckUser(m.Author.ID)
 
 	user, err := h.db.GetUser(m.Author.ID)
-	if err != nil{
+	if err != nil {
 		//fmt.Println("Error finding user")
 		return
 	}
@@ -47,43 +47,39 @@ func (h *UserHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// We use this a bit, this is the author id formatted as a mention
 	mention := m.Author.Mention()
 
-
-	if message[0] == cp + "groups" {
+	if message[0] == cp+"groups" {
 		mentions := m.Mentions
 
 		if len(mentions) == 0 {
 			groups, err := h.GetGroups(user.ID)
 			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, "Error retrieving groups: " + err.Error() )
+				s.ChannelMessageSend(m.ChannelID, "Error retrieving groups: "+err.Error())
 				return
 			}
 
-			s.ChannelMessageSend(m.ChannelID,  h.FormatGroups(groups))
+			s.ChannelMessageSend(m.ChannelID, h.FormatGroups(groups))
 			return
 		}
 
-
 		if !user.CheckRole("moderator") {
-			s.ChannelMessageSend(m.ChannelID, "You do not have permission to use this command" )
+			s.ChannelMessageSend(m.ChannelID, "You do not have permission to use this command")
 			return
 		}
 
 		if len(message) == 2 {
 			groups, err := h.GetGroups(mentions[0].ID)
 			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, "Error retrieving groups: " + err.Error() )
-				h.logchan <- "Bot "+mention + " || " + m.Author.Username + " || " + "groups" + "||" + err.Error()
+				s.ChannelMessageSend(m.ChannelID, "Error retrieving groups: "+err.Error())
+				h.logchan <- "Bot " + mention + " || " + m.Author.Username + " || " + "groups" + "||" + err.Error()
 				return
 			}
-			s.ChannelMessageSend(m.ChannelID,  h.FormatGroups(groups))
+			s.ChannelMessageSend(m.ChannelID, h.FormatGroups(groups))
 			return
 		}
 	}
 
-
 	return
 }
-
 
 func (h *UserHandler) GetUser(userid string) (user User, err error) {
 
@@ -92,15 +88,14 @@ func (h *UserHandler) GetUser(userid string) (user User, err error) {
 
 	db := h.db.rawdb.From("Users")
 	err = db.One("ID", userid, &user)
-	if err != nil{
+	if err != nil {
 		return user, err
 	}
 
 	return user, nil
 }
 
-
-func (h *UserHandler) CheckUser (ID string) {
+func (h *UserHandler) CheckUser(ID string) {
 
 	db := h.db.rawdb.From("Users")
 
@@ -138,50 +133,47 @@ func (h *UserHandler) CheckUser (ID string) {
 	}
 }
 
-
-
-func (h *UserHandler) GetGroups (ID string) (groups []string, err error) {
+func (h *UserHandler) GetGroups(ID string) (groups []string, err error) {
 
 	h.CheckUser(ID)
 	user, err := h.GetUser(ID)
 	if err != nil {
 		return groups, err
 	}
-	if user.CheckRole("owner"){
+	if user.CheckRole("owner") {
 		groups = append(groups, "owner")
 	}
-	if user.CheckRole("admin"){
+	if user.CheckRole("admin") {
 		groups = append(groups, "admin")
 	}
-	if user.CheckRole("smoderator"){
+	if user.CheckRole("smoderator") {
 		groups = append(groups, "smoderator")
 	}
-	if user.CheckRole("moderator"){
+	if user.CheckRole("moderator") {
 		groups = append(groups, "moderator")
 	}
-	if user.CheckRole("editor"){
+	if user.CheckRole("editor") {
 		groups = append(groups, "editor")
 	}
-	if user.CheckRole("agora"){
+	if user.CheckRole("agora") {
 		groups = append(groups, "agora")
 	}
-	if user.CheckRole("streamer"){
+	if user.CheckRole("streamer") {
 		groups = append(groups, "streamer")
 	}
-	if user.CheckRole("recruiter"){
+	if user.CheckRole("recruiter") {
 		groups = append(groups, "recruiter")
 	}
-	if user.CheckRole("citizen"){
+	if user.CheckRole("citizen") {
 		groups = append(groups, "citizen")
 	}
 
 	return groups, nil
 }
 
-
-func (h *UserHandler) FormatGroups (groups []string) (formatted string) {
+func (h *UserHandler) FormatGroups(groups []string) (formatted string) {
 	for i, group := range groups {
-		if i == len(groups) - 1{
+		if i == len(groups)-1 {
 			formatted = formatted + group
 		} else {
 			formatted = formatted + group + ", "

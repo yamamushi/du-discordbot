@@ -5,31 +5,26 @@ import (
 	"time"
 
 	"errors"
-	"strings"
 	"strconv"
+	"strings"
 
 	"github.com/yamamushi/chess/engine"
 	"github.com/yamamushi/chess/search"
 )
 
-
 type ChessGame struct {
-
 	boardlist []*ChessGameSession
-	db *DBHandler
-
+	db        *DBHandler
 }
-
 
 type ChessGameSession struct {
-	board	*engine.Board
-	UserID	string
-	SecondPlayerID	string
-	AIGame	bool
-	AIMove	bool
-	InProgress	bool
+	board          *engine.Board
+	UserID         string
+	SecondPlayerID string
+	AIGame         bool
+	AIMove         bool
+	InProgress     bool
 }
-
 
 type ChessPlayerRecord struct {
 	UserID           string `storm:"id"`
@@ -43,36 +38,30 @@ type ChessPlayerRecord struct {
 	WhitePieceStyle  string
 	BlackPieceStyle  string
 	BoardStyle       string
-	PieceStyles		[]string
-	BoardStyles		[]string
-	Plots            string  // Workaround because we can't store a bool in the db apparently
+	PieceStyles      []string
+	BoardStyles      []string
+	Plots            string // Workaround because we can't store a bool in the db apparently
 }
-
 
 type ChessPiece struct {
-	Type	string
-	Symbol	string
+	Type   string
+	Symbol string
 }
-
 
 type PieceStyle struct {
-
-	King	ChessPiece
-	Queen	ChessPiece
-	Bishop	ChessPiece
-	Knight	ChessPiece
-	Rook	ChessPiece
-	Pawn	ChessPiece
-	Price	int
+	King   ChessPiece
+	Queen  ChessPiece
+	Bishop ChessPiece
+	Knight ChessPiece
+	Rook   ChessPiece
+	Pawn   ChessPiece
+	Price  int
 }
 
-
 type BoardStyle struct {
-
 	WhiteChessSquare string
 	BlackChessSquare string
-	Price int
-
+	Price            int
 }
 
 var (
@@ -81,18 +70,15 @@ var (
 
 const LOG = false
 
-
-
 /*
 
 Functions Related to piece and board styles
 
 
 
- */
+*/
 
-
-func (h *ChessGame) DefaultBoardStyle() (style BoardStyle){
+func (h *ChessGame) DefaultBoardStyle() (style BoardStyle) {
 	style.WhiteChessSquare = ":white_large_square:"
 	style.BlackChessSquare = ":black_large_square:"
 	style.Price = 0
@@ -163,11 +149,11 @@ func (h *ChessGame) StyleAnimalPieces() (style PieceStyle) {
 func (h *ChessGame) GetStyleForName(name string) (style PieceStyle) {
 	if name == "default" {
 		style = h.DefaultBlackPieces()
-	} else if name == "church"{
+	} else if name == "church" {
 		style = h.StyleChurchPieces()
-	} else if name == "mosque"{
+	} else if name == "mosque" {
 		style = h.StyleMosquePieces()
-	} else if name == "animal"{
+	} else if name == "animal" {
 		style = h.StyleAnimalPieces()
 	} else {
 		style = h.DefaultBlackPieces()
@@ -175,29 +161,27 @@ func (h *ChessGame) GetStyleForName(name string) (style PieceStyle) {
 	return style
 }
 
-func (h *ChessGame) GetStyles(black string, white string, board string) (blackstyle PieceStyle, whitestyle PieceStyle, boardstyle BoardStyle){
-
+func (h *ChessGame) GetStyles(black string, white string, board string) (blackstyle PieceStyle, whitestyle PieceStyle, boardstyle BoardStyle) {
 
 	if black == "default" {
 		blackstyle = h.DefaultBlackPieces()
-	} else if black == "church"{
+	} else if black == "church" {
 		blackstyle = h.StyleChurchPieces()
-	} else if black == "mosque"{
+	} else if black == "mosque" {
 		blackstyle = h.StyleMosquePieces()
-	} else if black == "animal"{
+	} else if black == "animal" {
 		blackstyle = h.StyleAnimalPieces()
 	} else {
 		blackstyle = h.DefaultBlackPieces()
 	}
 
-
 	if white == "default" {
 		whitestyle = h.DefaultWhitePieces()
-	} else if white == "church"{
+	} else if white == "church" {
 		whitestyle = h.StyleChurchPieces()
-	} else if white == "mosque"{
+	} else if white == "mosque" {
 		whitestyle = h.StyleMosquePieces()
-	} else if white == "animal"{
+	} else if white == "animal" {
 		whitestyle = h.StyleAnimalPieces()
 	} else {
 		whitestyle = h.DefaultBlackPieces()
@@ -212,8 +196,7 @@ func (h *ChessGame) GetStyles(black string, white string, board string) (blackst
 	return blackstyle, whitestyle, boardstyle
 }
 
-
-func (h *ChessGame) EnablePlots(userid string) (err error){
+func (h *ChessGame) EnablePlots(userid string) (err error) {
 	record, err := h.GetRecordFromDB(userid)
 	if err != nil {
 		return err
@@ -229,8 +212,7 @@ func (h *ChessGame) EnablePlots(userid string) (err error){
 	return nil
 }
 
-
-func (h *ChessGame) DisablePlots(userid string) (err error){
+func (h *ChessGame) DisablePlots(userid string) (err error) {
 	record, err := h.GetRecordFromDB(userid)
 	if err != nil {
 		return err
@@ -246,16 +228,12 @@ func (h *ChessGame) DisablePlots(userid string) (err error){
 	return nil
 }
 
-
-
 /*
 
 Functions related to managing Chess Player Records
 
 
- */
-
-
+*/
 
 func (h *ChessGame) SaveRecordToDB(record ChessPlayerRecord) (err error) {
 
@@ -264,7 +242,7 @@ func (h *ChessGame) SaveRecordToDB(record ChessPlayerRecord) (err error) {
 	tmprecord := ChessPlayerRecord{}
 	err = db.One("UserID", record.UserID, &tmprecord)
 	if err == nil {
-//		fmt.Println("Updating Record")
+		//		fmt.Println("Updating Record")
 		err = db.Update(&record)
 		if err != nil {
 			return err
@@ -272,7 +250,7 @@ func (h *ChessGame) SaveRecordToDB(record ChessPlayerRecord) (err error) {
 		return nil
 	}
 
-//	fmt.Println("Creating New Record")
+	//	fmt.Println("Creating New Record")
 	err = db.Save(&record)
 	if err != nil {
 		return err
@@ -281,10 +259,9 @@ func (h *ChessGame) SaveRecordToDB(record ChessPlayerRecord) (err error) {
 	return nil
 }
 
+func (h *ChessGame) NewPlayerRecord(userid string) (err error) {
 
-func (h *ChessGame) NewPlayerRecord(userid string) (err error){
-
-	record := ChessPlayerRecord{UserID: userid, Games: 0, Wins: 0, Losses: 0, LastGameFEN: "", CurrentGame: "", WhitePieceStyle: "default",BlackPieceStyle: "default",BoardStyle: "default",Plots: "false",CurrentGameColor: "white"}
+	record := ChessPlayerRecord{UserID: userid, Games: 0, Wins: 0, Losses: 0, LastGameFEN: "", CurrentGame: "", WhitePieceStyle: "default", BlackPieceStyle: "default", BoardStyle: "default", Plots: "false", CurrentGameColor: "white"}
 	record.PieceStyles = append(record.PieceStyles, "default")
 	record.BoardStyles = append(record.BoardStyles, "default")
 
@@ -292,7 +269,6 @@ func (h *ChessGame) NewPlayerRecord(userid string) (err error){
 	return err
 
 }
-
 
 func (h *ChessGame) GetRecordFromDB(userid string) (record ChessPlayerRecord, err error) {
 	db := h.db.rawdb.From("Games").From("Chess")
@@ -305,8 +281,7 @@ func (h *ChessGame) GetRecordFromDB(userid string) (record ChessPlayerRecord, er
 	return userrecord, nil
 }
 
-
-func (h *ChessGame) PlayerHasRecord(userid string) (bool){
+func (h *ChessGame) PlayerHasRecord(userid string) bool {
 	db := h.db.rawdb.From("Games").From("Chess")
 
 	record := ChessPlayerRecord{}
@@ -317,8 +292,7 @@ func (h *ChessGame) PlayerHasRecord(userid string) (bool){
 	return true
 }
 
-
-func (h *ChessGame) ProcessWin(userid string) (err error){
+func (h *ChessGame) ProcessWin(userid string) (err error) {
 
 	record, err := h.GetRecordFromDB(userid)
 	if err != nil {
@@ -327,45 +301,43 @@ func (h *ChessGame) ProcessWin(userid string) (err error){
 	record.Wins = record.Wins + 1
 	record.Games = record.Games + 1
 
-	err= h.SaveRecordToDB(record)
+	err = h.SaveRecordToDB(record)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-
-func (h *ChessGame) ProcessLoss(userid string) (err error){
+func (h *ChessGame) ProcessLoss(userid string) (err error) {
 	record, err := h.GetRecordFromDB(userid)
 	if err != nil {
 		return err
 	}
 	record.Losses = record.Losses + 1
-	record.Games = record.Games +1
+	record.Games = record.Games + 1
 
-	err= h.SaveRecordToDB(record)
+	err = h.SaveRecordToDB(record)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-
-func (h *ChessGame) ProcessStalemate(userid string) (err error){
+func (h *ChessGame) ProcessStalemate(userid string) (err error) {
 	record, err := h.GetRecordFromDB(userid)
 	if err != nil {
 		return err
 	}
-	record.Games = record.Games +1
+	record.Games = record.Games + 1
 
-	err= h.SaveRecordToDB(record)
+	err = h.SaveRecordToDB(record)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (h *ChessGame) UpdateBlackStyle(style string, userid string) (err error){
+func (h *ChessGame) UpdateBlackStyle(style string, userid string) (err error) {
 	record, err := h.GetRecordFromDB(userid)
 	if err != nil {
 		return err
@@ -376,14 +348,14 @@ func (h *ChessGame) UpdateBlackStyle(style string, userid string) (err error){
 	}
 	record.BlackPieceStyle = style
 
-	err= h.SaveRecordToDB(record)
+	err = h.SaveRecordToDB(record)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (h *ChessGame) UpdateWhiteStyle(style string, userid string) (err error){
+func (h *ChessGame) UpdateWhiteStyle(style string, userid string) (err error) {
 	record, err := h.GetRecordFromDB(userid)
 	if err != nil {
 		return err
@@ -395,28 +367,28 @@ func (h *ChessGame) UpdateWhiteStyle(style string, userid string) (err error){
 
 	record.WhitePieceStyle = style
 
-	err= h.SaveRecordToDB(record)
+	err = h.SaveRecordToDB(record)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (h *ChessGame) UpdateBoardStyle(style string, userid string) (err error){
+func (h *ChessGame) UpdateBoardStyle(style string, userid string) (err error) {
 	record, err := h.GetRecordFromDB(userid)
 	if err != nil {
 		return err
 	}
 	record.BoardStyle = style
 
-	err= h.SaveRecordToDB(record)
+	err = h.SaveRecordToDB(record)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (h *ChessGame) GetBoardStyleNames(userid string) (styles []string, err error){
+func (h *ChessGame) GetBoardStyleNames(userid string) (styles []string, err error) {
 	record, err := h.GetRecordFromDB(userid)
 	if err != nil {
 		return styles, err
@@ -425,7 +397,7 @@ func (h *ChessGame) GetBoardStyleNames(userid string) (styles []string, err erro
 	return record.PieceStyles, nil
 }
 
-func (h *ChessGame) GetPieceStyleNames(userid string) (styles []string, err error){
+func (h *ChessGame) GetPieceStyleNames(userid string) (styles []string, err error) {
 	record, err := h.GetRecordFromDB(userid)
 	if err != nil {
 		return styles, err
@@ -433,7 +405,7 @@ func (h *ChessGame) GetPieceStyleNames(userid string) (styles []string, err erro
 	return record.BoardStyles, nil
 }
 
-func (h *ChessGame) CheckOwnedPieceStyleByName(userid string, style string) (owned bool){
+func (h *ChessGame) CheckOwnedPieceStyleByName(userid string, style string) (owned bool) {
 	record, err := h.GetRecordFromDB(userid)
 	if err != nil {
 		return false
@@ -448,7 +420,7 @@ func (h *ChessGame) CheckOwnedPieceStyleByName(userid string, style string) (own
 	return false
 }
 
-func (h *ChessGame) CheckOwnedBoardStyleByName(userid string, style string) (owned bool){
+func (h *ChessGame) CheckOwnedBoardStyleByName(userid string, style string) (owned bool) {
 	record, err := h.GetRecordFromDB(userid)
 	if err != nil {
 		return false
@@ -463,39 +435,39 @@ func (h *ChessGame) CheckOwnedBoardStyleByName(userid string, style string) (own
 	return false
 }
 
-func (h *ChessGame) AddPieceStyleByName(userid string, style string) (err error){
+func (h *ChessGame) AddPieceStyleByName(userid string, style string) (err error) {
 	record, err := h.GetRecordFromDB(userid)
 	if err != nil {
 		return err
 	}
 
-	if h.CheckOwnedPieceStyleByName(userid, style){
+	if h.CheckOwnedPieceStyleByName(userid, style) {
 		return errors.New("Style already owned!")
 	}
 
 	record.PieceStyles = append(record.PieceStyles, style)
 
 	err = h.SaveRecordToDB(record)
-	if err != nil{
+	if err != nil {
 		return errors.New("Error saving record to DB!")
 	}
 	return nil
 }
 
-func (h *ChessGame) AddBoardStyleByName(userid string, style string) (err error){
+func (h *ChessGame) AddBoardStyleByName(userid string, style string) (err error) {
 	record, err := h.GetRecordFromDB(userid)
 	if err != nil {
 		return err
 	}
 
-	if h.CheckOwnedBoardStyleByName(userid, style){
+	if h.CheckOwnedBoardStyleByName(userid, style) {
 		return errors.New("Style already owned!")
 	}
 
 	record.PieceStyles = append(record.BoardStyles, style)
 
 	err = h.SaveRecordToDB(record)
-	if err != nil{
+	if err != nil {
 		return errors.New("Error saving record to DB!")
 	}
 	return nil
@@ -505,15 +477,13 @@ func (h *ChessGame) AddBoardStyleByName(userid string, style string) (err error)
 
 Functions related to storing, managing, and interacting with live dubot-games
 
- */
-
+*/
 
 func (h *ChessGame) Init() {
 
 	h.boardlist = make([]*ChessGameSession, 0)
 
 }
-
 
 func (h *ChessGame) GetFen(userid string) (board string, err error) {
 
@@ -525,8 +495,7 @@ func (h *ChessGame) GetFen(userid string) (board string, err error) {
 	return board, nil
 }
 
-
-func (h *ChessGame) GetGame(userid string) (game *ChessGameSession, err error){
+func (h *ChessGame) GetGame(userid string) (game *ChessGameSession, err error) {
 
 	if !h.CheckGameInProgress(userid) {
 		return game, errors.New("No Games in Progress")
@@ -540,7 +509,6 @@ func (h *ChessGame) GetGame(userid string) (game *ChessGameSession, err error){
 	return game, errors.New("No Game Found")
 }
 
-
 func (h *ChessGame) CheckGameInProgress(userid string) bool {
 	for _, game := range h.boardlist {
 		if game.UserID == userid {
@@ -551,10 +519,9 @@ func (h *ChessGame) CheckGameInProgress(userid string) bool {
 	return false
 }
 
-
 func (h *ChessGame) NewGame(userid string, color string) (err error) {
 
-	if h.CheckGameInProgress(userid){
+	if h.CheckGameInProgress(userid) {
 		return errors.New("Game in progress, you must forfeit first!")
 	}
 
@@ -578,7 +545,6 @@ func (h *ChessGame) NewGame(userid string, color string) (err error) {
 	gameinprogress := ChessGameSession{UserID: userid, board: &engine.Board{Turn: 1}, AIGame: true, AIMove: false, InProgress: true}
 	gameinprogress.board.SetUpPieces()
 
-
 	for i, game := range h.boardlist {
 		if game.UserID == userid {
 			//fmt.Println("Removing")
@@ -596,14 +562,12 @@ func (h *ChessGame) NewGame(userid string, color string) (err error) {
 	return nil
 }
 
-
 func (h *ChessGame) EndGame(userid string) (err error) {
 	return h.Resign(userid)
 }
 
-
 // This doesn't work as expected, need to refactor
-func (h *ChessGame) LoadGame(game string, board *engine.Board) (err error){
+func (h *ChessGame) LoadGame(game string, board *engine.Board) (err error) {
 
 	log := strings.Fields(game)
 	if len(log) < 1 {
@@ -621,13 +585,12 @@ func (h *ChessGame) LoadGame(game string, board *engine.Board) (err error){
 		movetype := h.StringToMove(move)
 		err := board.Move(movetype)
 		//fmt.Println("Moving " + movetype.ToString())
-		if err != nil{
-			return errors.New("Error loading game at move " + strconv.Itoa(i) + " : "+ err.Error())
+		if err != nil {
+			return errors.New("Error loading game at move " + strconv.Itoa(i) + " : " + err.Error())
 		}
 	}
 	return nil
 }
-
 
 func (h *ChessGame) LoadCurrentGame(userid string) (err error) {
 
@@ -663,8 +626,6 @@ func (h *ChessGame) LoadCurrentGame(userid string) (err error) {
 		//fmt.Println("Adding")
 	}
 
-
-
 	// Reset our board
 	session.board = &engine.Board{Turn: 1}
 	session.board.SetUpPieces()
@@ -676,8 +637,8 @@ func (h *ChessGame) LoadCurrentGame(userid string) (err error) {
 		movetype := h.StringToMove(move)
 		err := session.board.Move(movetype)
 		//fmt.Println("Moving " + movetype.ToString())
-		if err != nil{
-			return errors.New("Error loading game at move " + strconv.Itoa(i) + " : "+ err.Error())
+		if err != nil {
+			return errors.New("Error loading game at move " + strconv.Itoa(i) + " : " + err.Error())
 		}
 	}
 
@@ -693,7 +654,7 @@ func (h *ChessGame) LoadCurrentGame(userid string) (err error) {
 
 		response := <-responsechannel
 
-		if strings.HasPrefix(response,"botmove") {
+		if strings.HasPrefix(response, "botmove") {
 			payload := strings.Fields(response)
 			if len(payload) < 2 {
 				return errors.New("Error Loading Game: Processing bot response payload is nil, contact a dev!")
@@ -725,8 +686,7 @@ func (h *ChessGame) LoadCurrentGame(userid string) (err error) {
 	return nil
 }
 
-
-func (h *ChessGame) Resign(userid string) (err error){
+func (h *ChessGame) Resign(userid string) (err error) {
 
 	record, err := h.GetRecordFromDB(userid)
 	if err != nil {
@@ -754,11 +714,10 @@ func (h *ChessGame) Resign(userid string) (err error){
 	}
 	//fmt.Println(record.CurrentGame)
 
-
 	/*
-	This used to be wrapped in ChessGame.EndGame() but to avoid
-	a race condition happening, it now happens here in one go.
-	 */
+		This used to be wrapped in ChessGame.EndGame() but to avoid
+		a race condition happening, it now happens here in one go.
+	*/
 
 	for i, game := range h.boardlist {
 		if game.UserID == userid {
@@ -770,16 +729,14 @@ func (h *ChessGame) Resign(userid string) (err error){
 	return nil
 }
 
-
-
 /*
 
 Functions related to interacting with live chess boards
 
- */
+*/
 
 // This will not updating the player record, call PlayerMove instead!
-func (h *ChessGame) Move(message string, board *engine.Board) (err error){
+func (h *ChessGame) Move(message string, board *engine.Board) (err error) {
 
 	if len(message) < 6 {
 		return errors.New("Invalid Move")
@@ -787,13 +744,12 @@ func (h *ChessGame) Move(message string, board *engine.Board) (err error){
 
 	move := h.StringToMove(message)
 	err = board.Move(move)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 
 	return nil
 }
-
 
 // Returns 2 if white wins, -2 if black wins, 1 if it's stalemate, 0 if the game is still going.
 func (h *ChessGame) GameStatus(userid string) (status int, err error) {
@@ -805,11 +761,9 @@ func (h *ChessGame) GameStatus(userid string) (status int, err error) {
 	return board.board.IsOver(), nil
 }
 
-
 func (h *ChessGame) PlayerMove(userid string, move string) (err error) {
 
-
-	record, err:= h.GetRecordFromDB(userid)
+	record, err := h.GetRecordFromDB(userid)
 	if err != nil {
 		return err
 	}
@@ -819,7 +773,7 @@ func (h *ChessGame) PlayerMove(userid string, move string) (err error) {
 		return err
 	}
 
-	if game.AIMove{
+	if game.AIMove {
 		return errors.New("It is not your turn!")
 	}
 
@@ -848,7 +802,6 @@ func (h *ChessGame) PlayerMove(userid string, move string) (err error) {
 	return nil
 }
 
-
 func (h *ChessGame) BotMove(userid string, move string) (err error) {
 	db := h.db.rawdb.From("Games").From("Chess")
 
@@ -862,7 +815,7 @@ func (h *ChessGame) BotMove(userid string, move string) (err error) {
 	if err != nil {
 		return err
 	}
-	if !game.AIGame{
+	if !game.AIGame {
 		return errors.New("Not an AI Game!")
 	}
 
@@ -875,7 +828,7 @@ func (h *ChessGame) BotMove(userid string, move string) (err error) {
 		record.LastColorMoved = "white"
 	}
 
-	if game.AIGame{
+	if game.AIGame {
 		game.AIMove = false
 	}
 	err = h.SaveRecordToDB(record)
@@ -886,8 +839,7 @@ func (h *ChessGame) BotMove(userid string, move string) (err error) {
 	return nil
 }
 
-
-func (h *ChessGame) ProcessBotMove(userid string, response chan string){
+func (h *ChessGame) ProcessBotMove(userid string, response chan string) {
 
 	db := h.db.rawdb.From("Games").From("Chess")
 
@@ -903,7 +855,7 @@ func (h *ChessGame) ProcessBotMove(userid string, response chan string){
 		response <- err.Error()
 		return
 	}
-	if !game.AIGame{
+	if !game.AIGame {
 		response <- "Not an AI Game!"
 		return
 	}
@@ -925,19 +877,17 @@ func (h *ChessGame) ProcessBotMove(userid string, response chan string){
 	}
 
 	movestring := mymove.ToString()
-	err = h.BotMove( userid, movestring)
+	err = h.BotMove(userid, movestring)
 	if err != nil {
 		response <- err.Error()
 		return
 	}
 
-	response <- "botmoved "+movestring
+	response <- "botmoved " + movestring
 	return
 }
 
-
-func (h *ChessGame) GetBoard(userid string, piecestyle string, boardstyle string) (board string, err error){
-
+func (h *ChessGame) GetBoard(userid string, piecestyle string, boardstyle string) (board string, err error) {
 
 	board = ":\n"
 	board = board + ":earth_americas: :earth_africa: :earth_asia:|| Chess ||:earth_asia: :earth_africa: :earth_americas:"
@@ -972,8 +922,8 @@ func (h *ChessGame) GetBoard(userid string, piecestyle string, boardstyle string
 			movetype := h.StringToMove(move)
 			err := game.board.Move(movetype)
 			//fmt.Println("Moving " + movetype.ToString())
-			if err != nil{
-				return board, errors.New("Error loading game at move " + strconv.Itoa(i) + " : "+ err.Error())
+			if err != nil {
+				return board, errors.New("Error loading game at move " + strconv.Itoa(i) + " : " + err.Error())
 			}
 		}
 	}
@@ -982,54 +932,54 @@ func (h *ChessGame) GetBoard(userid string, piecestyle string, boardstyle string
 	for y := 7; y >= 0; y-- {
 		for x := 0; x < 8; x++ {
 			if boardarray[y][x] == "" {
-				if y % 2 == 1 && x % 2 == 1{
+				if y%2 == 1 && x%2 == 1 {
 					board = board + bstyle.BlackChessSquare + " "
 				}
-				if y % 2 == 1 && x % 2 == 0{
+				if y%2 == 1 && x%2 == 0 {
 					board = board + bstyle.WhiteChessSquare + " "
 				}
-				if y % 2 == 0 && x % 2 == 0{
+				if y%2 == 0 && x%2 == 0 {
 					board = board + bstyle.BlackChessSquare + " "
 				}
-				if y % 2 == 0 && x % 2 == 1{
+				if y%2 == 0 && x%2 == 1 {
 					board = board + bstyle.WhiteChessSquare + " "
 				}
 
 			} else {
-				if boardarray[y][x] == "p"{
+				if boardarray[y][x] == "p" {
 					board = board + blackstyle.Pawn.Symbol + " "
 				}
-				if boardarray[y][x] == "P"{
+				if boardarray[y][x] == "P" {
 					board = board + whitestyle.Pawn.Symbol + " "
 				}
-				if boardarray[y][x] == "r"{
+				if boardarray[y][x] == "r" {
 					board = board + blackstyle.Rook.Symbol + " "
 				}
-				if boardarray[y][x] == "R"{
+				if boardarray[y][x] == "R" {
 					board = board + whitestyle.Rook.Symbol + " "
 				}
-				if boardarray[y][x] == "n"{
+				if boardarray[y][x] == "n" {
 					board = board + blackstyle.Knight.Symbol + " "
 				}
-				if boardarray[y][x] == "N"{
+				if boardarray[y][x] == "N" {
 					board = board + whitestyle.Knight.Symbol + " "
 				}
-				if boardarray[y][x] == "b"{
+				if boardarray[y][x] == "b" {
 					board = board + blackstyle.Bishop.Symbol + " "
 				}
-				if boardarray[y][x] == "B"{
+				if boardarray[y][x] == "B" {
 					board = board + whitestyle.Bishop.Symbol + " "
 				}
-				if boardarray[y][x] == "q"{
+				if boardarray[y][x] == "q" {
 					board = board + blackstyle.Queen.Symbol + " "
 				}
-				if boardarray[y][x] == "Q"{
+				if boardarray[y][x] == "Q" {
 					board = board + whitestyle.Queen.Symbol + " "
 				}
-				if boardarray[y][x] == "k"{
+				if boardarray[y][x] == "k" {
 					board = board + blackstyle.King.Symbol + " "
 				}
-				if boardarray[y][x] == "K"{
+				if boardarray[y][x] == "K" {
 					board = board + whitestyle.King.Symbol + " "
 				}
 			}
@@ -1037,28 +987,28 @@ func (h *ChessGame) GetBoard(userid string, piecestyle string, boardstyle string
 
 		if record.Plots == "true" {
 
-			if y == 0{
+			if y == 0 {
 				board = board + ":one:"
 			}
-			if y == 1{
+			if y == 1 {
 				board = board + ":two:"
 			}
-			if y == 2{
+			if y == 2 {
 				board = board + ":three:"
 			}
-			if y == 3{
+			if y == 3 {
 				board = board + ":four:"
 			}
-			if y == 4{
+			if y == 4 {
 				board = board + ":five:"
 			}
-			if y == 5{
+			if y == 5 {
 				board = board + ":six:"
 			}
-			if y == 6{
+			if y == 6 {
 				board = board + ":seven:"
 			}
-			if y == 7{
+			if y == 7 {
 				board = board + ":eight:"
 			}
 		}
@@ -1071,7 +1021,6 @@ func (h *ChessGame) GetBoard(userid string, piecestyle string, boardstyle string
 	return board, nil
 }
 
-
 // Accepts a string such as "pe2-e4" and converts it to the Move struct.
 func (h *ChessGame) StringToMove(s string) *engine.Move {
 	var move engine.Move
@@ -1080,7 +1029,6 @@ func (h *ChessGame) StringToMove(s string) *engine.Move {
 	move.Piece = s[0]
 	return &move
 }
-
 
 // Accepts a string such as "e4'"and converts it to the Square struct.
 func (h *ChessGame) StringToSquare(s string) engine.Square {

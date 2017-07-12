@@ -3,16 +3,16 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
-	"log"
 
-	"github.com/bwmarrin/discordgo"
 	"github.com/asdine/storm"
+	"github.com/bwmarrin/discordgo"
 
-	_ "net/http/pprof"
 	"net/http"
+	_ "net/http/pprof"
 )
 
 // Variables used for command line parameters
@@ -40,7 +40,7 @@ func main() {
 	// Setup our tmp directory
 	_, err := os.Stat("tmp")
 	if err != nil {
-		if os.IsNotExist(err){
+		if os.IsNotExist(err) {
 			err = os.Mkdir("tmp", os.FileMode(0777))
 			if err != nil {
 				fmt.Println("Could not make tmp directory! " + err.Error())
@@ -48,7 +48,6 @@ func main() {
 			}
 		}
 	}
-
 
 	// Verify we can actually read our config file
 	conf, err := ReadConfig(ConfPath)
@@ -64,7 +63,6 @@ func main() {
 		return
 	}
 	defer db.Close()
-
 
 	// Run a quick first time db configuration to verify that it is working properly
 	fmt.Println("Checking Database")
@@ -85,7 +83,6 @@ func main() {
 
 	logchannel := make(chan string)
 	logger := Logger{logchan: logchannel}
-
 
 	// Create a callback handler and add it to our Handler Queue
 	fmt.Println("Adding Callback Handler")
@@ -108,7 +105,6 @@ func main() {
 	fmt.Println("Adding Command Registry Handler")
 	commandhandler := CommandHandler{dg: dg, db: &dbhandler, callback: &callbackhandler,
 		user: &userhandler, conf: &conf, perm: &permissionshandler, logchan: logchannel}
-
 
 	// Create our permissions handler
 	fmt.Println("Adding Channel Permissions Handler")
@@ -151,7 +147,6 @@ func main() {
 		return
 	}
 	fmt.Println("\n|| Main Handler Initialized ||\n")
-
 
 	if conf.DUBotConfig.Profiler {
 		http.ListenAndServe(":8080", http.DefaultServeMux)

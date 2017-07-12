@@ -2,7 +2,7 @@ package main
 
 /*
 Some quick helper functions for getting color ints
- */
+*/
 
 func ColorDefault() int {
 	return 0

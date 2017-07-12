@@ -1,50 +1,46 @@
 package main
 
 import (
-	"github.com/bwmarrin/discordgo"
-	"github.com/lunixbochs/vtclean"
-	"net/http"
-	"io/ioutil"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/bwmarrin/discordgo"
+	"github.com/lunixbochs/vtclean"
+	"io/ioutil"
+	"net/http"
 	"strings"
 )
 
 type UtilitiesHandler struct {
-
-	user *UserHandler
-	db *DBHandler
-	conf *Config
+	user     *UserHandler
+	db       *DBHandler
+	conf     *Config
 	registry *CommandRegistry
-	logchan chan string
-
+	logchan  chan string
 }
 
 type ShortUrlResponse struct {
 	Short map[string]string `json:"/short"`
 }
 
+func (h *UtilitiesHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
-func (h *UtilitiesHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate){
-
-	if !SafeInput(s, m, h.conf){
+	if !SafeInput(s, m, h.conf) {
 		return
 	}
 
-	command, payload :=  CleanCommand(m.Content, h.conf)
+	command, payload := CleanCommand(m.Content, h.conf)
 
 	h.user.CheckUser(m.Author.ID)
 
-
 	_, err := h.db.GetUser(m.Author.ID)
-	if err != nil{
+	if err != nil {
 		//fmt.Println("Error finding user")
 		return
 	}
 	/*
-	command = payload[0]
-	payload = RemoveStringFromSlice(payload, command)
+		command = payload[0]
+		payload = RemoveStringFromSlice(payload, command)
 	*/
 
 	if command == "unfold" || command == "unshorten" {
@@ -53,17 +49,17 @@ func (h *UtilitiesHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate
 			return
 		}
 		response, err := h.UnfoldURL(payload[0])
-		if err != nil{
-			s.ChannelMessageSend(m.ChannelID, "Could not unfold " + payload[0] + " : " + err.Error())
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Could not unfold "+payload[0]+" : "+err.Error())
 			return
 		}
-		s.ChannelMessageSend(m.ChannelID, payload[0]+" unfolds to ```\n" + response +"\n```")
+		s.ChannelMessageSend(m.ChannelID, payload[0]+" unfolds to ```\n"+response+"\n```")
 		return
 	}
-	if command == "moon"{
+	if command == "moon" {
 		message, err := h.GetMoon()
 		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, "Could not get moon: " + err.Error())
+			s.ChannelMessageSend(m.ChannelID, "Could not get moon: "+err.Error())
 			return
 		}
 		s.ChannelMessageSend(m.ChannelID, "Current Moon From Earth:\n"+message)
@@ -73,11 +69,10 @@ func (h *UtilitiesHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate
 
 }
 
-
-func (h *UtilitiesHandler) UnfoldURL(input string) (output string, err error){
+func (h *UtilitiesHandler) UnfoldURL(input string) (output string, err error) {
 
 	// The first step is to use golang’s http module to get the response:
-	res, err := http.Get("http://x.datasig.io/short?url="+input)
+	res, err := http.Get("http://x.datasig.io/short?url=" + input)
 	if err != nil {
 		return output, err
 	}
@@ -108,8 +103,7 @@ func (h *UtilitiesHandler) UnfoldURL(input string) (output string, err error){
 
 }
 
-
-func (h *UtilitiesHandler) GetMoon() (output string, err error){
+func (h *UtilitiesHandler) GetMoon() (output string, err error) {
 
 	client := &http.Client{}
 
@@ -126,7 +120,6 @@ func (h *UtilitiesHandler) GetMoon() (output string, err error){
 	}
 	defer resp.Body.Close()
 
-
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return output, err
@@ -134,7 +127,7 @@ func (h *UtilitiesHandler) GetMoon() (output string, err error){
 
 	output = string(body)
 
-	output = vtclean.Clean(output,false)
+	output = vtclean.Clean(output, false)
 	payload := strings.Split(output, "\n")
 
 	output = "\n```\n"

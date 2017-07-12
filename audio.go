@@ -1,23 +1,22 @@
 package main
 
 import (
-	"os"
-	"github.com/jonas747/ogg"
-	"os/exec"
 	"bytes"
-	"io"
-	"strings"
 	"errors"
+	"github.com/jonas747/ogg"
+	"io"
+	"os"
+	"os/exec"
+	"strings"
 )
 
 /*
 
 These functions help with audio conversion and prepare files for transmission
 
- */
+*/
 
-
-func MakeAudioBuffer(path string) (output [][]byte, err error){
+func MakeAudioBuffer(path string) (output [][]byte, err error) {
 	reader, err := os.Open(path)
 	defer reader.Close()
 	if err != nil {
@@ -35,8 +34,7 @@ func MakeAudioBuffer(path string) (output [][]byte, err error){
 	}
 }
 
-
-func ToOpus(path string) (err error){
+func ToOpus(path string) (err error) {
 
 	args := strings.Split(path, ".")
 	if len(args) < 2 {
@@ -44,15 +42,13 @@ func ToOpus(path string) (err error){
 	}
 
 	err = ConvertAudio("tmp/"+path, "tmp/"+args[0]+".opus")
-	if err != nil{
+	if err != nil {
 		return err
 	}
 	return nil
 }
 
-
-
-func ConvertAudio(from string, to string) (err error){
+func ConvertAudio(from string, to string) (err error) {
 
 	avconv := exec.Command("avconv", "-i", from, "-f", "wav", "-")
 	opusenc := exec.Command("opusenc", "--bitrate", "256", "-", to)

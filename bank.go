@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"errors"
+	"fmt"
 )
 
 /*
@@ -13,38 +13,30 @@ The bank has a balance on hold that can be used for issuing loans.
 
 Loan logic is also included here
 
- */
-
+*/
 
 type Bank struct {
-
-	db *DBHandler
+	db   *DBHandler
 	conf *Config
 	user *UserHandler
-
 }
 
 type BankRecord struct {
-
-	ID	string	`storm:"id"`
-	Pin string
-	Balance int
+	ID           string `storm:"id"`
+	Pin          string
+	Balance      int
 	LoansEnabled bool
 }
 
-
 type AccountRecord struct {
-
-	ID	string	`storm:"id"`
-	Pin string
-	UserID	string	`storm:"index"`
-	Balance	int
-	ActiveLoan	bool	`storm:"index"`
-
+	ID         string `storm:"id"`
+	Pin        string
+	UserID     string `storm:"index"`
+	Balance    int
+	ActiveLoan bool `storm:"index"`
 }
 
-
-func (h *Bank) Init(){
+func (h *Bank) Init() {
 
 	if h.conf.BankConfig.Reset {
 		err := h.ResetBank()
@@ -66,8 +58,7 @@ func (h *Bank) Init(){
 	}
 }
 
-
-func (h *Bank) CreateBank() (err error){
+func (h *Bank) CreateBank() (err error) {
 
 	_, err = h.GetMainBankAccount()
 	if err == nil {
@@ -86,15 +77,14 @@ func (h *Bank) CreateBank() (err error){
 	}
 	*/
 	err = db.Save(&mainrecord)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 
 	return nil
 }
 
-
-func (h *Bank) ResetBank() (err error){
+func (h *Bank) ResetBank() (err error) {
 	account, err := h.GetMainBankAccount()
 	if err != nil {
 		return err
@@ -103,15 +93,14 @@ func (h *Bank) ResetBank() (err error){
 	db := h.db.rawdb.From("Bank")
 
 	err = db.DeleteStruct(&account)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 
 	return h.CreateBank()
 }
 
-
-func (h *Bank) SaveBank() (err error){
+func (h *Bank) SaveBank() (err error) {
 	account, err := h.GetMainBankAccount()
 	if err != nil {
 		return err
@@ -125,7 +114,7 @@ func (h *Bank) SaveBank() (err error){
 	}
 	*/
 	err = db.Save(&account)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 	return nil
@@ -140,8 +129,7 @@ func (h *Bank) BankInitialized() bool {
 	return true
 }
 
-
-func (h *Bank) GetMainBankAccount() (account BankRecord, err error){
+func (h *Bank) GetMainBankAccount() (account BankRecord, err error) {
 
 	db := h.db.rawdb.From("Bank")
 
@@ -153,10 +141,9 @@ func (h *Bank) GetMainBankAccount() (account BankRecord, err error){
 	return account, nil
 }
 
+func (h *Bank) GetAccountForUser(userid string) (account AccountRecord, err error) {
 
-func (h *Bank) GetAccountForUser(userid string) (account AccountRecord, err error){
-
-	if !h.CheckUserAccount(userid){
+	if !h.CheckUserAccount(userid) {
 		h.CreateUserAccount(userid)
 	}
 
@@ -171,8 +158,7 @@ func (h *Bank) GetAccountForUser(userid string) (account AccountRecord, err erro
 	return record, nil
 }
 
-
-func (h *Bank) GetAccountByAccountID(accountid string) (account AccountRecord, err error){
+func (h *Bank) GetAccountByAccountID(accountid string) (account AccountRecord, err error) {
 
 	bankdb := h.db.rawdb.From("Bank")
 	accountdb := bankdb.From("Accounts")
@@ -185,8 +171,7 @@ func (h *Bank) GetAccountByAccountID(accountid string) (account AccountRecord, e
 	return account, nil
 }
 
-
-func (h *Bank) CheckUserAccount(userid string) (bool){
+func (h *Bank) CheckUserAccount(userid string) bool {
 
 	bankdb := h.db.rawdb.From("Bank")
 	accountdb := bankdb.From("Accounts")
@@ -201,8 +186,7 @@ func (h *Bank) CheckUserAccount(userid string) (bool){
 	return true
 }
 
-
-func (h *Bank) CreateUserAccount(userid string) (err error){
+func (h *Bank) CreateUserAccount(userid string) (err error) {
 
 	bankdb := h.db.rawdb.From("Bank")
 	accountdb := bankdb.From("Accounts")
@@ -226,12 +210,10 @@ func (h *Bank) CreateUserAccount(userid string) (err error){
 	return nil
 }
 
-
 func (h *Bank) SaveUserAccount(account AccountRecord) (err error) {
 
 	bankdb := h.db.rawdb.From("Bank")
 	accountdb := bankdb.From("Accounts")
-
 
 	if h.CheckUserAccount(account.UserID) {
 		err = accountdb.DeleteStruct(&account)

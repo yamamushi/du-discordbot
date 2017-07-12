@@ -31,19 +31,17 @@ type ChannelDB struct {
 }
 
 type ChannelRecord struct {
-
-	ID		string `storm:"id"`
+	ID     string `storm:"id"`
 	Groups []string
 
-	IsBotLog	bool
-	IsPermissionLog	bool
-	IsBankLog	bool
-	IsMusicRoom	bool
-	IsMusicAudio bool
+	IsBotLog        bool
+	IsPermissionLog bool
+	IsBankLog       bool
+	IsMusicRoom     bool
+	IsMusicAudio    bool
 
-	HQ	bool
+	HQ bool
 }
-
 
 func (h *ChannelDB) CreateChannel(channelid string) (err error) {
 
@@ -65,7 +63,7 @@ func (h *ChannelDB) CreateChannel(channelid string) (err error) {
 	return nil
 }
 
-func (h *ChannelDB) GetChannel(channelid string) (record ChannelRecord, err error){
+func (h *ChannelDB) GetChannel(channelid string) (record ChannelRecord, err error) {
 	db := h.db.rawdb.From("Channels")
 	record = ChannelRecord{}
 
@@ -94,7 +92,7 @@ func (h *ChannelDB) GetDB() (records []ChannelRecord, err error) {
 	db := h.db.rawdb.From("Channels")
 
 	err = db.All(&commandrecords)
-	if err != nil{
+	if err != nil {
 		return records, err
 	}
 	return commandrecords, nil
@@ -139,8 +137,7 @@ func (h *ChannelDB) AddGroup(channelid string, group string) (err error) {
 	return nil
 }
 
-
-func (h *ChannelDB) RemoveGroup(channelid string, group string) (err error){
+func (h *ChannelDB) RemoveGroup(channelid string, group string) (err error) {
 
 	record, err := h.GetChannel(channelid)
 	if err != nil {
@@ -158,8 +155,7 @@ func (h *ChannelDB) RemoveGroup(channelid string, group string) (err error){
 	return errors.New("Channel does not belong to group " + group)
 }
 
-
-func (h *ChannelDB) GetGroups(channelid string) (groups []string, err error){
+func (h *ChannelDB) GetGroups(channelid string) (groups []string, err error) {
 
 	record, err := h.GetChannel(channelid)
 	if err != nil {
@@ -169,9 +165,8 @@ func (h *ChannelDB) GetGroups(channelid string) (groups []string, err error){
 	return record.Groups, nil
 }
 
-
 // Bot Log
-func (h *ChannelDB) SetBotLog(channelid string) (err error){
+func (h *ChannelDB) SetBotLog(channelid string) (err error) {
 
 	err = h.CreateIfNotExists(channelid)
 	if err != nil {
@@ -190,7 +185,7 @@ func (h *ChannelDB) SetBotLog(channelid string) (err error){
 	}
 
 	channelrecord, err := h.GetChannel(channelid)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 
@@ -217,7 +212,7 @@ func (h *ChannelDB) GetBotLog() (channelid string, err error) {
 	return "", errors.New("Bot Log Channel Not Found")
 }
 
-func (h *ChannelDB) RemoveBotLog() (err error){
+func (h *ChannelDB) RemoveBotLog() (err error) {
 
 	channelrecords, err := h.GetDB()
 	if err != nil {
@@ -228,7 +223,7 @@ func (h *ChannelDB) RemoveBotLog() (err error){
 		if record.IsBotLog {
 			record.IsBotLog = false
 			err := h.SaveChannel(record)
-			if err != nil{
+			if err != nil {
 				return err
 			}
 			return nil
@@ -237,9 +232,8 @@ func (h *ChannelDB) RemoveBotLog() (err error){
 	return errors.New("Bot Log Channel Not Found")
 }
 
-
 // Promotion Log
-func (h *ChannelDB) SetPermissionLog(channelid string) (err error){
+func (h *ChannelDB) SetPermissionLog(channelid string) (err error) {
 
 	err = h.CreateIfNotExists(channelid)
 	if err != nil {
@@ -258,7 +252,7 @@ func (h *ChannelDB) SetPermissionLog(channelid string) (err error){
 	}
 
 	channelrecord, err := h.GetChannel(channelid)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 
@@ -285,7 +279,7 @@ func (h *ChannelDB) GetPermissionLog() (channelid string, err error) {
 	return "", errors.New("Permission Log Channel Not Found")
 }
 
-func (h *ChannelDB) RemovePermissionLog() (err error){
+func (h *ChannelDB) RemovePermissionLog() (err error) {
 
 	channelrecords, err := h.GetDB()
 	if err != nil {
@@ -296,7 +290,7 @@ func (h *ChannelDB) RemovePermissionLog() (err error){
 		if record.IsPermissionLog {
 			record.IsPermissionLog = false
 			err := h.SaveChannel(record)
-			if err != nil{
+			if err != nil {
 				return err
 			}
 			return nil
@@ -305,10 +299,8 @@ func (h *ChannelDB) RemovePermissionLog() (err error){
 	return errors.New("Permission Log Channel Not Found")
 }
 
-
-
 // Bank Log
-func (h *ChannelDB) SetBankLog(channelid string) (err error){
+func (h *ChannelDB) SetBankLog(channelid string) (err error) {
 
 	err = h.CreateIfNotExists(channelid)
 	if err != nil {
@@ -327,7 +319,7 @@ func (h *ChannelDB) SetBankLog(channelid string) (err error){
 	}
 
 	channelrecord, err := h.GetChannel(channelid)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 
@@ -354,7 +346,7 @@ func (h *ChannelDB) GetBankLog() (channelid string, err error) {
 	return "", errors.New("Bank Log Channel Not Found")
 }
 
-func (h *ChannelDB) RemoveBankLog() (err error){
+func (h *ChannelDB) RemoveBankLog() (err error) {
 
 	channelrecords, err := h.GetDB()
 	if err != nil {
@@ -365,7 +357,7 @@ func (h *ChannelDB) RemoveBankLog() (err error){
 		if record.IsBankLog {
 			record.IsBankLog = false
 			err := h.SaveChannel(record)
-			if err != nil{
+			if err != nil {
 				return err
 			}
 			return nil
@@ -374,9 +366,8 @@ func (h *ChannelDB) RemoveBankLog() (err error){
 	return errors.New("Bank Log Channel Not Found")
 }
 
-
 // HQ
-func (h *ChannelDB) SetHQ(channelid string) (err error){
+func (h *ChannelDB) SetHQ(channelid string) (err error) {
 
 	err = h.CreateIfNotExists(channelid)
 	if err != nil {
@@ -395,7 +386,7 @@ func (h *ChannelDB) SetHQ(channelid string) (err error){
 	}
 
 	channelrecord, err := h.GetChannel(channelid)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 
@@ -422,7 +413,7 @@ func (h *ChannelDB) GetHQ() (channelid string, err error) {
 	return "", errors.New("HQ Channel Not Found")
 }
 
-func (h *ChannelDB) RemoveHQ() (err error){
+func (h *ChannelDB) RemoveHQ() (err error) {
 
 	channelrecords, err := h.GetDB()
 	if err != nil {
@@ -433,7 +424,7 @@ func (h *ChannelDB) RemoveHQ() (err error){
 		if record.HQ {
 			record.HQ = false
 			err := h.SaveChannel(record)
-			if err != nil{
+			if err != nil {
 				return err
 			}
 			return nil
@@ -442,9 +433,8 @@ func (h *ChannelDB) RemoveHQ() (err error){
 	return errors.New("HQ Channel Not Found")
 }
 
-
 // MusicRoom
-func (h *ChannelDB) SetMusicRoom(channelid string) (err error){
+func (h *ChannelDB) SetMusicRoom(channelid string) (err error) {
 
 	err = h.CreateIfNotExists(channelid)
 	if err != nil {
@@ -463,7 +453,7 @@ func (h *ChannelDB) SetMusicRoom(channelid string) (err error){
 	}
 
 	channelrecord, err := h.GetChannel(channelid)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 
@@ -490,7 +480,7 @@ func (h *ChannelDB) GetMusicRoom() (channelid string, err error) {
 	return "", errors.New("Music Room Not Found")
 }
 
-func (h *ChannelDB) RemoveMusicRoom() (err error){
+func (h *ChannelDB) RemoveMusicRoom() (err error) {
 
 	channelrecords, err := h.GetDB()
 	if err != nil {
@@ -501,7 +491,7 @@ func (h *ChannelDB) RemoveMusicRoom() (err error){
 		if record.IsMusicRoom {
 			record.IsMusicRoom = false
 			err := h.SaveChannel(record)
-			if err != nil{
+			if err != nil {
 				return err
 			}
 			return nil
@@ -510,9 +500,8 @@ func (h *ChannelDB) RemoveMusicRoom() (err error){
 	return errors.New("Music Room Not Found")
 }
 
-
 // MusicAudio
-func (h *ChannelDB) SetMusicAudio(channelid string) (err error){
+func (h *ChannelDB) SetMusicAudio(channelid string) (err error) {
 
 	err = h.CreateIfNotExists(channelid)
 	if err != nil {
@@ -531,7 +520,7 @@ func (h *ChannelDB) SetMusicAudio(channelid string) (err error){
 	}
 
 	channelrecord, err := h.GetChannel(channelid)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 
@@ -558,7 +547,7 @@ func (h *ChannelDB) GetMusicAudio() (channelid string, err error) {
 	return "", errors.New("Music Audio Channel Not Found")
 }
 
-func (h *ChannelDB) RemoveMusicAudio() (err error){
+func (h *ChannelDB) RemoveMusicAudio() (err error) {
 
 	channelrecords, err := h.GetDB()
 	if err != nil {
@@ -569,7 +558,7 @@ func (h *ChannelDB) RemoveMusicAudio() (err error){
 		if record.IsMusicAudio {
 			record.IsMusicAudio = false
 			err := h.SaveChannel(record)
-			if err != nil{
+			if err != nil {
 				return err
 			}
 			return nil

@@ -1,15 +1,13 @@
 package main
 
 import (
-	"github.com/asdine/storm"
 	"fmt"
+	"github.com/asdine/storm"
 )
 
 type DBHandler struct {
-
-	rawdb   *storm.DB
-	conf *Config
-
+	rawdb *storm.DB
+	conf  *Config
 }
 
 func (h *DBHandler) FirstTimeSetup() error {
@@ -38,9 +36,9 @@ func (h *DBHandler) FirstTimeSetup() error {
 			return err
 		}
 
-		if(user.Owner) {
+		if user.Owner {
 			err = db.One("ID", h.conf.DiscordConfig.AdminID, &user)
-			if err != nil{
+			if err != nil {
 				fmt.Println("Could not retrieve data from the database, something went wrong!")
 				return err
 			}
@@ -90,4 +88,3 @@ func (h *DBHandler) GetUser(uid string) (user User, err error) {
 
 	return user, nil
 }
-
