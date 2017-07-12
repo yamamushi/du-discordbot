@@ -8,7 +8,9 @@ import (
 	"github.com/lunixbochs/vtclean"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
+	"time"
 )
 
 // UtilitiesHandler struct
@@ -36,9 +38,13 @@ func (h *UtilitiesHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate
 
 	h.user.CheckUser(m.Author.ID)
 
-	_, err := h.db.GetUser(m.Author.ID)
+	user, err := h.db.GetUser(m.Author.ID)
 	if err != nil {
 		//fmt.Println("Error finding user")
+		return
+	}
+
+	if !user.Citizen {
 		return
 	}
 	/*
@@ -68,6 +74,15 @@ func (h *UtilitiesHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate
 		s.ChannelMessageSend(m.ChannelID, "Current Moon From Earth:\n"+message)
 		return
 
+	}
+	if command == "countdown" {
+		s.ChannelMessageSend(m.ChannelID, h.GetCountdownStatus())
+		return
+	}
+	if command == "pledging" || command == "pledges" || command == "crowdfunding" || command == "founderspacks" {
+
+		s.ChannelMessageSend(m.ChannelID, h.GetPledgingStatus())
+		return
 	}
 
 }
@@ -144,5 +159,38 @@ func (h *UtilitiesHandler) GetMoon() (output string, err error) {
 	}
 	output = output + "\n```"
 	return output, nil
+
+}
+
+// GetAlphaStatus function returns a formatted list of days important to Alpha and pledging
+func (h *UtilitiesHandler) GetCountdownStatus() (output string) {
+
+	endofsep := time.Date(2017, 9, 30, 0, 0, 0, 0, time.Now().Location())
+	beginsep := time.Date(2017, 9, 1, 0, 0, 0, 0, time.Now().Location())
+	endofpledges := time.Date(2017, 9, 7, 0, 0, 0, 0, time.Now().Location())
+
+	daysuntilbegin := beginsep.YearDay() - time.Now().YearDay()
+	daysuntilend := endofsep.YearDay() - time.Now().YearDay()
+	daysuntilpledges := endofpledges.YearDay() - time.Now().YearDay()
+
+	output = "Current Important Countdowns: ```\n"
+	output = output + "Minimum Estimated Days Until Alpha: " + strconv.Itoa(daysuntilbegin) + "\n"
+	output = output + "Maximum Estimated Days Until Alpha: " + strconv.Itoa(daysuntilend) + "\n"
+	output = output + "Days Until Founders Pack Pledging Ends: " + strconv.Itoa(daysuntilpledges) + "\n"
+	output = output + "```\n"
+
+	return output
+
+}
+
+func (h *UtilitiesHandler) GetPledgingStatus() (output string) {
+
+	endofpledges := time.Date(2017, 9, 7, 0, 0, 0, 0, time.Now().Location())
+	daysuntilpledges := endofpledges.YearDay() - time.Now().YearDay()
+	output = "Current Pledging Information: ```\n"
+	output = output + "Days Until Founders Pack Pledging Ends: " + strconv.Itoa(daysuntilpledges) + "\n"
+	output = output + "```\n"
+
+	return output
 
 }
