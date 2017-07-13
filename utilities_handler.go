@@ -8,7 +8,6 @@ import (
 	"github.com/lunixbochs/vtclean"
 	"io/ioutil"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -162,33 +161,34 @@ func (h *UtilitiesHandler) GetMoon() (output string, err error) {
 
 }
 
-// GetAlphaStatus function returns a formatted list of days important to Alpha and pledging
+// GetCountdownStatus function returns a formatted list of days important to Alpha and pledging
 func (h *UtilitiesHandler) GetCountdownStatus() (output string) {
 
-	endofsep := time.Date(2017, 9, 30, 0, 0, 0, 0, time.Now().Location())
-	beginsep := time.Date(2017, 9, 1, 0, 0, 0, 0, time.Now().Location())
-	endofpledges := time.Date(2017, 9, 7, 0, 0, 0, 0, time.Now().Location())
+	endofsep := time.Date(2017, 9, 30, 0, 0, 0, 0, time.UTC)
+	beginsep := time.Date(2017, 9, 1, 0, 0, 0, 0, time.UTC)
+	endofpledges := time.Date(2017, 9, 7, 0, 0, 0, 0, time.UTC)
 
-	daysuntilbegin := beginsep.YearDay() - time.Now().YearDay()
-	daysuntilend := endofsep.YearDay() - time.Now().YearDay()
-	daysuntilpledges := endofpledges.YearDay() - time.Now().YearDay()
+	daysuntilbegin := beginsep.Sub(time.Now().UTC())
+	daysuntilend := endofsep.Sub(time.Now().UTC())
+	daysuntilpledges := endofpledges.Sub(time.Now().UTC())
 
 	output = "Current Important Countdowns: ```\n"
-	output = output + "Minimum Estimated Days Until Alpha: " + strconv.Itoa(daysuntilbegin) + "\n"
-	output = output + "Maximum Estimated Days Until Alpha: " + strconv.Itoa(daysuntilend) + "\n"
-	output = output + "Days Until Founders Pack Pledging Ends: " + strconv.Itoa(daysuntilpledges) + "\n"
+	output = output + "Minimum Estimated Time Until Alpha: " + TruncateTime(daysuntilbegin, time.Second).String() + "\n"
+	output = output + "Maximum Estimated Time Until Alpha: " + TruncateTime(daysuntilend, time.Second).String() + "\n"
+	output = output + "Time Until Founders Pack Pledging Ends: " + TruncateTime(daysuntilpledges, time.Second).String() + "\n"
 	output = output + "```\n"
 
 	return output
 
 }
 
+// GetPledgingStatus function
 func (h *UtilitiesHandler) GetPledgingStatus() (output string) {
 
-	endofpledges := time.Date(2017, 9, 7, 0, 0, 0, 0, time.Now().Location())
-	daysuntilpledges := endofpledges.YearDay() - time.Now().YearDay()
+	endofpledges := time.Date(2017, 9, 7, 0, 0, 0, 0, time.UTC)
+	daysuntilpledges := endofpledges.Sub(time.Now().UTC())
 	output = "Current Pledging Information: ```\n"
-	output = output + "Days Until Founders Pack Pledging Ends: " + strconv.Itoa(daysuntilpledges) + "\n"
+	output = output + "Time Until Founders Pack Pledging Ends: " + TruncateTime(daysuntilpledges, time.Second).String() + "\n"
 	output = output + "```\n"
 
 	return output

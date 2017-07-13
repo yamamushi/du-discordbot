@@ -6,6 +6,13 @@ import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"strings"
+	"time"
+)
+
+// minDuration and maxDuration const for rounding
+const (
+	minTimeDuration time.Duration = -1 << 63
+	maxTimeDuration time.Duration = 1<<63 - 1
 )
 
 // RemoveStringFromSlice function
@@ -205,4 +212,43 @@ func IsVoiceChannelEmpty(s *discordgo.Session, channelid string, botid string) b
 
 	return true
 
+}
+
+// TruncateTime returns the result of rounding d toward zero to a multiple of m.
+// If m <= 0, Truncate returns d unchanged.
+func TruncateTime(d time.Duration, m time.Duration) time.Duration {
+	if m <= 0 {
+		return d
+	}
+	return d - d%m
+}
+
+// RoundTime returns the result of rounding d to the nearest multiple of m.
+// The rounding behavior for halfway values is to round away from zero.
+// If the result exceeds the maximum (or minimum)
+// value that can be stored in a Duration,
+// Round returns the maximum (or minimum) duration.
+// If m <= 0, Round returns d unchanged.
+func RoundTime(d time.Duration, m time.Duration) time.Duration {
+	if m <= 0 {
+		return d
+	}
+	r := d % m
+	if d < 0 {
+		r = -r
+		if r+r < m {
+			return d + r
+		}
+		if d1 := d - m + r; d1 < d {
+			return d1
+		}
+		return minTimeDuration // overflow
+	}
+	if r+r < m {
+		return d - r
+	}
+	if d1 := d + m - r; d1 > d {
+		return d1
+	}
+	return maxTimeDuration // overflow
 }
