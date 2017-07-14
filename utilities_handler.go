@@ -8,6 +8,7 @@ import (
 	"github.com/lunixbochs/vtclean"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -19,6 +20,7 @@ type UtilitiesHandler struct {
 	conf     *Config
 	registry *CommandRegistry
 	logchan  chan string
+	callback *CallbackHandler
 }
 
 // ShortURLResponse struct
@@ -82,6 +84,77 @@ func (h *UtilitiesHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate
 
 		s.ChannelMessageSend(m.ChannelID, h.GetPledgingStatus())
 		return
+	}
+	if command == "computer" || command == "Computer" {
+
+		if len(payload) < 2 {
+			return
+		}
+		if payload[0] == "nude" && payload[1] == "tayne" {
+			s.ChannelMessageSend(m.ChannelID, "This is not suitable for work. Are you sure?")
+			h.callback.Watch(h.TayneOhGod, GetUUID(), "", s, m)
+			return
+		}
+
+		if len(payload) < 3 {
+			return
+		}
+		if payload[0] == "add" && payload[1] == "sequence:" && payload[2] == "OYSTER" {
+			s.ChannelMessageSend(m.ChannelID, "http://i.imgur.com/LGnzAXN.gif")
+			return
+		}
+
+		if payload[0] == "and" && payload[1] == "a" && payload[2] == "flarhgunnstow?" {
+			s.ChannelMessageSend(m.ChannelID, "Yes. http://i.imgur.com/zlz25iD.gif")
+			return
+		}
+
+		if len(payload) < 5 {
+			return
+		}
+		if payload[0] == "load" && payload[1] == "up" && payload[2] == "celery" && payload[3] == "man" && payload[4] == "please" {
+			s.ChannelMessageSend(m.ChannelID, "Yes "+m.Author.Mention()+" https://www.tenor.co/zSBS.gif")
+			return
+		}
+
+		if len(payload) < 6 {
+			return
+		}
+		if payload[0] == "could" && payload[1] == "you" && payload[2] == "kick" && payload[3] == "up" && payload[4] == "the" && payload[5] == "4d3d3d3?" {
+			s.ChannelMessageSend(m.ChannelID, "4D3d3d3 Engaged "+m.Author.Mention()+" https://www.tenor.co/uk58.gif")
+			return
+		}
+
+		if payload[0] == "could" && payload[1] == "I" && payload[2] == "see" && payload[3] == "a" && payload[4] == "hat" && payload[5] == "wobble?" {
+			s.ChannelMessageSend(m.ChannelID, "Yes. http://i.imgur.com/QVnGKCH.gif")
+			return
+		}
+
+		if payload[0] == "do" && payload[1] == "we" && payload[2] == "have" && payload[3] == "any" &&
+			payload[4] == "new" && payload[5] == "sequences?" {
+			s.ChannelMessageSend(m.ChannelID, "I have a BETA sequence\nI have been working on\nWould you like to see it?")
+			h.callback.Watch(h.TayneResponse, GetUUID(), "", s, m)
+			return
+		}
+
+		if len(payload) < 8 {
+			return
+		}
+
+		if payload[0] == "give" && payload[1] == "me" && payload[2] == "a" && payload[3] == "print" &&
+			payload[4] == "out" && payload[5] == "of" && payload[6] == "oyster" && payload[7] == "smiling" {
+			s.ChannelMessageSend(m.ChannelID, "okay. https://i.imgur.com/Qrhid0G.png")
+			return
+		}
+
+		if len(payload) < 9 {
+			return
+		}
+		if payload[0] == "is" && payload[1] == "there" && payload[2] == "any" && payload[3] == "way" &&
+			payload[4] == "to" && payload[5] == "generate" && payload[6] == "a" && payload[7] == "nude" && payload[8] == "tayne?" {
+			s.ChannelMessageSend(m.ChannelID, "Not Computing. Please repeat.")
+			return
+		}
 	}
 
 }
@@ -168,14 +241,18 @@ func (h *UtilitiesHandler) GetCountdownStatus() (output string) {
 	beginsep := time.Date(2017, 9, 1, 0, 0, 0, 0, time.UTC)
 	endofpledges := time.Date(2017, 9, 7, 0, 0, 0, 0, time.UTC)
 
-	daysuntilbegin := beginsep.Sub(time.Now().UTC())
-	daysuntilend := endofsep.Sub(time.Now().UTC())
-	daysuntilpledges := endofpledges.Sub(time.Now().UTC())
+	exacttimeuntilbegin := beginsep.Sub(time.Now().UTC())
+	exattimeuntilend := endofsep.Sub(time.Now().UTC())
+	exacttimeuntilpledges := endofpledges.Sub(time.Now().UTC())
+
+	daysuntilbegin := beginsep.YearDay() - time.Now().YearDay()
+	daysuntilend := endofsep.YearDay() - time.Now().YearDay()
+	daysuntilpledges := endofpledges.YearDay() - time.Now().YearDay()
 
 	output = "Current Important Countdowns: ```\n"
-	output = output + "Minimum Estimated Time Until Alpha: " + TruncateTime(daysuntilbegin, time.Second).String() + "\n"
-	output = output + "Maximum Estimated Time Until Alpha: " + TruncateTime(daysuntilend, time.Second).String() + "\n"
-	output = output + "Time Until Founders Pack Pledging Ends: " + TruncateTime(daysuntilpledges, time.Second).String() + "\n"
+	output = output + "Minimum Estimated Time Until Alpha: " + strconv.Itoa(daysuntilbegin) + " days (Approx: " + TruncateTime(exacttimeuntilbegin, time.Second).String() + ")\n"
+	output = output + "Maximum Estimated Time Until Alpha: " + strconv.Itoa(daysuntilend) + " days (Approx: " + TruncateTime(exattimeuntilend, time.Second).String() + ")\n"
+	output = output + "Time Until Founders Pack Pledging Ends: " + strconv.Itoa(daysuntilpledges) + " days (Approx: " + TruncateTime(exacttimeuntilpledges, time.Second).String() + ")\n"
 	output = output + "```\n"
 
 	return output
@@ -186,11 +263,53 @@ func (h *UtilitiesHandler) GetCountdownStatus() (output string) {
 func (h *UtilitiesHandler) GetPledgingStatus() (output string) {
 
 	endofpledges := time.Date(2017, 9, 7, 0, 0, 0, 0, time.UTC)
-	daysuntilpledges := endofpledges.Sub(time.Now().UTC())
+	exacttimeuntilpledges := endofpledges.Sub(time.Now().UTC())
+	daysuntilpledges := endofpledges.YearDay() - time.Now().YearDay()
+
 	output = "Current Pledging Information: ```\n"
-	output = output + "Time Until Founders Pack Pledging Ends: " + TruncateTime(daysuntilpledges, time.Second).String() + "\n"
+	output = output + "Time Until Founders Pack Pledging Ends: " + strconv.Itoa(daysuntilpledges) + " days (Exactly: " + TruncateTime(exacttimeuntilpledges, time.Second).String() + ")\n"
 	output = output + "```\n"
 
 	return output
 
+}
+
+// TayneResponse function
+func (h *UtilitiesHandler) TayneResponse(url string, s *discordgo.Session, m *discordgo.MessageCreate) {
+
+	cp := h.conf.DUBotConfig.CP
+	if strings.HasPrefix(m.Content, cp) {
+		s.ChannelMessageSend(m.ChannelID, "Computer Command Cancelled")
+		return
+	}
+
+	content := strings.Fields(m.Content)
+	if len(content) > 0 {
+		if content[0] == "alright" || content[0] == "Alright" {
+			s.ChannelMessageSend(m.ChannelID, "Okay http://i.imgur.com/5K4qcE4.gif")
+			return
+		}
+	}
+
+	s.ChannelMessageSend(m.ChannelID, "Computer Input Cancelled")
+}
+
+// TayneOhGod function
+func (h *UtilitiesHandler) TayneOhGod(url string, s *discordgo.Session, m *discordgo.MessageCreate) {
+
+	cp := h.conf.DUBotConfig.CP
+	if strings.HasPrefix(m.Content, cp) {
+		s.ChannelMessageSend(m.ChannelID, "Computer Command Cancelled")
+		return
+	}
+
+	content := strings.Fields(m.Content)
+	if len(content) > 0 {
+		if content[0] == "yes" || content[0] == "mhmm" || content[0] == "yep" {
+			s.ChannelMessageSend(m.ChannelID, "Okay https://www.tenor.co/Fcsn.gif")
+			return
+		}
+	}
+
+	s.ChannelMessageSend(m.ChannelID, "Computer Input Cancelled")
 }

@@ -43,7 +43,7 @@ func (h *PrimaryHandler) Init() error {
 	h.dg.AddHandler(chess.Read)
 
 	fmt.Println("Adding Utilities Handler")
-	utilities := UtilitiesHandler{db: h.db, conf: h.conf, user: h.user, registry: h.command.registry, logchan: h.logchan}
+	utilities := UtilitiesHandler{db: h.db, conf: h.conf, user: h.user, registry: h.command.registry, logchan: h.logchan, callback: h.callback}
 	h.dg.AddHandler(utilities.Read)
 
 	fmt.Println("Adding Lua Handler")
