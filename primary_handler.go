@@ -46,15 +46,31 @@ func (h *PrimaryHandler) Init() error {
 	utilities := UtilitiesHandler{db: h.db, conf: h.conf, user: h.user, registry: h.command.registry, logchan: h.logchan, callback: h.callback}
 	h.dg.AddHandler(utilities.Read)
 
+	fmt.Println("Adding Computer command Handler")
+	computerhandler := ComputerHandler{db: h.db, conf: h.conf, user: h.user, registry: h.command.registry, callback: h.callback}
+	h.dg.AddHandler(computerhandler.Read)
+
 	fmt.Println("Adding Lua Handler")
 	luahandler := LuaHandler{db: h.db, conf: h.conf, user: h.user, registry: h.command.registry}
 	h.dg.AddHandler(luahandler.Read)
 
-	fmt.Println("Adding Music Handler")
-	musichandler := MusicHandler{db: h.db, user: h.user, registry: h.command.registry,
-		wallet: h.bankhandler.wallet, channel: h.channel, conf: h.conf}
-	musichandler.Init()
-	h.dg.AddHandler(musichandler.Read)
+	fmt.Println("Adding DevDiary Handler")
+	devdiary := DevDiaryHandler{db: h.db, conf: h.conf, user: h.user, registry: h.command.registry}
+	h.dg.AddHandler(devdiary.Read)
+
+	fmt.Println("Adding Interview Handler")
+	interviews := InterviewHandler{db: h.db, conf: h.conf, user: h.user, registry: h.command.registry}
+	h.dg.AddHandler(interviews.Read)
+
+	fmt.Println("Adding Meme Handler")
+	memes := MemeHandler{}
+	h.dg.AddHandler(memes.Read)
+
+	//fmt.Println("Adding Music Handler")
+	//musichandler := MusicHandler{db: h.db, user: h.user, registry: h.command.registry,
+	//	wallet: h.bankhandler.wallet, channel: h.channel, conf: h.conf}
+	//musichandler.Init()
+	//h.dg.AddHandler(musichandler.Read)
 
 	// Open a websocket connection to Discord and begin listening.
 	fmt.Println("Opening Connection to Discord")
@@ -145,6 +161,7 @@ func (h *PrimaryHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) 
 
 	if command == cp+"help" {
 		s.ChannelMessageSend(m.ChannelID, "https://github.com/yamamushi/du-discordbot#table-of-contents")
+		return
 	}
 
 	if command == cp+"follow" {
@@ -158,11 +175,13 @@ func (h *PrimaryHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) 
 		}
 		if len(command) < 2 {
 			s.ChannelMessageSend(m.ChannelID, "Command usage: follow <user>")
+			return
 		}
 
 		forum := ForumIntegration{}
 		forum.FollowUser(message[1])
 		s.ChannelMessageSend(m.ChannelID, "Callback launched")
+		return
 	}
 }
 
@@ -176,6 +195,9 @@ func (h *PrimaryHandler) RegisterCommands() (err error) {
 	h.registry.Register("balance", "Display user balance", "balance")
 	h.registry.Register("addbalance", "-?-", "-?-")
 	h.registry.Register("chess", "du-discordbot chess", "chess")
+	h.registry.Register("computer", "celery man please", "computer")
+	h.registry.Register("devdiary", "Display a dev diary for a given month", "devdiary <month>")
+	h.registry.Register("interview", "Display an interview for a given id", "devdiary <id> || <list>")
 
 	return nil
 }

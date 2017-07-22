@@ -100,7 +100,7 @@ You can save this file as `hello_handler.go`, I like the underscore in the filen
 Cool, we've got a simple handler built, but how do we actually get it to listen to incoming messages?
 
 
-Open up `func (h *MainHandler) Init() error`, which is defined within ``main_handler.go``, our entry point for adding handlers into our _discordgo_ session.
+Open up `func (h *MainHandler) Init() error`, which is defined within ``primary_handler.go``, our entry point for adding handlers into our _discordgo_ session.
 
 You will see several examples of handlers being added to the queue, but let's skip those for now and find the line that reads
 
@@ -214,7 +214,7 @@ func (h *HelloHandler) Prompt(message string, s *discordgo.Session, m *discordgo
 ```
 
 
-Now back in `main_handler.go`, we'll update the section you changed before to look like the following:
+Now back in `primary_handler.go`, we'll update the section you changed before to look like the following:
 
 ```go
     // Add new handlers below this line //
@@ -361,7 +361,7 @@ For our `hello` command, we have added the necessary function call to the comman
 
 
 
-Open up `main_handler.go` and scroll down to where you added your `HelloHandler` before, modify it slightly to the following:
+Open up `primary_handler.go` and scroll down to where you added your `HelloHandler` before, modify it slightly to the following:
 
 
 ```go
@@ -377,7 +377,7 @@ Open up `main_handler.go` and scroll down to where you added your `HelloHandler`
 ```
 
 
-Now in `main_handler.go`, scroll down to `RegisterCommands()` and modify it to the following (it may look different as other commands were likely registered between the time of writing and the time you're looking at the file):
+Now in `primary_handler.go`, scroll down to `RegisterCommands()` and modify it to the following (it may look different as other commands were likely registered between the time of writing and the time you're looking at the file):
 
 ```go
 func (h *MainHandler) RegisterCommands() (err error) {

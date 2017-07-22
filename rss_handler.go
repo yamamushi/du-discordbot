@@ -153,10 +153,10 @@ func (h *RSSHandler) UpdateRSSFeeds(s *discordgo.Session) {
 				item, err := rss.GetLatestItem(feed.URL, feed.ChannelID)
 				if err != nil {
 					fmt.Println(err.Error())
-					rss.Unsubscribe(feed.URL, feed.ChannelID) // Unsubscribe us if we got here
-					message := "Error reading feed, unsubscribing for sanity: " + feed.URL + "\n"
-					message = message + err.Error()
-					s.ChannelMessageSend(feed.ChannelID, message)
+					//rss.Unsubscribe(feed.URL, feed.ChannelID) // Unsubscribe us if we got here
+					//message := "Error reading feed, unsubscribing for sanity: " + feed.URL + "\n"
+					//message = message + err.Error()
+					//s.ChannelMessageSend(feed.ChannelID, message)
 					skip = true
 				}
 
@@ -347,6 +347,10 @@ func (h *RSSHandler) ConfirmAddRSS(url string, s *discordgo.Session, m *discordg
 			err := rss.Subscribe(url, "", m.ChannelID, repeat)
 			if err != nil {
 				s.ChannelMessageSend(m.ChannelID, "Error Subscribing to URL: "+err.Error())
+				return
+			}
+			if repeat {
+				s.ChannelMessageSend(m.ChannelID, "Repeating Selection Confirmed: "+url)
 				return
 			}
 
