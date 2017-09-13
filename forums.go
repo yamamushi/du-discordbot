@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/anaskhan96/soup"
 	"strings"
+	"fmt"
 )
 
 /*
@@ -46,10 +47,11 @@ func (h *ForumIntegration) GetLatestCommentForThread(url string) (username strin
 
 	resp, err := soup.Get(url + "/&page=1000") // Append page=1000 so we get the last page
 	if err != nil {
+		fmt.Println("Could not retreive page: " + url)
 		return "", "", "", err
 	}
 	doc := soup.HTMLParse(resp)
-	comments := doc.Find("div", "class", "ipsfocusBox-content").FindAll("article")
+	comments := doc.Find("div", "class", "cTopic ipsClear ipsSpacer_top").FindAll("article")
 
 	lastid := len(comments)
 
@@ -79,5 +81,6 @@ func (h *ForumIntegration) GetLatestCommentForThread(url string) (username strin
 		return username, truncatedcomment, latestcommentlink, nil
 	}
 
+	fmt.Println("Could not find comment id")
 	return "", "", "", errors.New("Could not find comment id")
 }

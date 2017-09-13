@@ -167,21 +167,18 @@ func (h *UtilitiesHandler) GetMoon() (output string, err error) {
 func (h *UtilitiesHandler) GetCountdownStatus() (output string) {
 
 	endofsep := time.Date(2017, 9, 30, 0, 0, 0, 0, time.UTC)
-	beginsep := time.Date(2017, 9, 1, 0, 0, 0, 0, time.UTC)
-	endofpledges := time.Date(2017, 9, 7, 0, 0, 0, 0, time.UTC)
+	//endofpledges := time.Date(2017, 9, 8, 8, 0, 0, 0, time.UTC)
 
-	exacttimeuntilbegin := beginsep.Sub(time.Now().UTC())
-	exattimeuntilend := endofsep.Sub(time.Now().UTC())
-	exacttimeuntilpledges := endofpledges.Sub(time.Now().UTC())
+	exacttimeuntilprealpha := endofsep.Sub(time.Now().UTC())
+	//exacttimeuntilpledges := endofpledges.Sub(time.Now().UTC())
 
-	daysuntilbegin := beginsep.YearDay() - time.Now().YearDay()
-	daysuntilend := endofsep.YearDay() - time.Now().YearDay()
-	daysuntilpledges := endofpledges.YearDay() - time.Now().YearDay()
+	daysuntilprealpha := endofsep.YearDay() - time.Now().YearDay()
+	//daysuntilpledges := endofpledges.YearDay() - time.Now().YearDay()
 
 	output = "Current Important Countdowns: ```\n"
-	output = output + "Minimum Estimated Time Until Alpha: " + strconv.Itoa(daysuntilbegin) + " days (Approx: " + TruncateTime(exacttimeuntilbegin, time.Second).String() + ")\n"
-	output = output + "Maximum Estimated Time Until Alpha: " + strconv.Itoa(daysuntilend) + " days (Approx: " + TruncateTime(exattimeuntilend, time.Second).String() + ")\n"
-	output = output + "Time Until Founders Pack Pledging Ends: " + strconv.Itoa(daysuntilpledges) + " days (Approx: " + TruncateTime(exacttimeuntilpledges, time.Second).String() + ")\n"
+	//output = output + "Time Until Founders Pack Pledging Ends: " + strconv.Itoa(daysuntilpledges) + " days (Approx: " + TruncateTime(exacttimeuntilpledges, time.Second).String() + ")\n"
+	output = output + "Founders pledging has ended, stay tuned for supporter packs in Q4 2017!\n"
+	output = output + "Time Until Pre-Alpha Release          : " + strconv.Itoa(daysuntilprealpha) + " days (Approx: " + TruncateTime(exacttimeuntilprealpha, time.Second).String() + ")\n"
 	output = output + "```\n"
 
 	return output
@@ -191,12 +188,13 @@ func (h *UtilitiesHandler) GetCountdownStatus() (output string) {
 // GetPledgingStatus function
 func (h *UtilitiesHandler) GetPledgingStatus() (output string) {
 
-	endofpledges := time.Date(2017, 9, 7, 0, 0, 0, 0, time.UTC)
-	exacttimeuntilpledges := endofpledges.Sub(time.Now().UTC())
-	daysuntilpledges := endofpledges.YearDay() - time.Now().YearDay()
+	//endofpledges := time.Date(2017, 9, 8, 8, 0, 0, 0, time.UTC)
+	//exacttimeuntilpledges := endofpledges.Sub(time.Now().UTC())
+	//daysuntilpledges := endofpledges.YearDay() - time.Now().YearDay()
 
 	output = "Current Pledging Information: ```\n"
-	output = output + "Time Until Founders Pack Pledging Ends: " + strconv.Itoa(daysuntilpledges) + " days (Exactly: " + TruncateTime(exacttimeuntilpledges, time.Second).String() + ")\n"
+	//output = output + "Time Until Founders Pack Pledging Ends: " + strconv.Itoa(daysuntilpledges) + " days (Exactly: " + TruncateTime(exacttimeuntilpledges, time.Second).String() + ")\n"
+	output = output + "Founders pledging has ended, stay tuned for supporter packs in Q4 2017!"
 	output = output + "```\n"
 
 	return output
