@@ -85,6 +85,10 @@ func (h *UtilitiesHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate
 		s.ChannelMessageSend(m.ChannelID, h.GetPledgingStatus())
 		return
 	}
+	if command == "nqtime" || command == "paristime" {
+		s.ChannelMessageSend(m.ChannelID, h.GetParisTime())
+		return
+	}
 
 }
 
@@ -166,18 +170,22 @@ func (h *UtilitiesHandler) GetMoon() (output string, err error) {
 // GetCountdownStatus function returns a formatted list of days important to Alpha and pledging
 func (h *UtilitiesHandler) GetCountdownStatus() (output string) {
 
-	endofsep := time.Date(2017, 9, 30, 0, 0, 0, 0, time.UTC)
+	endofsep := time.Date(2017, 9, 30, 13, 0, 0, 0, time.UTC)
+	atvalpha := time.Date(2017, 9, 23, 13, 0, 0, 0, time.UTC)
 	//endofpledges := time.Date(2017, 9, 8, 8, 0, 0, 0, time.UTC)
 
 	exacttimeuntilprealpha := endofsep.Sub(time.Now().UTC())
+	exacttimeuntilatvalpha := atvalpha.Sub(time.Now().UTC())
 	//exacttimeuntilpledges := endofpledges.Sub(time.Now().UTC())
 
 	daysuntilprealpha := endofsep.YearDay() - time.Now().YearDay()
+	daysuntilatvalpha := atvalpha.YearDay() - time.Now().YearDay()
 	//daysuntilpledges := endofpledges.YearDay() - time.Now().YearDay()
 
 	output = "Current Important Countdowns: ```\n"
 	//output = output + "Time Until Founders Pack Pledging Ends: " + strconv.Itoa(daysuntilpledges) + " days (Approx: " + TruncateTime(exacttimeuntilpledges, time.Second).String() + ")\n"
 	output = output + "Founders pledging has ended, stay tuned for supporter packs in Q4 2017!\n"
+	output = output + "Time Until ATV Pre-Alpha Release      : " + strconv.Itoa(daysuntilatvalpha) + " days (Approx: " + TruncateTime(exacttimeuntilatvalpha, time.Second).String() + ")\n"
 	output = output + "Time Until Pre-Alpha Release          : " + strconv.Itoa(daysuntilprealpha) + " days (Approx: " + TruncateTime(exacttimeuntilprealpha, time.Second).String() + ")\n"
 	output = output + "```\n"
 
@@ -199,4 +207,18 @@ func (h *UtilitiesHandler) GetPledgingStatus() (output string) {
 
 	return output
 
+}
+
+// GetParisTime function
+func (h *UtilitiesHandler) GetParisTime() (output string){
+
+	paris, err := time.LoadLocation("Europe/Paris")
+	if err != nil {
+		return ""
+	}
+
+	output = "Current time in Paris is - "
+	output = output + time.Now().In(paris).Format("15:04:05 PM")
+
+	return output
 }

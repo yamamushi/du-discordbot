@@ -9,10 +9,10 @@ ADD . /go/src/github.com/yamamushi/du-discordbot
 RUN mkdir /du-bot
 
 # Run our dependency installation for Opus Encoding/Decoding
-RUN apt-get update && \
-        DEBIAN_FRONTEND=noninteractive apt-get install -y libav-tools opus-tools -f && \
-        apt-get clean && \
-        rm -rf /var/lib/apt/lists/
+#RUN apt-get update && \
+#        DEBIAN_FRONTEND=noninteractive apt-get install -y libav-tools opus-tools -f && \
+#        apt-get clean && \
+#        rm -rf /var/lib/apt/lists/
 
 
 # Get the du-discordbot dependencies inside the container.
