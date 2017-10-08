@@ -223,7 +223,7 @@ func (h *RSSHandler) FormatRSSItem(url string, rssitem RSSItem, feedtitle string
 		formatted = ":postbox: New unread post in " + Bold(feedtitle) + "\n"
 		formatted = formatted + ":newspaper: || " + UnderlineBold(rssitem.Title) + " || \n" //+"<"+rssitem.Link+">\n\n"
 		username, comment, commenturl, err := h.foruminteg.GetLatestCommentForThread(rssitem.Link)
-		fmt.Println("RSS debug: " + username + " " + comment + " " + commenturl)
+		//fmt.Println("RSS debug: " + username + " " + comment + " " + commenturl)
 		if err == nil {
 			formatted = formatted + "New Comment from " + Bold(username) + ":\n"
 			formatted = formatted + "```" + comment + "```\n"

@@ -66,6 +66,11 @@ func (h *PrimaryHandler) Init() error {
 	memes := MemeHandler{}
 	h.dg.AddHandler(memes.Read)
 
+	fmt.Println("Adding Backer Handler")
+	backer := BackerHandler{db: h.db, callback: h.callback, conf: h.conf}
+	backer.Init()
+	h.dg.AddHandler(backer.Read)
+
 	//fmt.Println("Adding Music Handler")
 	//musichandler := MusicHandler{db: h.db, user: h.user, registry: h.command.registry,
 	//	wallet: h.bankhandler.wallet, channel: h.channel, conf: h.conf}

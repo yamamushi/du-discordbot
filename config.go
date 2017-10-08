@@ -13,12 +13,14 @@ type Config struct {
 	DUBotConfig   dubotConfig    `toml:"du-bot"`
 	BankConfig    bankConfig     `toml:"bank"`
 	CasinoConfig  casinoConfig   `toml:"casino"`
+	RolesConfig	  rolesConfig	 `toml:"roles"`
 }
 
 // discordConfig struct
 type discordConfig struct {
 	Token   string `toml:"bot_token"`
 	AdminID string `toml:"admin_id"`
+	GuildID string `toml:"guild_id"`
 }
 
 // databaseConfig struct
@@ -58,6 +60,20 @@ type casinoConfig struct {
 	Pin        string `toml:"casino_pin"`
 	Reset      bool   `toml:"reset_casino"`
 	SeedWallet int    `toml:"starting_casino_wallet_value"`
+}
+
+// rolesConfig struct
+type rolesConfig struct {
+	ATVRoleID		string	`toml:"atv_role"`
+	IronRoleID		string	`toml:"iron_role"`
+	BronzeRoleID	string	`toml:"bronze_role"`
+	SilverRoleID	string	`toml:"silver_role"`
+	GoldRoleID		string	`toml:"gold_role"`
+	SapphireRoleID	string	`toml:"sapphire_role"`
+	RubyRoleID		string	`toml:"ruby_role"`
+	EmeraldRoleID	string	`toml:"emerald_role"`
+	DiamondRoleID	string	`toml:"diamond_role"`
+	KyriumRoleID	string	`toml:"kyrium_role"`
 }
 
 // ReadConfig function

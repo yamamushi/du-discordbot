@@ -13,6 +13,7 @@ import (
 
 	"net/http"
 	_ "net/http/pprof"
+	"io/ioutil"
 )
 
 // Variables used for command line parameters
@@ -36,6 +37,7 @@ func init() {
 func main() {
 
 	fmt.Println("\n\n|| Starting du-discordbot ||\n")
+	log.SetOutput(ioutil.Discard)
 
 	// Setup our tmp directory
 	_, err := os.Stat("tmp")
@@ -132,6 +134,7 @@ func main() {
 	bankhandler := BankHandler{db: &dbhandler, conf: centralbank.conf, com: &commandhandler, logchan: logchannel,
 		user: &userhandler, callback: &callbackhandler, bank: &centralbank, wallet: &wallethandler}
 	dg.AddHandler(bankhandler.Read)
+
 
 	// Initalize our Logger
 	fmt.Println("Initializing Logger")
