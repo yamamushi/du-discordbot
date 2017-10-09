@@ -64,16 +64,18 @@ type casinoConfig struct {
 
 // rolesConfig struct
 type rolesConfig struct {
-	ATVRoleID		string	`toml:"atv_role"`
-	IronRoleID		string	`toml:"iron_role"`
-	BronzeRoleID	string	`toml:"bronze_role"`
-	SilverRoleID	string	`toml:"silver_role"`
-	GoldRoleID		string	`toml:"gold_role"`
-	SapphireRoleID	string	`toml:"sapphire_role"`
-	RubyRoleID		string	`toml:"ruby_role"`
-	EmeraldRoleID	string	`toml:"emerald_role"`
-	DiamondRoleID	string	`toml:"diamond_role"`
-	KyriumRoleID	string	`toml:"kyrium_role"`
+	ATVRoleID				string	`toml:"atv_role"`
+	IronRoleID				string	`toml:"iron_role"`
+	BronzeRoleID			string	`toml:"bronze_role"`
+	SilverRoleID			string	`toml:"silver_role"`
+	GoldRoleID				string	`toml:"gold_role"`
+	SapphireRoleID			string	`toml:"sapphire_role"`
+	RubyRoleID				string	`toml:"ruby_role"`
+	EmeraldRoleID			string	`toml:"emerald_role"`
+	DiamondRoleID			string	`toml:"diamond_role"`
+	KyriumRoleID			string	`toml:"kyrium_role"`
+	ForumLinkedRoleID		string	`toml:"forumlinked_role"`
+	ATVForumLinkedRoleID	string	`toml:"atvforumlinked_role"`
 }
 
 // ReadConfig function

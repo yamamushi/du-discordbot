@@ -374,6 +374,19 @@ func (h *BackerInterface) GetValidationString(record BackerRecord) (validation s
 											}
 										}
 									}
+
+									span := activityitem.Find("div", "class", "ipsStreamItem_snippet").FindAll("span")
+									if len(span) > 0 {
+										message := span[0].Text()
+										if strings.Contains(message, "discordauth"){
+											fields := strings.Split(message, ":")
+											if len(fields) == 2 {
+												checksum := strings.TrimSuffix(fields[1], "\n")
+												return checksum, nil
+											}
+										}
+									}
+
 								}
 							}
 						}

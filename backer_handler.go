@@ -43,21 +43,24 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		}
 
 		hashedid := h.backerInterface.HashUserID(m.Author.ID)
-		output := "In order to validate your access to the pre-alpha sections of this discord, you must first validate " +
+		output := ":satellite:**Authorization**:satellite: " +
+			"\nIn order to validate your access to the pre-alpha sections of this discord, you must first validate " +
 			"your backer status or ATV status through the Dual Universe forum.\n\n"
-		output += "To complete this process, please submit the following text into your " +
-			"public message feed through your **forum profile** (If you do not see the public message feed on your profile, " +
-				"you need to enable status updates in your forum account settings. It's the first option in Basic Info at the " +
-					"top of the **edit profile** settings window. You can disable it after the registration process is complete):"
-		output += "\n\n**Remember to paste this as plaintext or paste and match style, or this will not work otherwise!**\n"
-		output += "```discordauth:"+hashedid+"```"
-		output += "\n**99% of the time if you are having issues it is because you did not use Plaintext**\n\n"
-		output += "Once you have finished this step, please reply to this message with the " +
+		output += ":one: To complete this process, please post the following text on your " +
+			"public message feed through your **forum profile**:"
+		output += "\n```"
+		output += "discordauth:"+hashedid+"```"
+		output += ":bulb: If you do not see the public message feed on your profile, you need to enable status " +
+			"updates in your forum account settings.\n It's the first option in Basic Info at the top of the " +
+				"**edit profile** settings window. You can disable it after this registration process is complete."
+
+		output += "\n\n:two: Once you have posted your discordauth key, please reply to this message with the " +
 			"following **command** to complete the validation process:\n"
 		output += "```"
 		output += "~linkprofile <url of your forum profile>"
 		output += "\n```\n"
-		output += "If you continue to have issues with this process, please contact a discord moderator for assistance."
+		output += "If you continue to have issues with this process, please contact a discord moderator for assistance.\n" +
+			"(This message may not display properly on mobile due to a discord bug!)"
 
 		s.ChannelMessageSend(userprivatechannel.ID, output)
 		return
@@ -103,7 +106,7 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		s.ChannelMessageSend(userprivatechannel.ID, "Could not validate account.")
 		return
 	}
-	if command == "resetforum" {
+	if command == "resetauth" {
 		if !user.Admin {
 			// Don't even bother responding, just silently fail
 			return
@@ -175,19 +178,30 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		}
 
 		output := "User record for " + m.Mentions[0].Mention() + "\n"
+		output += "Profile: " + record.ForumProfile
 		output += "```"
 		output += "Founder Status: " + record.BackerStatus
 		if record.ATV == "true" {
-			output += "ATV Status: true"
+			output += "\nATV Status: true"
 		} else {
-			output += "ATV Status: false"
+			output += "\nATV Status: false"
 		}
-		output += "Profile: " + record.ForumProfile
 		output += "\n```\n"
 		s.ChannelMessageSend(m.ChannelID, output)
 		return
 	}
+	/*if command == "debugroles" {
+		if !user.Admin{
+			return
+		}
 
+		fmt.Println("Roles List:")
+
+		for _, role := range s.State.Guilds[0].Roles{
+			fmt.Println(role.Name)
+			fmt.Println(role.ID)
+		}
+	}*/
 }
 
 func (h *BackerHandler) ResetBackerConfirm(payload string, s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -203,11 +217,59 @@ func (h *BackerHandler) ResetBackerConfirm(payload string, s *discordgo.Session,
 		username := splitpayload[0]
 		userid := splitpayload[1]
 
-		err := h.backerInterface.ResetUser(userid)
+		atvStatus, err := h.backerInterface.GetATVStatus(userid)
 		if err != nil {
 			s.ChannelMessageSend(m.ChannelID, err.Error())
 			return
 		}
+
+		backerStatus, err := h.backerInterface.GetBackerStatus(userid)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, err.Error())
+			return
+		}
+
+		err = h.backerInterface.ResetUser(userid)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, err.Error())
+			return
+		}
+
+		if backerStatus == "Iron Founder" {
+			s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.IronRoleID)
+
+		} else if backerStatus == "Bronze Founder" {
+			s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.BronzeRoleID)
+
+		} else if backerStatus == "Silver Founder" {
+			s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.SilverRoleID)
+
+		} else if backerStatus == "Gold Founder" {
+			s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.GoldRoleID)
+
+		} else if backerStatus == "Sapphire Founder" {
+			s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.SapphireRoleID)
+
+		} else if backerStatus == "Ruby Founder" {
+			s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.RubyRoleID)
+
+		} else if backerStatus == "Emerald Founder" {
+			s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.EmeraldRoleID)
+
+		} else if backerStatus == "Diamond Founder" {
+			s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.DiamondRoleID)
+
+		} else if backerStatus == "Kyrium Founder" {
+			s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.KyriumRoleID)
+		}
+
+		if atvStatus == "true"{
+			s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.ATVRoleID)
+			s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.ATVForumLinkedRoleID)
+		}
+
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.ForumLinkedRoleID)
+
 		s.ChannelMessageSend(m.ChannelID, "Selection Confirmed: "+username+" backer status reset.")
 		return
 	}
@@ -259,7 +321,9 @@ func (h *BackerHandler) UpdateRoles(s *discordgo.Session, m *discordgo.MessageCr
 
 	if atvStatus == "true"{
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.ATVRoleID)
+		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.ATVForumLinkedRoleID)
 	}
 
+	s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.ForumLinkedRoleID)
 	return nil
 }
