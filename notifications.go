@@ -120,9 +120,25 @@ func (h *Notifications) RemoveChannelNotificationFromDB(channelnotification Chan
 	h.querylocker.Lock()
 	defer h.querylocker.Unlock()
 
+
+
 	db := h.db.rawdb.From("ChannelNotifications")
 	err = db.DeleteStruct(&channelnotification)
 	return err
+}
+
+func (h *Notifications) UpdateChannelNotification(channelnotification ChannelNotification) (err error) {
+	h.querylocker.Lock()
+	defer h.querylocker.Unlock()
+
+	db := h.db.rawdb.From("ChannelNotifications")
+
+	err = db.Update(&channelnotification)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 

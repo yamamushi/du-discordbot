@@ -196,7 +196,6 @@ func (h *NotificationsHandler) RemoveNotification(messageid string, s *discordgo
 // GetAllNotifications function
 func (h *NotificationsHandler) GetAllNotifications(page string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
-	fmt.Println("page: " + page)
 	pagenum, err := strconv.Atoi(page)
 	if err != nil {
 		pagenum = 1
@@ -249,7 +248,6 @@ func (h *NotificationsHandler) GetAllNotifications(page string, s *discordgo.Ses
 // GetAllNotifications function
 func (h *NotificationsHandler) GetAllChannelNotifications(page string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
-	fmt.Println("page: " + page)
 	pagenum, err := strconv.Atoi(page)
 	if err != nil {
 		pagenum = 1
@@ -382,6 +380,45 @@ func (h *NotificationsHandler) CheckNotifications(s *discordgo.Session) {
 		// Only run every X minutes
 		time.Sleep(h.conf.DUBotConfig.Notifications * time.Minute)
 
+		//fmt.Println("Running Notifications Handler")
+		notificationsdb := Notifications{db: h.db}
+
+		notificationlist, err := notificationsdb.GetAllChannelNotifications()
+		if err != nil {
+			fmt.Println("Error reading from channel notifications database: " + err.Error())
+		}
+
+		for _, channelnotification := range notificationlist {
+
+			//fmt.Println("Reading Notification")
+
+			timeout := channelnotification.Timeout
+
+			hours, minutes, err := h.ParseTimeout(timeout)
+			if err != nil{
+				fmt.Println("Error parsing timeout for channel notification: " + channelnotification.ID)
+			}
+
+			if hours > 0 {
+				minutes = (hours * 60) + minutes
+			}
+
+			interval := time.Duration(minutes*60*1000*1000*1000)
+			//fmt.Println("Interval: " + strconv.Itoa(interval))
+
+			diff := time.Now().Sub(channelnotification.LastRun)
+			if diff > interval {
+
+				notification, err := notificationsdb.GetNotificationFromDB(channelnotification.Notification)
+				if err != nil{
+					fmt.Println("Error reading from notifications database: " + err.Error())
+				}
+				s.ChannelMessageSend(channelnotification.ChannelID, notification.Message)
+
+				channelnotification.LastRun = time.Now()
+				notificationsdb.UpdateChannelNotification(channelnotification)
+			}
+		}
 	}
 
 }
@@ -412,15 +449,12 @@ func (h *NotificationsHandler) ParseTimeout(timeout string) (hours int64, minute
 					if err != nil {
 						return 0, 0, errors.New("Could not parse hours")
 					}
-					fmt.Println("hours:" + minutesstring)
-
 				} else if strings.Contains(field, "m"){
 					minutesstring = strings.TrimSuffix(field, "m")
 					minutes, err = strconv.ParseInt(minutesstring, 10, 64)
 					if err != nil {
 						return 0, 0, errors.New("Could not parse minutes")
 					}
-					fmt.Println("minutes:" + minutesstring)
 				} else {
 					return 0, 0, errors.New("Invalid time interval format")
 				}
@@ -430,6 +464,10 @@ func (h *NotificationsHandler) ParseTimeout(timeout string) (hours int64, minute
 			}
 			break
 		}
+	}
+
+	if hours == 0 && minutes == 0 {
+		return hours, minutes, errors.New("Invalid interval specified")
 	}
 
 	return hours, minutes, nil
