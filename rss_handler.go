@@ -228,6 +228,7 @@ func (h *RSSHandler) FormatRSSItem(url string, rssitem RSSItem, feedtitle string
 			formatted = formatted + "New Comment from " + Bold(username) + ":\n"
 			formatted = formatted + "```" + comment + "```\n"
 			formatted = formatted + "Continue reading @ <" + commenturl + ">\n"
+			formatted = formatted + "=============="
 		}
 	} else {
 		formatted = ":postbox: New update: \n" // from " + url + "\n"

@@ -58,7 +58,7 @@ func (h *YoutubeInterface) RemoveFromDB(record YoutubeRecord, playlist string) (
 	}
 
 	db := h.db.rawdb.From("YouTube").From(playlist)
-	err = db.Remove(&record)
+	err = db.DeleteStruct(&record)
 	return err
 }
 

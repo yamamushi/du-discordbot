@@ -22,6 +22,7 @@ type BackerRecord struct {
 	BackerStatus	string
 	ForumProfile	string
 	ATV				string
+	PreAlpha		string
 	Validated		int
 }
 
@@ -91,11 +92,13 @@ func (h *BackerInterface) UniqueProfileCheck(userid string, profileurl string) (
 
 // UserHasRecord function
 func (h *BackerInterface) UserHasRecord(userid string) bool {
-	db := h.db.rawdb.From("DiscordAuth")
 
-	record := BackerRecord{}
-	err := db.One("UserID", userid, &record)
+	record, err := h.GetRecordFromDB(userid)
 	if err != nil {
+		return false
+	}
+
+	if record.UserID == "" {
 		return false
 	}
 	return true
@@ -192,6 +195,34 @@ func (h *BackerInterface) SetATVStatus(userid string, atvstatus string) (err err
 	return nil
 }
 
+
+// GetATVStatus function
+func (h *BackerInterface) GetPreAlphaStatus(userid string) (status string, err error) {
+	if !h.UserHasRecord(userid){
+		return "", errors.New("Error: No User Record Exists!")
+	}
+	record, err := h.GetRecordFromDB(userid)
+	if err != nil {
+		return "", err
+	}
+	return record.PreAlpha, nil
+}
+
+// GetATVStatus function
+func (h *BackerInterface) SetPreAlphaStatus(userid string, prealphastatus string) (err error) {
+
+	record, err := h.GetRecordFromDB(userid)
+	if err != nil {
+		return err
+	}
+	record.PreAlpha = prealphastatus
+	err = h.SaveRecordToDB(record)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // UserHasRecord function
 func (h *BackerInterface) GetForumProfile(userid string) (profileurl string, err error) {
 	if !h.UserHasRecord(userid){
@@ -242,9 +273,9 @@ func (h *BackerInterface) HashUserID(userid string) string {
 
 func (h *BackerInterface) ResetUser(userid string) error {
 
-	if !h.UserHasRecord(userid){
+	/* if !h.UserHasRecord(userid){
 		return errors.New("Error: No User Record Exists!")
-	}
+	} */
 
 	record, err := h.GetRecordFromDB(userid)
 	if err != nil {
@@ -253,6 +284,7 @@ func (h *BackerInterface) ResetUser(userid string) error {
 	record.Validated = 0
 	record.ATV = "false"
 	record.ForumProfile = ""
+	record.PreAlpha = "false"
 
 	err = h.SaveRecordToDB(record)
 	if err != nil{
@@ -305,7 +337,12 @@ func (h *BackerInterface) ForumAuth(url string, userid string) (err error) {
 		return err
 	}
 
-	if backerstatus != "" || atvstatus == "true" {
+	prealphastatus, err := h.GetPreAlphaStatus(userid)
+	if err != nil {
+		return err
+	}
+
+	if backerstatus != "" || atvstatus == "true" || prealphastatus == "true"{
 		err = h.SetValidatedStatus(userid, 1)
 		if err != nil {
 			//fmt.Println("Setting validated status")
@@ -422,6 +459,13 @@ func (h *BackerInterface) CheckStatus(userid string) (err error) {
 		}
 	}
 
+	if h.GetPreAlphaString(record) {
+		err = h.SetPreAlphaStatus(userid, "true")
+		if err != nil{
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -464,6 +508,34 @@ func (h *BackerInterface) GetBackerString(record BackerRecord) (status string){
 	return ""
 }
 
+
+func (h *BackerInterface) GetPreAlphaString(record BackerRecord) (status bool){
+
+	resp, err := soup.Get(record.ForumProfile) // Append page=1000 so we get the last page
+	if err != nil {
+		//fmt.Println("Could not retreive page: " + record.ForumProfile)
+		return false
+	}
+
+	doc := soup.HTMLParse(resp)
+	profile_header := doc.FindAll("header", "data-role", "profileHeader")
+
+	if len(profile_header) > 0 {
+		for _, headers := range profile_header {
+			bar_text := headers.FindAll("span", "class", "ipsPageHead_barText")
+			if len(bar_text) > 0 {
+				status := bar_text[0].FindAll("span")
+				if len(status) > 0 {
+					if status[0].Text() == "Pre-Alpha Tester" {
+						return true
+					}
+				}
+			}
+		}
+	}
+
+	return false
+}
 
 
 func (h *BackerInterface) GetATVString(record BackerRecord) (status bool){

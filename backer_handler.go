@@ -122,7 +122,7 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 		s.ChannelMessageSend(m.ChannelID, "Resetting Forum Account for : "+m.Mentions[0].Username+" Confirm? (Y/N)")
 
-		message := m.Mentions[0].Username + " " + m.Mentions[0].ID
+		message := m.Mentions[0].Username + "||" + m.Mentions[0].ID
 		h.callback.Watch(h.ResetBackerConfirm, GetUUID(), message, s, m)
 		return
 	}
@@ -154,9 +154,9 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 	if command == "forumprofile" {
-		if !user.Admin{
-			return
-		}
+		//if !user.Admin{
+		//	return
+		//}
 		if len(m.Mentions) < 1 {
 			s.ChannelMessageSend(m.ChannelID, command + " expects a user mention.")
 			return
@@ -178,7 +178,7 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		}
 
 		output := "User record for " + m.Mentions[0].Mention() + "\n"
-		output += "Profile: " + record.ForumProfile
+		output += "Profile: " + record.ForumProfile + "\n"
 		output += "```"
 		output += "Founder Status: " + record.BackerStatus
 		if record.ATV == "true" {
@@ -190,18 +190,71 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		s.ChannelMessageSend(m.ChannelID, output)
 		return
 	}
-	/*if command == "debugroles" {
+	if command == "forumprofilebyid" {
 		if !user.Admin{
 			return
 		}
 
-		fmt.Println("Roles List:")
-
-		for _, role := range s.State.Guilds[0].Roles{
-			fmt.Println(role.Name)
-			fmt.Println(role.ID)
+		if len(payload) < 1 {
+			s.ChannelMessageSend(m.ChannelID, "Error: forumprofilebyid expects an argument!")
+			return
 		}
-	}*/
+
+		mentionid := payload[0]
+
+		if !h.backerInterface.UserValidated(mentionid) {
+			s.ChannelMessageSend(m.ChannelID, "Selected user has not linked their profile yet.")
+			return
+		}
+
+		record, err := h.backerInterface.GetRecordFromDB(mentionid)
+		if err != nil{
+			s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+			return
+		}
+
+		member, err := s.State.Member(h.conf.DiscordConfig.GuildID, mentionid)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+			return
+		}
+
+		usermention := member.User.Mention()
+
+		output := "User record for " + usermention + "\n"
+		output += "Profile: " + record.ForumProfile + "\n"
+		output += "```"
+		output += "Founder Status: " + record.BackerStatus
+		if record.ATV == "true" {
+			output += "\nATV Status: true"
+		} else {
+			output += "\nATV Status: false"
+		}
+		output += "\n```\n"
+		s.ChannelMessageSend(m.ChannelID, output)
+		return
+	}
+	if command == "debugroles" {
+		if !user.Admin{
+			return
+		}
+
+		userprivatechannel, err := s.UserChannelCreate(m.Author.ID)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error initializing backerauth.")
+			return
+		}
+
+		//fmt.Println("Roles List:")
+
+		output := ":bulb: Roles for this server\n```"
+		for _, role := range s.State.Guilds[0].Roles{
+			output = output + "\n" + role.Name + " : " + role.ID
+		}
+		output = output + "\n```\n"
+		s.ChannelMessageSend(userprivatechannel.ID, output)
+		return
+	}
 }
 
 func (h *BackerHandler) ResetBackerConfirm(payload string, s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -213,25 +266,31 @@ func (h *BackerHandler) ResetBackerConfirm(payload string, s *discordgo.Session,
 	}
 
 	if m.Content == "Y" || m.Content == "y" {
-		splitpayload := strings.Fields(payload)
+		splitpayload := strings.Split(payload,"||")
 		username := splitpayload[0]
 		userid := splitpayload[1]
 
 		atvStatus, err := h.backerInterface.GetATVStatus(userid)
-		if err != nil {
+		/*if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error retrieving ATV Status")
+			return
+		}*/
+
+		prealphaStatus, err := h.backerInterface.GetPreAlphaStatus(userid)
+		/*if err != nil {
 			s.ChannelMessageSend(m.ChannelID, err.Error())
 			return
-		}
+		}*/
 
 		backerStatus, err := h.backerInterface.GetBackerStatus(userid)
-		if err != nil {
+		/*if err != nil {
 			s.ChannelMessageSend(m.ChannelID, err.Error())
 			return
-		}
+		}*/
 
 		err = h.backerInterface.ResetUser(userid)
 		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, err.Error())
+			s.ChannelMessageSend(m.ChannelID, "Could not reset user: " + userid + " : " + err.Error())
 			return
 		}
 
@@ -246,26 +305,37 @@ func (h *BackerHandler) ResetBackerConfirm(payload string, s *discordgo.Session,
 
 		} else if backerStatus == "Gold Founder" {
 			s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.GoldRoleID)
+			s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
 
 		} else if backerStatus == "Sapphire Founder" {
 			s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.SapphireRoleID)
+			s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
 
 		} else if backerStatus == "Ruby Founder" {
 			s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.RubyRoleID)
+			s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
 
 		} else if backerStatus == "Emerald Founder" {
 			s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.EmeraldRoleID)
+			s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
 
 		} else if backerStatus == "Diamond Founder" {
 			s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.DiamondRoleID)
+			s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
 
 		} else if backerStatus == "Kyrium Founder" {
 			s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.KyriumRoleID)
+			s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
 		}
 
 		if atvStatus == "true"{
 			s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.ATVRoleID)
 			s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.ATVForumLinkedRoleID)
+			s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
+		}
+
+		if prealphaStatus == "true"{
+			s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
 		}
 
 		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.ForumLinkedRoleID)
@@ -286,6 +356,11 @@ func (h *BackerHandler) UpdateRoles(s *discordgo.Session, m *discordgo.MessageCr
 		return err
 	}
 
+	prealphaStatus, err := h.backerInterface.GetPreAlphaStatus(userid)
+	if err != nil {
+		return err
+	}
+
 	backerStatus, err := h.backerInterface.GetBackerStatus(userid)
 	if err != nil {
 		return err
@@ -302,26 +377,37 @@ func (h *BackerHandler) UpdateRoles(s *discordgo.Session, m *discordgo.MessageCr
 
 	} else if backerStatus == "Gold Founder" {
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.GoldRoleID)
+		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
 
 	} else if backerStatus == "Sapphire Founder" {
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.SapphireRoleID)
+		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
 
 	} else if backerStatus == "Ruby Founder" {
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.RubyRoleID)
+		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
 
 	} else if backerStatus == "Emerald Founder" {
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.EmeraldRoleID)
+		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
 
 	} else if backerStatus == "Diamond Founder" {
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.DiamondRoleID)
+		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
 
 	} else if backerStatus == "Kyrium Founder" {
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.KyriumRoleID)
+		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
+	}
+
+	if prealphaStatus == "true"{
+		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
 	}
 
 	if atvStatus == "true"{
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.ATVRoleID)
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.ATVForumLinkedRoleID)
+		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
 	}
 
 	s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.ForumLinkedRoleID)

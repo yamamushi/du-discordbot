@@ -93,6 +93,14 @@ func (h *UtilitiesHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate
 		s.ChannelMessageSend(m.ChannelID, h.FinalCountdown())
 		return
 	}
+	if command == "novawrimo" {
+		s.ChannelMessageSend(m.ChannelID, h.NovaWrimo())
+		return
+	}
+	if command == "events" {
+		s.ChannelMessageSend(m.ChannelID, h.Events())
+		return
+	}
 
 }
 
@@ -188,10 +196,11 @@ func (h *UtilitiesHandler) GetCountdownStatus() (output string) {
 	output = "Current Important Countdowns: ```\n"
 	//output = output + "Time Until Founders Pack Pledging Ends: " + strconv.Itoa(daysuntilpledges) + " days (Approx: " + TruncateTime(exacttimeuntilpledges, time.Second).String() + ")\n"
 	output = output + "Founders pledging has ended, stay tuned for supporter packs in Q4 2017!\n"
+	output = output + "Gold and higher Founders can refer to the forums for the Pre-Alpha Testing Schedule.\n"
 	//output = output + "Time Until ATV Pre-Alpha Release      : " + strconv.Itoa(daysuntilatvalpha) + " days (Approx: " + TruncateTime(exacttimeuntilatvalpha, time.Second).String() + ")\n"
-	output = output + "Time Until ATV Pre-Alpha Release      : ATV in Pre-Alpha, Have Fun!\n"
+	//output = output + "Time Until ATV Pre-Alpha Release      : ATV in Pre-Alpha, Have Fun!\n"
 	//output = output + "Time Until Pre-Alpha Release          : " + strconv.Itoa(daysuntilprealpha) + " days (Approx: " + TruncateTime(exacttimeuntilprealpha, time.Second).String() + ")\n"
-	output = output + "Time Until Pre-Alpha Release          : Gold+ Backers in Pre-Alpha, Have Fun!\n"
+	//output = output + "Time Until Pre-Alpha Release          : Gold+ Backers in Pre-Alpha, Have Fun!\n"
 	output = output + "```\n"
 
 	return output
@@ -233,4 +242,37 @@ func (h *UtilitiesHandler) FinalCountdown() (output string){
 
 	return ":rotating_light: :rotating_light: :rotating_light: !!! https://www.youtube.com/watch?v=9jK-NcRmVcw"
 
+}
+
+func (h *UtilitiesHandler) NovaWrimo() (output string){
+
+	output = ":rotating_light: :rotating_light: :rotating_light: !!!"
+	output += "\n" + "NovaWrimo 2017 is now live!"
+	output += "\n" + "Enter for your chance to win a free Gold Founders Pledge! Find out more at the link below:\n"
+	output += "\n" + "https://board.dualthegame.com/index.php?/topic/10415-novawrimo-contest-2016-rules-to-participate/"
+	return output
+}
+
+func (h *UtilitiesHandler) Events() (output string){
+
+	output = ":rotating_light: :rotating_light: :rotating_light: !!! "
+	output += "\n" + "Current Events in Dual Universe!"
+	output += "\n" + "```"
+
+	output += "\n" + "It's contest season in Dual Universe! Take part in the following event(s) for your"
+	output += "opportunity to win cool stuff!"
+	output += "\n" + "NovaWrimo 2017 | https://board.dualthegame.com/index.php?/topic/10415-novawrimo-contest-2016-rules-to-participate/ "
+
+	output += "\n\n" + "- News -"
+
+	output += "\n" + "As of December 2017, closed pre-alpha testing is currently taking place under a strict NDA policy. "
+	output += "If you have a Gold or higher level Founders Pledge, you are currently eligible to take part in these closed tests."
+	output += "\n\n" + "Those who would like to discuss testing in this discord can run ~forumauth to authenticate your gold+ account "
+	output +=  "on the forums."
+
+
+	output += "\n" + "```"
+
+
+	return output
 }

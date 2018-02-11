@@ -81,7 +81,7 @@ func (h *RSS) RemoveFromDB(rssfeed RSSFeed) (err error) {
 	defer h.querylocker.Unlock()
 
 	db := h.db.rawdb.From("RSS")
-	err = db.Remove(&rssfeed)
+	err = db.DeleteStruct(&rssfeed)
 	return err
 }
 

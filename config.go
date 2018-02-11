@@ -76,6 +76,7 @@ type rolesConfig struct {
 	KyriumRoleID			string	`toml:"kyrium_role"`
 	ForumLinkedRoleID		string	`toml:"forumlinked_role"`
 	ATVForumLinkedRoleID	string	`toml:"atvforumlinked_role"`
+	PreAlphaForumLinkedRole	string	`toml:"prealpha_role"`
 }
 
 // ReadConfig function
