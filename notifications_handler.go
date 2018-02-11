@@ -117,6 +117,16 @@ func (h *NotificationsHandler) ParseCommand(command []string, s *discordgo.Sessi
 		return
 	}
 
+	if command[1] == "view" && len(command) <= 2 {
+		s.ChannelMessageSend(m.ChannelID, "Command expects an argument")
+		return
+	}
+
+	if command[1] == "view" && len(command) > 2 {
+		h.ViewNotificationMessageID(command[2], s, m)
+		return
+	}
+
 	if command[1] == "messagelist" || command[1] == "listmessages" || command[1] == "listnotifications" || command[1] == "messages"{
 		if len(command) > 2 {
 			page := command[2]
@@ -186,9 +196,9 @@ func (h *NotificationsHandler) RemoveNotification(messageid string, s *discordgo
 
 	notificationsdb := Notifications{db: h.db}
 
-	err := notificationsdb.RemoveNotificationFromDBByID(messageid)
+	err := notificationsdb.RemoveNotificationFromDBByID(messageid, s)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Could not remove notification from db: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, err.Error())
 		return
 	}
 
@@ -223,6 +233,7 @@ func (h *NotificationsHandler) GetAllNotifications(page string, s *discordgo.Ses
 	}
 
 	list := "```"
+	list = list + "   ID    | Message\n"
 	count := 0
 	for num, notification := range notificationlist {
 
@@ -275,8 +286,8 @@ func (h *NotificationsHandler) GetAllChannelNotifications(page string, s *discor
 	}
 
 	list := "```\n"
-	list = list + "   ID    |  Interval  | Message\n"
-	list = list + "--------------------------------------------------------------\n"
+	list = list + "   ID    | Interval | MessageID |      Last Run       | Message\n"
+	list = list + "-------------------------------------------------------------------------\n"
 	count := 0
 	for num, notification := range notificationlist {
 
@@ -307,14 +318,23 @@ func (h *NotificationsHandler) GetAllChannelNotifications(page string, s *discor
 				timeout = hours + " " + minutes
 
 
-				if len(timeout) < 12 {
-					padright := 11-len(timeout)
+				if len(timeout) < 10 {
+					padright := 9-len(timeout)
 					for i := 0; i < padright; i++ {
 						timeout = timeout + " "
 					}
 				}
 
-				output := notification.ID + " | " + timeout + "| " + notificationmessage.Message + "\n"
+				lastrun := notification.LastRun.UTC()
+				lastrunstring := lastrun.Format("2006-01-02 15:04:05")
+				notificationid := notification.Notification
+
+				message := notificationmessage.Message
+				if len(message) > 12 {
+					message = strings.TrimSuffix(message, string(message[12]))
+				}
+
+				output := notification.ID + " | " + timeout + "| " + notificationid + "  | " + lastrunstring + " | " + message + "\n"
 				list = list + output
 
 				if count == 10{
@@ -379,6 +399,25 @@ func (h *NotificationsHandler) DisableChannelNotification(notificationid string,
 	}
 
 	s.ChannelMessageSend(m.ChannelID, "Notification disabled for this channel.")
+	return
+}
+
+func (h *NotificationsHandler) ViewNotificationMessageID(notificationid string, s *discordgo.Session, m *discordgo.MessageCreate) {
+
+	notificationsdb := Notifications{db: h.db}
+	notification, err := notificationsdb.GetNotificationFromDB(notificationid)
+	if err != nil{
+		s.ChannelMessageSend(m.ChannelID, err.Error())
+		return
+	}
+
+	output := "```"
+	output = output + "   ID    | Message\n"
+	output = output + "-------------------------------------------------------------------------\n"
+	output = output + notification.ID + " | " + notification.Message + "\n"
+	output = output + "```"
+
+	s.ChannelMessageSend(m.ChannelID, output)
 	return
 }
 

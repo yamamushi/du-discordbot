@@ -4,6 +4,7 @@ import (
 	"sync"
 	"time"
 	"errors"
+	"github.com/bwmarrin/discordgo"
 )
 
 // Notifications struct
@@ -51,11 +52,38 @@ func (h *Notifications) RemoveNotificationFromDB(notification Notification) (err
 }
 
 // RemoveNotificationFromDBByID function
-func (h *Notifications) RemoveNotificationFromDBByID(messageid string) (err error) {
+func (h *Notifications) RemoveNotificationFromDBByID(messageid string, s *discordgo.Session) (err error) {
 
 	notification, err := h.GetNotificationFromDB(messageid)
 	if err != nil {
 		return err
+	}
+
+	channelnotifications, err := h.GetAllChannelNotifications()
+	if err != nil {
+		return err
+	}
+
+	found := false
+	channelsinuse := ""
+	for _, channelnotification := range channelnotifications {
+
+		if channelnotification.Notification == notification.ID {
+			found = true
+			mention, err := MentionChannel(channelnotification.ChannelID, s)
+			if err != nil {
+				return err
+			}
+
+			if channelsinuse != ""{
+				channelsinuse = channelsinuse + ", " + mention
+			} else {
+				channelsinuse = mention
+			}
+		}
+	}
+	if (found) {
+		return errors.New("Could not remove message from db, it is currently in use by the following channel notification(s):\n" + channelsinuse)
 	}
 
 	err = h.RemoveNotificationFromDB(notification)
@@ -116,8 +144,6 @@ func (h *Notifications) AddChannelNotificationToDB(channelnotification ChannelNo
 func (h *Notifications) RemoveChannelNotificationFromDB(channelnotification ChannelNotification) (err error) {
 	h.querylocker.Lock()
 	defer h.querylocker.Unlock()
-
-
 
 	db := h.db.rawdb.From("ChannelNotifications")
 	err = db.DeleteStruct(&channelnotification)
