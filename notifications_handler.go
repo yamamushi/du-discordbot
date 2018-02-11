@@ -28,7 +28,7 @@ func (h *NotificationsHandler) Init() {
 // RegisterCommands function
 func (h *NotificationsHandler) RegisterCommands() (err error) {
 
-	h.registry.Register("notifications", "Manage notifications for this channel", "enable|disable|add|remove|list|view")
+	h.registry.Register("notifications", "Manage notifications for this channel", "enable(for)|disable(for)|add|remove|list|view|channel|messages")
 	return nil
 
 }
@@ -117,6 +117,29 @@ func (h *NotificationsHandler) ParseCommand(command []string, s *discordgo.Sessi
 		return
 	}
 
+	// Channel Specific Commands
+
+	if command[1] == "enablefor" && len(command) <= 3 {
+		s.ChannelMessageSend(m.ChannelID, "Command expects three arguments - ChannelID, Notification ID and Time Interval in hours and minutes. Expected format for the time interval is hours(h) and/or minutes(m) separated with a space, ie: 2h 4m")
+		return
+	}
+
+	if command[1] == "enablefor" && len(command) > 3 {
+		h.EnableChannelNotificationFor(command, s, m)
+		return
+	}
+
+	if command[1] == "disablefor" && len(command) <= 3 {
+		s.ChannelMessageSend(m.ChannelID, "Command expects two arguments")
+		return
+	}
+
+	if command[1] == "disablefor" && len(command) > 3 {
+		h.DisableChannelNotificationFor(command[2], command[3], s, m)
+		return
+	}
+
+
 	if command[1] == "view" && len(command) <= 2 {
 		s.ChannelMessageSend(m.ChannelID, "Command expects an argument")
 		return
@@ -146,6 +169,18 @@ func (h *NotificationsHandler) ParseCommand(command []string, s *discordgo.Sessi
 		h.GetAllChannelNotifications("1", s, m )
 		return
 	}
+
+
+	if command[1] == "channel" || command[1] == "channellist" || command[1] == "listchannel" {
+		if len(command) > 3 {
+			page := command[3]
+			h.GetAllChannelNotificationsFor(command[2], page, s, m)
+			return
+		}
+		h.GetAllChannelNotificationsFor(command[2], "1", s, m )
+		return
+	}
+
 	if command[1] == "flush" {
 		notificationsdb := Notifications{db: h.db}
 		err := notificationsdb.FlushChannelNotifications(m.ChannelID)
@@ -157,6 +192,7 @@ func (h *NotificationsHandler) ParseCommand(command []string, s *discordgo.Sessi
 		return
 	}
 }
+
 
 // AddNotification function
 func (h *NotificationsHandler) AddNotification(command []string, s *discordgo.Session, m *discordgo.MessageCreate){
@@ -234,13 +270,14 @@ func (h *NotificationsHandler) GetAllNotifications(page string, s *discordgo.Ses
 
 	list := "```"
 	list = list + "   ID    | Message\n"
+	list = list + "---------------------------------------------------------------------------\n"
 	count := 0
 	for num, notification := range notificationlist {
 
 		count = count + 1
 
 		if num >= ((pagenum * 10)-10) {
-			output := notification.ID + ": " + notification.Message + "\n"
+			output := notification.ID + " | " + notification.Message + "\n"
 			list = list + output
 
 			if count == 10{
@@ -259,8 +296,7 @@ func (h *NotificationsHandler) GetAllNotifications(page string, s *discordgo.Ses
 }
 
 
-
-// GetAllNotifications function
+// GetAllChannelNotifications function
 func (h *NotificationsHandler) GetAllChannelNotifications(page string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	pagenum, err := strconv.Atoi(page)
@@ -287,7 +323,7 @@ func (h *NotificationsHandler) GetAllChannelNotifications(page string, s *discor
 
 	list := "```\n"
 	list = list + "   ID    | Interval | MessageID |      Last Run       | Message\n"
-	list = list + "-------------------------------------------------------------------------\n"
+	list = list + "---------------------------------------------------------------------------\n"
 	count := 0
 	for num, notification := range notificationlist {
 
@@ -330,8 +366,8 @@ func (h *NotificationsHandler) GetAllChannelNotifications(page string, s *discor
 				notificationid := notification.Notification
 
 				message := notificationmessage.Message
-				if len(message) > 12 {
-					message = strings.TrimSuffix(message, string(message[12]))
+				if len(message) > 11 {
+					message = strings.TrimSuffix(message, string(message[10]))
 				}
 
 				output := notification.ID + " | " + timeout + "| " + notificationid + "  | " + lastrunstring + " | " + message + "\n"
@@ -354,6 +390,7 @@ func (h *NotificationsHandler) GetAllChannelNotifications(page string, s *discor
 }
 
 
+// EnableChannelNotification function
 func (h *NotificationsHandler) EnableChannelNotification(command []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 
@@ -388,7 +425,7 @@ func (h *NotificationsHandler) EnableChannelNotification(command []string, s *di
 	return
 }
 
-
+// DisableChannelNotification function
 func (h *NotificationsHandler) DisableChannelNotification(notificationid string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	notificationsdb := Notifications{db: h.db}
@@ -402,6 +439,202 @@ func (h *NotificationsHandler) DisableChannelNotification(notificationid string,
 	return
 }
 
+// Channel Specific Functions
+
+// GetAllChannelNotifications function
+func (h *NotificationsHandler) GetAllChannelNotificationsFor(channelname string, page string, s *discordgo.Session, m *discordgo.MessageCreate) {
+
+	channelname = strings.TrimPrefix(channelname, "<#")
+	channelname = strings.TrimSuffix(channelname, ">")
+
+	channel, err := s.Channel(channelname)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Could not parse channel (use the # name not the id number):" + err.Error())
+		return
+	}
+
+	channelmention, err := MentionChannel(channel.ID, s)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error parsing channel: " + err.Error())
+		return
+	}
+
+	pagenum, err := strconv.Atoi(page)
+	if err != nil {
+		pagenum = 1
+	}
+
+	notificationsdb := Notifications{db: h.db}
+
+	notificationlist, err := notificationsdb.GetAllChannelNotifications()
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error retrieving notifications list: " + err.Error())
+		return
+	}
+
+	pages := (len(notificationlist) / 10)+1
+	if len(notificationlist) == 10 {
+		pages = 1
+	}
+
+	if pagenum > pages{
+		pagenum = 1
+	}
+
+
+
+	list := ":bulb: Channel Notifications for " + channelmention + ": \n"
+	list = list + "```\n"
+	list = list + "   ID    | Interval | MessageID |      Last Run       | Message\n"
+	list = list + "---------------------------------------------------------------------------\n"
+	count := 0
+	for num, notification := range notificationlist {
+
+		if notification.ChannelID == channel.ID {
+			count = count + 1
+
+			if num >= ((pagenum * 10)-10) {
+
+				notificationmessage, err := notificationsdb.GetNotificationFromDB(notification.Notification)
+				if err != nil {
+					s.ChannelMessageSend(m.ChannelID, "Error retrieving notification from db")
+					return
+				}
+
+				timeout := notification.Timeout
+				hours := "0h"
+				minutes := "0m"
+				holder := strings.Split(timeout, " ")
+
+				for i := 0; i < len(holder); i++ {
+					if strings.Contains(holder[i], "h"){
+						hours = holder[i]
+					} else if strings.Contains(holder[i], "m"){
+						minutes = holder[i]
+					}
+				}
+
+				timeout = hours + " " + minutes
+
+
+				if len(timeout) < 10 {
+					padright := 9-len(timeout)
+					for i := 0; i < padright; i++ {
+						timeout = timeout + " "
+					}
+				}
+
+				lastrun := notification.LastRun.UTC()
+				lastrunstring := lastrun.Format("2006-01-02 15:04:05")
+				notificationid := notification.Notification
+
+				message := notificationmessage.Message
+				if len(message) > 11 {
+					message = strings.TrimSuffix(message, string(message[10]))
+				}
+
+				output := notification.ID + " | " + timeout + "| " + notificationid + "  | " + lastrunstring + " | " + message + "\n"
+				list = list + output
+
+				if count == 10{
+					list = list + "```"
+					list = list + "Page " + strconv.Itoa(pagenum) + " of " + strconv.Itoa(pages)
+					s.ChannelMessageSend(m.ChannelID, list)
+					return
+				}
+			}
+		}
+	}
+
+	list = list + "```"
+	list = list + "Page " + strconv.Itoa(pagenum) + " of " + strconv.Itoa(pages)
+	s.ChannelMessageSend(m.ChannelID, list)
+	return
+}
+
+// EnableChannelNotificationFor function
+func (h *NotificationsHandler) EnableChannelNotificationFor(command []string, s *discordgo.Session, m *discordgo.MessageCreate) {
+
+	var parsed string
+
+	for i, field := range command {
+		if i > 3 {
+			parsed = parsed + field + " "
+		}
+	}
+
+	channelname := command[2]
+	channelname = strings.TrimPrefix(channelname, "<#")
+	channelid := strings.TrimSuffix(channelname, ">")
+
+	_, err := s.Channel(channelid)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Could not parse channel (use the # name not the id number):" + err.Error())
+		return
+	}
+
+	channelmention, err := MentionChannel(channelid, s)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error parsing channel: " + err.Error())
+		return
+	}
+
+
+	_, _, err = h.ParseTimeout(parsed)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, err.Error())
+		return
+	}
+
+	notificationsdb := Notifications{db: h.db}
+	uuid, err := GetUUID()
+	if err != nil{
+		s.ChannelMessageSend(m.ChannelID, "Fatal Error generating UUID: " + err.Error())
+		return
+	}
+	id := strings.Split(uuid, "-")
+	err = notificationsdb.CreateChannelNotification(id[0], command[3], channelid, parsed)
+	if err != nil{
+		s.ChannelMessageSend(m.ChannelID, err.Error())
+		return
+	}
+
+	s.ChannelMessageSend(m.ChannelID, "Notification enabled for " + channelmention)
+	return
+}
+
+// DisableChannelNotificationFor function
+func (h *NotificationsHandler) DisableChannelNotificationFor(channelname string, notificationid string, s *discordgo.Session, m *discordgo.MessageCreate) {
+
+	channelname = strings.TrimPrefix(channelname, "<#")
+	channelid := strings.TrimSuffix(channelname, ">")
+
+	_, err := s.Channel(channelid)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Could not parse channel (use the # name not the id number):" + err.Error())
+		return
+	}
+
+	channelmention, err := MentionChannel(channelid, s)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error parsing channel: " + err.Error())
+		return
+	}
+
+	notificationsdb := Notifications{db: h.db}
+	err = notificationsdb.RemoveChannelNotificationFromDBByID(notificationid, channelid)
+	if err != nil{
+		s.ChannelMessageSend(m.ChannelID, err.Error())
+		return
+	}
+
+	s.ChannelMessageSend(m.ChannelID, "Notification disabled for " + channelmention)
+	return
+}
+
+
+
+// ViewNotificationMessageID function
 func (h *NotificationsHandler) ViewNotificationMessageID(notificationid string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	notificationsdb := Notifications{db: h.db}
@@ -413,7 +646,7 @@ func (h *NotificationsHandler) ViewNotificationMessageID(notificationid string, 
 
 	output := "```"
 	output = output + "   ID    | Message\n"
-	output = output + "-------------------------------------------------------------------------\n"
+	output = output + "---------------------------------------------------------------------------\n"
 	output = output + notification.ID + " | " + notification.Message + "\n"
 	output = output + "```"
 
@@ -473,9 +706,7 @@ func (h *NotificationsHandler) CheckNotifications(s *discordgo.Session) {
 }
 
 
-
-
-
+// ParseTimeout function
 func (h *NotificationsHandler) ParseTimeout(timeout string) (hours int64, minutes int64, err error){
 
 	hoursstring 	:= "0"
