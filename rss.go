@@ -300,7 +300,11 @@ func (h *RSS) Subscribe(url string, title string, channel string, repeatposts bo
 		isForum = true
 	}
 
-	rssfeed := RSSFeed{ID: GetUUID(), URL: url, Title: title, Description: feed.Description,
+	uuid, err := GetUUID()
+	if err != nil{
+		return errors.New( "Fatal Error generating UUID: " + err.Error())
+	}
+	rssfeed := RSSFeed{ID: uuid, URL: url, Title: title, Description: feed.Description,
 		Created: time.Now().String(), Updated: feed.Updated, Published: feed.Published,
 		ChannelID: channel, Link: feed.Link, Author: author, Twitter: isTwitter, Reddit: isReddit,
 		Youtube: isYoutube, Forum: isForum, RepeatPosts: repeatposts}

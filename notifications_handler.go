@@ -160,12 +160,16 @@ func (h *NotificationsHandler) AddNotification(command []string, s *discordgo.Se
 	}
 
 	notificationsdb := Notifications{db: h.db}
-
-	id := strings.Split(GetUUID(), "-")
+	uuid, err := GetUUID()
+	if err != nil{
+		s.ChannelMessageSend(m.ChannelID, "Fatal Error generating UUID: " + err.Error())
+		return
+	}
+	id := strings.Split(uuid, "-")
 
 	notification := Notification{ID: id[0], Message: message}
 
-	err := notificationsdb.AddNotificationToDB(notification)
+	err = notificationsdb.AddNotificationToDB(notification)
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, "Error adding notification to db: " + err.Error())
 		return
@@ -346,8 +350,12 @@ func (h *NotificationsHandler) EnableChannelNotification(command []string, s *di
 	}
 
 	notificationsdb := Notifications{db: h.db}
-
-	id := strings.Split(GetUUID(), "-")
+	uuid, err := GetUUID()
+	if err != nil{
+		s.ChannelMessageSend(m.ChannelID, "Fatal Error generating UUID: " + err.Error())
+		return
+	}
+	id := strings.Split(uuid, "-")
 	err = notificationsdb.CreateChannelNotification(id[0], command[2], m.ChannelID, parsed)
 	if err != nil{
 		s.ChannelMessageSend(m.ChannelID, err.Error())

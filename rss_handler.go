@@ -79,28 +79,48 @@ func (h *RSSHandler) ParseCommand(command []string, s *discordgo.Session, m *dis
 	if command[1] == "add" && len(command) == 2 {
 		s.ChannelMessageSend(m.ChannelID, "Please supply a feed URL: ")
 		message := ""
-		h.callback.Watch(h.AddRSS, GetUUID(), message, s, m)
+		uuid, err := GetUUID()
+		if err != nil{
+			s.ChannelMessageSend(m.ChannelID, "Fatal Error generating UUID: " + err.Error())
+			return
+		}
+		h.callback.Watch(h.AddRSS, uuid, message, s, m)
 		return
 	}
 
 	if command[1] == "add" && len(command) > 2 {
 		s.ChannelMessageSend(m.ChannelID, "Add RSS Feed: "+command[2]+" Confirm? (Y/N)")
 		message := command[2]
-		h.callback.Watch(h.ConfirmAddRSS, GetUUID(), message, s, m)
+		uuid, err := GetUUID()
+		if err != nil{
+			s.ChannelMessageSend(m.ChannelID, "Fatal Error generating UUID: " + err.Error())
+			return
+		}
+		h.callback.Watch(h.ConfirmAddRSS, uuid, message, s, m)
 		return
 	}
 
 	if command[1] == "remove" && len(command) == 2 {
 		s.ChannelMessageSend(m.ChannelID, "Please supply a feed URL: ")
 		message := ""
-		h.callback.Watch(h.RemoveRSS, GetUUID(), message, s, m)
+		uuid, err := GetUUID()
+		if err != nil{
+			s.ChannelMessageSend(m.ChannelID, "Fatal Error generating UUID: " + err.Error())
+			return
+		}
+		h.callback.Watch(h.RemoveRSS, uuid, message, s, m)
 		return
 	}
 
 	if command[1] == "remove" && len(command) > 2 {
 		s.ChannelMessageSend(m.ChannelID, "Remove RSS Feed: "+command[2]+" Confirm? (Y/N)")
 		message := command[2]
-		h.callback.Watch(h.ConfirmRemoveRSS, GetUUID(), message, s, m)
+		uuid, err := GetUUID()
+		if err != nil{
+			s.ChannelMessageSend(m.ChannelID, "Fatal Error generating UUID: " + err.Error())
+			return
+		}
+		h.callback.Watch(h.ConfirmRemoveRSS, uuid, message, s, m)
 		return
 	}
 
@@ -322,7 +342,13 @@ func (h *RSSHandler) AddRSS(command string, s *discordgo.Session, m *discordgo.M
 
 	s.ChannelMessageSend(m.ChannelID, "Adding: "+m.Content+" Confirm? (Y/N)")
 
-	h.callback.Watch(h.ConfirmAddRSS, GetUUID(), m.Content, s, m)
+
+	uuid, err := GetUUID()
+	if err != nil{
+		s.ChannelMessageSend(m.ChannelID, "Fatal Error generating UUID: " + err.Error())
+		return
+	}
+	h.callback.Watch(h.ConfirmAddRSS, uuid, m.Content, s, m)
 
 }
 
@@ -384,8 +410,12 @@ func (h *RSSHandler) RemoveRSS(command string, s *discordgo.Session, m *discordg
 	}
 
 	s.ChannelMessageSend(m.ChannelID, "Removing: "+m.Content+" Confirm? (Y/N)")
-
-	h.callback.Watch(h.ConfirmRemoveRSS, GetUUID(), m.Content, s, m)
+	uuid, err := GetUUID()
+	if err != nil{
+		s.ChannelMessageSend(m.ChannelID, "Fatal Error generating UUID: " + err.Error())
+		return
+	}
+	h.callback.Watch(h.ConfirmRemoveRSS, uuid, m.Content, s, m)
 
 }
 

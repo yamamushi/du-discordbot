@@ -71,7 +71,11 @@ func (h *Bank) CreateBank() (err error) {
 	}
 
 	// Loans are disabled for now!
-	mainrecord := BankRecord{ID: GetUUID(), Pin: h.conf.BankConfig.Pin,
+	uuid, err := GetUUID()
+	if err != nil{
+		return errors.New("Fatal Error generating UUID")
+	}
+	mainrecord := BankRecord{ID: uuid, Pin: h.conf.BankConfig.Pin,
 		Balance: h.conf.BankConfig.SeedWallet, LoansEnabled: false}
 
 	db := h.db.rawdb.From("Bank")
@@ -210,7 +214,10 @@ func (h *Bank) CreateUserAccount(userid string) (err error) {
 		return errors.New("User Account Already Exists")
 	}
 
-	account.ID = GetUUID()
+	account.ID, err = GetUUID()
+	if err != nil {
+		return err
+	}
 	account.Pin = ""
 	account.UserID = userid
 	account.Balance = h.conf.BankConfig.SeedUserAccountBalance

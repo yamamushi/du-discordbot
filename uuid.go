@@ -5,10 +5,13 @@ import (
 )
 
 // GetUUID function
-func GetUUID() string {
+func GetUUID() (id string, err error) {
 
-	id := uuid.NewV4()
+	formattedid, err := uuid.NewV4()
+	if err != nil {
+		return "", err
+	}
 
-	return id.String()
+	return formattedid.String(), nil
 
 }

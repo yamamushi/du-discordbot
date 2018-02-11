@@ -123,7 +123,12 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		s.ChannelMessageSend(m.ChannelID, "Resetting Forum Account for : "+m.Mentions[0].Username+" Confirm? (Y/N)")
 
 		message := m.Mentions[0].Username + "||" + m.Mentions[0].ID
-		h.callback.Watch(h.ResetBackerConfirm, GetUUID(), message, s, m)
+		uuid, err := GetUUID()
+		if err != nil{
+			s.ChannelMessageSend(m.ChannelID, "Fatal Error generating UUID: " + err.Error())
+			return
+		}
+		h.callback.Watch(h.ResetBackerConfirm, uuid, message, s, m)
 		return
 	}
 	if command == "forumrole" || command == "rerunforumrole" || command == "runroles"{

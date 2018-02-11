@@ -185,7 +185,12 @@ func (h *BankHandler) Prompt(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	payload = channel.ID
 	m.ChannelID = channel.ID
-	h.callback.Watch(h.ReadPrompt, GetUUID(), payload, s, m)
+	uuid, err := GetUUID()
+	if err != nil{
+		s.ChannelMessageSend(m.ChannelID, "Fatal Error generating UUID")
+		return
+	}
+	h.callback.Watch(h.ReadPrompt, uuid, payload, s, m)
 }
 
 // Bank Terminal Functions
