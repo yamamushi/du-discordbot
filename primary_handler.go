@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"strings"
+	"time"
 )
 
 // PrimaryHandler struct
@@ -168,6 +169,11 @@ func (h *PrimaryHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) 
 			s.ChannelMessageSend(m.ChannelID, "Ping!")
 			return
 		}
+	}
+
+	if command == cp+"time" {
+		s.ChannelMessageSend(m.ChannelID, "Current UTC Time: " + time.Now().UTC().Format("2006-01-02 15:04:05"))
+		return
 	}
 
 	if command == cp+"help" {

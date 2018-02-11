@@ -83,7 +83,7 @@ func (h *Notifications) RemoveNotificationFromDBByID(messageid string, s *discor
 		}
 	}
 	if (found) {
-		return errors.New("Could not remove message from db, it is currently in use by the following channel notification(s):\n" + channelsinuse)
+		return errors.New("Could not remove message from db, it is currently in use by the following channel(s):\n" + channelsinuse)
 	}
 
 	err = h.RemoveNotificationFromDB(notification)
