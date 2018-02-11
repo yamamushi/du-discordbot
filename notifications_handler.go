@@ -259,8 +259,8 @@ func (h *NotificationsHandler) GetAllNotifications(page string, s *discordgo.Ses
 		return
 	}
 
-	pages := (len(notificationlist) / 10)+1
-	if len(notificationlist) == 10 {
+	pages := (len(notificationlist) / 5)+1
+	if len(notificationlist) == 5 {
 		pages = 1
 	}
 
@@ -276,11 +276,12 @@ func (h *NotificationsHandler) GetAllNotifications(page string, s *discordgo.Ses
 
 		count = count + 1
 
-		if num >= ((pagenum * 10)-10) {
+		if num >= ((pagenum * 5)-5) {
 			output := notification.ID + " | " + notification.Message + "\n"
 			list = list + output
+			list = list + "---------------------------------------------------------------------------\n"
 
-			if count == 10{
+			if count == 5{
 				list = list + "```"
 				list = list + "Page " + strconv.Itoa(pagenum) + " of " + strconv.Itoa(pages)
 				s.ChannelMessageSend(m.ChannelID, list)
@@ -312,8 +313,8 @@ func (h *NotificationsHandler) GetAllChannelNotifications(page string, s *discor
 		return
 	}
 
-	pages := (len(notificationlist) / 10)+1
-	if len(notificationlist) == 10 {
+	pages := (len(notificationlist) / 5)+1
+	if len(notificationlist) == 5 {
 		pages = 1
 	}
 
@@ -330,7 +331,7 @@ func (h *NotificationsHandler) GetAllChannelNotifications(page string, s *discor
 		if notification.ChannelID == m.ChannelID {
 			count = count + 1
 
-			if num >= ((pagenum * 10)-10) {
+			if num >= ((pagenum * 5)-5) {
 
 				notificationmessage, err := notificationsdb.GetNotificationFromDB(notification.Notification)
 				if err != nil {
@@ -367,13 +368,18 @@ func (h *NotificationsHandler) GetAllChannelNotifications(page string, s *discor
 
 				message := notificationmessage.Message
 				if len(message) > 11 {
-					message = strings.TrimSuffix(message, string(message[10]))
+					if message[10] == ' ' || message[10] == '.' || message[10] == ',' || message[10] == ':' || message[10] == ';' || message[10] == '?' || message[10] == '!'{
+						message = strings.TrimSuffix(message, string(message[11]))
+					} else {
+						message = strings.TrimSuffix(message, string(message[10]))
+					}
 				}
 
 				output := notification.ID + " | " + timeout + "| " + notificationid + "  | " + lastrunstring + " | " + message + "\n"
 				list = list + output
+				list = list + "---------------------------------------------------------------------------\n"
 
-				if count == 10{
+				if count == 5{
 					list = list + "```"
 					list = list + "Page " + strconv.Itoa(pagenum) + " of " + strconv.Itoa(pages)
 					s.ChannelMessageSend(m.ChannelID, list)
@@ -530,11 +536,16 @@ func (h *NotificationsHandler) GetAllChannelNotificationsFor(channelname string,
 
 				message := notificationmessage.Message
 				if len(message) > 11 {
-					message = strings.TrimSuffix(message, string(message[10]))
+					if message[10] == ' ' || message[10] == '.' || message[10] == ',' || message[10] == ':' || message[10] == ';' || message[10] == '?' || message[10] == '!'{
+						message = strings.TrimSuffix(message, string(message[11]))
+					} else {
+						message = strings.TrimSuffix(message, string(message[10]))
+					}
 				}
 
 				output := notification.ID + " | " + timeout + "| " + notificationid + "  | " + lastrunstring + " | " + message + "\n"
 				list = list + output
+				list = list + "---------------------------------------------------------------------------\n"
 
 				if count == 10{
 					list = list + "```"
