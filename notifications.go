@@ -4,7 +4,6 @@ import (
 	"sync"
 	"time"
 	"errors"
-	"fmt"
 )
 
 // Notifications struct
@@ -56,13 +55,11 @@ func (h *Notifications) RemoveNotificationFromDBByID(messageid string) (err erro
 
 	notification, err := h.GetNotificationFromDB(messageid)
 	if err != nil {
-		fmt.Println("Error in RemoveNotificationFromDBByID retrieving message")
 		return err
 	}
 
 	err = h.RemoveNotificationFromDB(notification)
 	if err != nil {
-		fmt.Println("Error in RemoveNotificationFromDBByID when removing from db")
 		return err
 	}
 
@@ -144,17 +141,15 @@ func (h *Notifications) UpdateChannelNotification(channelnotification ChannelNot
 
 
 // RemoveNotificationFromDBByID function
-func (h *Notifications) RemoveChannelNotificationFromDBByID(channelnotificationid string) (err error) {
+func (h *Notifications) RemoveChannelNotificationFromDBByID(channelnotificationid string, channelid string) (err error) {
 
-	channelnotification, err := h.GetChannelNotificationFromDB(channelnotificationid)
+	channelnotification, err := h.GetChannelNotificationFromDB(channelnotificationid, channelid)
 	if err != nil {
-		fmt.Println("Error in RemoveChannelNotificationFromDBByID retrieving message")
 		return err
 	}
 
 	err = h.RemoveChannelNotificationFromDB(channelnotification)
 	if err != nil {
-		fmt.Println("Error in RemoveChannelNotificationFromDBByID when removing from db")
 		return err
 	}
 
@@ -163,7 +158,7 @@ func (h *Notifications) RemoveChannelNotificationFromDBByID(channelnotificationi
 
 
 // GetNotificationFromDB function
-func (h *Notifications) GetChannelNotificationFromDB(channelnotificationid string) (channelnotification ChannelNotification, err error) {
+func (h *Notifications) GetChannelNotificationFromDB(channelnotificationid string, channelid string) (channelnotification ChannelNotification, err error) {
 
 	channelnotifications, err := h.GetAllChannelNotifications()
 	if err != nil{
@@ -172,11 +167,13 @@ func (h *Notifications) GetChannelNotificationFromDB(channelnotificationid strin
 
 	for _, i := range channelnotifications {
 		if i.ID == channelnotificationid{
-			return i, nil
+			if i.ChannelID == channelid {
+				return i, nil
+			}
 		}
 	}
 
-	return channelnotification, errors.New("No record found")
+	return channelnotification, errors.New("Channel notification " + channelnotificationid + " does not exist for this channel!")
 }
 
 
@@ -199,14 +196,12 @@ func (h *Notifications) FlushChannelNotifications(channelid string) (err error){
 
 	channelnotifications, err := h.GetAllChannelNotifications()
 	if err != nil {
-		fmt.Println("Error in FlushChannelNotifications retrieving message")
 		return err
 	}
 
 	for _, notification := range channelnotifications {
 		err = h.RemoveChannelNotificationFromDB(notification)
 		if err != nil {
-			fmt.Println("Error in FlushChannelNotifications when removing from db")
 			return err
 		}
 	}

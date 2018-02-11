@@ -230,14 +230,14 @@ func (h *RSSHandler) FormatRSSItem(url string, rssitem RSSItem, feedtitle string
 		//formatted = formatted + item.Description + "\n"
 		formatted = formatted + rssitem.Link + "\n"
 		formatted = formatted + rssitem.Published + "\n"
-		formatted = formatted + "==============\n"
+		formatted = formatted + "============================\n"
 	} else if rssitem.Youtube {
 		//formatted = "Latest update from " + rssitem.Author + "\n"
 		formatted = ":video_camera: New YouTube upload from " + rssitem.Author + "!\n"
 		formatted = formatted + rssitem.Title + "\n"
 		formatted = formatted + rssitem.Description + "\n"
 		formatted = formatted + rssitem.Link + "\n"
-		formatted = formatted + "==============\n"
+		formatted = formatted + "============================\n"
 	} else if rssitem.Forum {
 		//formatted = "Latest update from " + rssitem.Author + "\n"
 		feedtitle = strings.TrimSuffix(feedtitle, " Latest Topics")
@@ -249,7 +249,7 @@ func (h *RSSHandler) FormatRSSItem(url string, rssitem RSSItem, feedtitle string
 			formatted = formatted + "New Comment from " + Bold(username) + ":\n"
 			formatted = formatted + "```" + comment + "```\n"
 			formatted = formatted + "Continue reading @ <" + commenturl + ">\n"
-			formatted = formatted + "==============\n"
+			formatted = formatted + "============================\n"
 		}
 	} else {
 		formatted = ":postbox: New update: \n" // from " + url + "\n"
@@ -259,7 +259,7 @@ func (h *RSSHandler) FormatRSSItem(url string, rssitem RSSItem, feedtitle string
 		//formatted = formatted + item.Description + "\n"
 		formatted = formatted + rssitem.Link + "\n"
 		formatted = formatted + rssitem.Published + "\n"
-		formatted = formatted + "==============\n"
+		formatted = formatted + "============================\n"
 	}
 	return formatted
 }

@@ -280,47 +280,49 @@ func (h *NotificationsHandler) GetAllChannelNotifications(page string, s *discor
 	count := 0
 	for num, notification := range notificationlist {
 
-		count = count + 1
+		if notification.ChannelID == m.ChannelID {
+			count = count + 1
 
-		if num >= ((pagenum * 10)-10) {
+			if num >= ((pagenum * 10)-10) {
 
-			notificationmessage, err := notificationsdb.GetNotificationFromDB(notification.Notification)
-			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, "Error retrieving notification from db")
-				return
-			}
-
-			timeout := notification.Timeout
-			hours := "0h"
-			minutes := "0m"
-			holder := strings.Split(timeout, " ")
-
-			for i := 0; i < len(holder); i++ {
-				if strings.Contains(holder[i], "h"){
-					hours = holder[i]
-				} else if strings.Contains(holder[i], "m"){
-					minutes = holder[i]
+				notificationmessage, err := notificationsdb.GetNotificationFromDB(notification.Notification)
+				if err != nil {
+					s.ChannelMessageSend(m.ChannelID, "Error retrieving notification from db")
+					return
 				}
-			}
 
-			timeout = hours + " " + minutes
+				timeout := notification.Timeout
+				hours := "0h"
+				minutes := "0m"
+				holder := strings.Split(timeout, " ")
 
-
-			if len(timeout) < 12 {
-				padright := 11-len(timeout)
-				for i := 0; i < padright; i++ {
-					timeout = timeout + " "
+				for i := 0; i < len(holder); i++ {
+					if strings.Contains(holder[i], "h"){
+						hours = holder[i]
+					} else if strings.Contains(holder[i], "m"){
+						minutes = holder[i]
+					}
 				}
-			}
 
-			output := notification.ID + " | " + timeout + "| " + notificationmessage.Message + "\n"
-			list = list + output
+				timeout = hours + " " + minutes
 
-			if count == 10{
-				list = list + "```"
-				list = list + "Page " + strconv.Itoa(pagenum) + " of " + strconv.Itoa(pages)
-				s.ChannelMessageSend(m.ChannelID, list)
-				return
+
+				if len(timeout) < 12 {
+					padright := 11-len(timeout)
+					for i := 0; i < padright; i++ {
+						timeout = timeout + " "
+					}
+				}
+
+				output := notification.ID + " | " + timeout + "| " + notificationmessage.Message + "\n"
+				list = list + output
+
+				if count == 10{
+					list = list + "```"
+					list = list + "Page " + strconv.Itoa(pagenum) + " of " + strconv.Itoa(pages)
+					s.ChannelMessageSend(m.ChannelID, list)
+					return
+				}
 			}
 		}
 	}
@@ -370,7 +372,7 @@ func (h *NotificationsHandler) EnableChannelNotification(command []string, s *di
 func (h *NotificationsHandler) DisableChannelNotification(notificationid string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	notificationsdb := Notifications{db: h.db}
-	err := notificationsdb.RemoveChannelNotificationFromDBByID(notificationid)
+	err := notificationsdb.RemoveChannelNotificationFromDBByID(notificationid, m.ChannelID)
 	if err != nil{
 		s.ChannelMessageSend(m.ChannelID, err.Error())
 		return
