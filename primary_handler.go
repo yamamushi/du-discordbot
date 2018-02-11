@@ -71,6 +71,12 @@ func (h *PrimaryHandler) Init() error {
 	backer.Init()
 	h.dg.AddHandler(backer.Read)
 
+	fmt.Println("Adding Notifications Handler")
+	notifications := NotificationsHandler{db: h.db, callback: h.callback, conf: h.conf, registry: h.command.registry}
+	notifications.Init()
+	h.dg.AddHandler(notifications.Read)
+	go notifications.CheckNotifications(h.dg)
+
 	//fmt.Println("Adding Music Handler")
 	//musichandler := MusicHandler{db: h.db, user: h.user, registry: h.command.registry,
 	//	wallet: h.bankhandler.wallet, channel: h.channel, conf: h.conf}
@@ -169,6 +175,7 @@ func (h *PrimaryHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) 
 		return
 	}
 
+	/*
 	if command == cp+"follow" {
 		if CheckPermissions("follow", m.ChannelID, &user, s, h.command) {
 			s.ChannelMessageSend(m.ChannelID, "Not yet implemented!")
@@ -187,7 +194,7 @@ func (h *PrimaryHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) 
 		forum.FollowUser(message[1])
 		s.ChannelMessageSend(m.ChannelID, "Callback launched")
 		return
-	}
+	}*/
 }
 
 // RegisterCommands function
