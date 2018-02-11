@@ -23,7 +23,7 @@ type ChannelNotification struct {
 
 	ID          	string `storm:"id"`
 	Notification	string	// The ID of our notification message
-	ChannelID   string `storm:"index"` // Limit our notifications per channel
+	ChannelID   	string `storm:"index"` // Limit our notifications per channel
 	LastRun    		time.Time
 	Timeout         string    `storm:"index"`
 
@@ -39,6 +39,7 @@ func (h *Notifications) AddNotificationToDB(notification Notification) (err erro
 	err = db.Save(&notification)
 	return err
 }
+
 
 // RemoveNotificationFromDB function
 func (h *Notifications) RemoveNotificationFromDB(notification Notification) (err error) {
@@ -102,6 +103,8 @@ func (h *Notifications) GetAllNotifications() (notificationlist []Notification, 
 
 
 
+
+
 // AddChannelNotificationToDB function
 func (h *Notifications) AddChannelNotificationToDB(channelnotification ChannelNotification) (err error) {
 	h.querylocker.Lock()
@@ -121,3 +124,74 @@ func (h *Notifications) RemoveChannelNotificationFromDB(channelnotification Chan
 	err = db.DeleteStruct(&channelnotification)
 	return err
 }
+
+
+
+// RemoveNotificationFromDBByID function
+func (h *Notifications) RemoveChannelNotificationFromDBByID(channelnotificationid string) (err error) {
+
+	channelnotification, err := h.GetChannelNotificationFromDB(channelnotificationid)
+	if err != nil {
+		fmt.Println("Error in RemoveChannelNotificationFromDBByID retrieving message")
+		return err
+	}
+
+	err = h.RemoveChannelNotificationFromDB(channelnotification)
+	if err != nil {
+		fmt.Println("Error in RemoveChannelNotificationFromDBByID when removing from db")
+		return err
+	}
+
+	return nil
+}
+
+
+// GetNotificationFromDB function
+func (h *Notifications) GetChannelNotificationFromDB(channelnotificationid string) (channelnotification ChannelNotification, err error) {
+
+	channelnotifications, err := h.GetAllChannelNotifications()
+	if err != nil{
+		return channelnotification, err
+	}
+
+	for _, i := range channelnotifications {
+		if i.ID == channelnotificationid{
+			return i, nil
+		}
+	}
+
+	return channelnotification, errors.New("No record found")
+}
+
+
+// GetAllChannelNotifications function
+func (h *Notifications) GetAllChannelNotifications() (channelnotificationlist []ChannelNotification, err error) {
+	h.querylocker.Lock()
+	defer h.querylocker.Unlock()
+
+	db := h.db.rawdb.From("ChannelNotifications")
+	err = db.All(&channelnotificationlist)
+	if err != nil {
+		return channelnotificationlist, err
+	}
+
+	return channelnotificationlist, nil
+}
+
+
+func (h *Notifications) CreateChannelNotification(id string, notificationid string, channelid string, timeout string) (err error){
+
+	_, err = h.GetNotificationFromDB(notificationid)
+	if err != nil {
+		return errors.New("Notification ID: " + notificationid + " - not found")
+	}
+
+	channelnotification := ChannelNotification{ID: id, Notification: notificationid, ChannelID: channelid, LastRun: time.Now(), Timeout: timeout}
+
+	err = h.AddChannelNotificationToDB(channelnotification)
+	if err != nil{
+		return err
+	}
+	return nil
+}
+

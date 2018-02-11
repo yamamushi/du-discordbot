@@ -6,6 +6,7 @@ import (
 	"time"
 	"strconv"
 	"fmt"
+	"errors"
 )
 
 // NotificationsHandler struct
@@ -71,11 +72,11 @@ func (h *NotificationsHandler) Read(s *discordgo.Session, m *discordgo.MessageCr
 func (h *NotificationsHandler) ParseCommand(command []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if len(command) < 2 {
-		s.ChannelMessageSend(m.ChannelID, "Expected flag for 'notifications' command")
+		s.ChannelMessageSend(m.ChannelID, "Expected flag for 'notifications' command, see usage for more info")
 		return
 	}
 
-	if command[1] == "add" && len(command) == 2 {
+	if command[1] == "add" && len(command) <= 2 {
 		s.ChannelMessageSend(m.ChannelID, "Command expects an argument")
 		return
 	}
@@ -85,7 +86,7 @@ func (h *NotificationsHandler) ParseCommand(command []string, s *discordgo.Sessi
 		return
 	}
 
-	if command[1] == "remove" && len(command) == 2 {
+	if command[1] == "remove" && len(command) <= 2 {
 		s.ChannelMessageSend(m.ChannelID, "Command expects an argument")
 		return
 	}
@@ -95,23 +96,38 @@ func (h *NotificationsHandler) ParseCommand(command []string, s *discordgo.Sessi
 		return
 	}
 
-	if command[1] == "enable" && len(command) == 2 {
+	if command[1] == "enable" && len(command) <= 2 {
+		s.ChannelMessageSend(m.ChannelID, "Command expects two arguments - Notification ID and Time Interval in hours and minutes. Expected format for the time interval is hours(h) and/or minutes(m) separated with a space, ie: 2h 4m")
+		return
+	}
+
+	if command[1] == "enable" && len(command) > 2 {
+		s.ChannelMessageSend(m.ChannelID, "Command expects two arguments - Notification ID and Time Interval in hours and minutes. Expected format for the time interval is hours(h) and/or minutes(m) separated with a space, ie: 2h 4m")
+		return
+	}
+
+	if command[1] == "disable" && len(command) <= 2 {
 		s.ChannelMessageSend(m.ChannelID, "Command expects an argument")
 		return
 	}
 
-	if command[1] == "disable" && len(command) == 2 {
-		s.ChannelMessageSend(m.ChannelID, "Command expects an argument")
-		return
-	}
-
-	if command[1] == "list" {
+	if command[1] == "listnotifications" {
 		if len(command) > 2 {
 			page := command[2]
 			h.GetAllNotifications(page, s, m)
 			return
 		}
 		h.GetAllNotifications("1", s, m )
+		return
+	}
+
+	if command[1] == "list" {
+		if len(command) > 2 {
+			page := command[2]
+			h.GetAllChannelNotifications(page, s, m)
+			return
+		}
+		h.GetAllChannelNotifications("1", s, m )
 		return
 	}
 }
@@ -214,6 +230,79 @@ func (h *NotificationsHandler) GetAllNotifications(page string, s *discordgo.Ses
 
 
 
+// GetAllNotifications function
+func (h *NotificationsHandler) GetAllChannelNotifications(page string, s *discordgo.Session, m *discordgo.MessageCreate) {
+
+	fmt.Println("page: " + page)
+	pagenum, err := strconv.Atoi(page)
+	if err != nil {
+		pagenum = 1
+	}
+
+	notificationsdb := Notifications{db: h.db}
+
+	notificationlist, err := notificationsdb.GetAllChannelNotifications()
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error retrieving notifications list: " + err.Error())
+		return
+	}
+
+	pages := (len(notificationlist) / 10)+1
+	if len(notificationlist) == 10 {
+		pages = 1
+	}
+
+	if pagenum > pages{
+		pagenum = 1
+	}
+
+	list := "```\n"
+	list = list + "   ID    |  Interval  | Message"
+	count := 0
+	for num, notification := range notificationlist {
+
+		count = count + 1
+
+		if num >= ((pagenum * 10)-10) {
+
+			notificationmessage, err := notificationsdb.GetNotificationFromDB(notification.Notification)
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "Error retrieving notification from db")
+				return
+			}
+
+			timeout := notification.Timeout
+			if len(notification.Timeout) < 12 {
+				padright := len(notification.Timeout)
+				padcount := 12 - padright
+				for i := 0; i < padcount; i++ {
+					timeout = timeout + " "
+				}
+			}
+
+			output := notification.ID + " : " + timeout + " | " + notificationmessage.Message + "\n"
+			list = list + output
+
+			if count == 10{
+				list = list + "```"
+				list = list + "Page " + strconv.Itoa(pagenum) + " of " + strconv.Itoa(pages)
+				s.ChannelMessageSend(m.ChannelID, list)
+				return
+			}
+		}
+	}
+
+	list = list + "```"
+	list = list + "Page " + strconv.Itoa(pagenum) + " of " + strconv.Itoa(pages)
+	s.ChannelMessageSend(m.ChannelID, list)
+	return
+}
+
+
+
+
+
+
 // CheckNotifications function
 func (h *NotificationsHandler) CheckNotifications(s *discordgo.Session) {
 
@@ -223,4 +312,51 @@ func (h *NotificationsHandler) CheckNotifications(s *discordgo.Session) {
 
 	}
 
+}
+
+
+
+
+
+func (h *NotificationsHandler) ParseTimeout(timeout string) (hours int64, minutes int64, err error){
+
+	hoursstring 	:= "0"
+	minutesstring 	:= "0"
+
+	if !strings.Contains(timeout, " "){
+		return 0, 0, errors.New("Invalid time interval format")
+	}
+
+	separated := strings.Split(timeout, " ")
+
+	for _, field := range separated {
+
+		for _, value := range field {
+			switch {
+			case value >= '0' && value <= '9':
+				if strings.Contains(field, "h"){
+					hoursstring = strings.TrimSuffix(field, "h")
+				}
+				if strings.Contains(field, "m"){
+					minutesstring = strings.TrimSuffix(field, "m")
+				}
+				break
+			default:
+				return 0, 0, errors.New("Invalid time interval format")
+			}
+			break
+		}
+	}
+
+	hours, err = strconv.ParseInt(hoursstring, 10, 64)
+	if err != nil {
+		return 0, 0, errors.New("Could not parse hours")
+	}
+	minutes, err = strconv.ParseInt(minutesstring, 10, 64)
+	if err != nil {
+		return 0, 0, errors.New("Could not parse minutes")
+	}
+
+
+	return hours, minutes, nil
 }
