@@ -28,7 +28,7 @@ func (h *NotificationsHandler) Init() {
 // RegisterCommands function
 func (h *NotificationsHandler) RegisterCommands() (err error) {
 
-	h.registry.Register("notifications", "Manage notifications for this channel", "enable|disable|add|remove|list")
+	h.registry.Register("notifications", "Manage notifications for this channel", "enable|disable|add|remove|list|view")
 	return nil
 
 }
