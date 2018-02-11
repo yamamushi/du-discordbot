@@ -179,11 +179,51 @@ func (h *Notifications) GetAllChannelNotifications() (channelnotificationlist []
 }
 
 
+func (h *Notifications) FlushChannelNotifications(channelid string) (err error){
+
+	channelnotifications, err := h.GetAllChannelNotifications()
+	if err != nil {
+		fmt.Println("Error in FlushChannelNotifications retrieving message")
+		return err
+	}
+
+	for _, notification := range channelnotifications {
+		err = h.RemoveChannelNotificationFromDB(notification)
+		if err != nil {
+			fmt.Println("Error in FlushChannelNotifications when removing from db")
+			return err
+		}
+	}
+
+	return nil
+}
+
+
 func (h *Notifications) CreateChannelNotification(id string, notificationid string, channelid string, timeout string) (err error){
 
 	_, err = h.GetNotificationFromDB(notificationid)
 	if err != nil {
 		return errors.New("Notification ID: " + notificationid + " - not found")
+	}
+
+	channelnotifications, err := h.GetAllChannelNotifications()
+	if err != nil{
+		return err
+	}
+
+	for _, i := range channelnotifications {
+		idmatches := false
+		channelmatches := false
+		if i.Notification == notificationid {
+			idmatches = true
+		}
+		if i.ChannelID == channelid {
+			channelmatches = true
+		}
+
+		if idmatches && channelmatches {
+			return errors.New("Notification is already enabled for this channel")
+		}
 	}
 
 	channelnotification := ChannelNotification{ID: id, Notification: notificationid, ChannelID: channelid, LastRun: time.Now(), Timeout: timeout}
