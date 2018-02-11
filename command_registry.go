@@ -33,15 +33,10 @@ type CommandRecord struct {
 // Does the same thing as Create Command without a return value
 func (h *CommandRegistry) Register(command string, description string, usage string) {
 
-	existingrecord, err := h.GetCommand(command)
-	if err == nil {
-		h.RemoveCommand(existingrecord)
-	}
-
 	db := h.db.rawdb.From("Commands")
 
 	record := CommandRecord{}
-	err = db.One("Command", command, &record)
+	err := db.One("Command", command, &record)
 	if err == nil {
 		return // command already exists
 	}
