@@ -63,6 +63,10 @@ func (h *PrimaryHandler) Init() error {
 	interviews := InterviewHandler{db: h.db, conf: h.conf, user: h.user, registry: h.command.registry}
 	h.dg.AddHandler(interviews.Read)
 
+	fmt.Println("Adding Tutorial Handler")
+	tutorials := TutorialHandler{db: h.db, conf: h.conf, user: h.user, registry: h.command.registry}
+	h.dg.AddHandler(tutorials.Read)
+
 	fmt.Println("Adding Meme Handler")
 	memes := MemeHandler{}
 	h.dg.AddHandler(memes.Read)
@@ -215,7 +219,8 @@ func (h *PrimaryHandler) RegisterCommands() (err error) {
 	h.registry.Register("chess", "du-discordbot chess", "chess")
 	h.registry.Register("computer", "celery man please", "computer")
 	h.registry.Register("devdiary", "Display a dev diary for a given month", "devdiary <month>")
-	h.registry.Register("interview", "Display an interview for a given id", "devdiary <id> || <list>")
+	h.registry.Register("interview", "Display an interview for a given id", "interview <id> || <list>")
+	h.registry.Register("tutorial", "Display a tutorial for a given id", "tutorial <id> || <list>")
 
 	return nil
 }

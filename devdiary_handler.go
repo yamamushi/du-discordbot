@@ -118,6 +118,12 @@ func (h *DevDiaryHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate)
 				s.ChannelMessageSend(m.ChannelID, diarylink)
 				return
 			}
+			if month == "October" || month == "10" || month == "oct" {
+				diarylink := "DevDiary for October 2017:\n"
+				diarylink = diarylink + "https://www.youtube.com/watch?v=hxawXXUqZkw"
+				s.ChannelMessageSend(m.ChannelID, diarylink)
+				return
+			}
 
 			s.ChannelMessageSend(m.ChannelID, "No DevDiary for "+month+" "+year+" found.")
 			return
