@@ -272,3 +272,40 @@ func (h *Notifications) CreateChannelNotification(id string, notificationid stri
 	return nil
 }
 
+
+func (h *Notifications) GetNotificationLinkedChannels(messageid string, s *discordgo.Session) (channels string, err error){
+
+	notification, err := h.GetNotificationFromDB(messageid)
+	if err != nil {
+		return channels, err
+	}
+
+	channelnotifications, err := h.GetAllChannelNotifications()
+	if err != nil {
+		return channels, err
+	}
+
+	found := false
+	channelsinuse := ""
+	for _, channelnotification := range channelnotifications {
+
+		if channelnotification.Notification == notification.ID {
+			found = true
+			mention, err := MentionChannel(channelnotification.ChannelID, s)
+			if err != nil {
+				return channels, err
+			}
+
+			if channelsinuse != ""{
+				channelsinuse = channelsinuse + ", " + mention
+			} else {
+				channelsinuse = mention
+			}
+		}
+	}
+	if (found) {
+		return channelsinuse, nil
+	} else {
+		return channels, nil
+	}
+}

@@ -170,6 +170,16 @@ func (h *NotificationsHandler) ParseCommand(command []string, s *discordgo.Sessi
 		return
 	}
 
+	if command[1] == "linked" && len(command) <= 2 {
+		s.ChannelMessageSend(m.ChannelID, "Command expects an argument")
+		return
+	}
+
+	if command[1] == "linked" && len(command) > 2 {
+		h.GetAllLinkedChannels(command[2], s, m)
+		return
+	}
+
 
 	if command[1] == "channel" || command[1] == "channellist" || command[1] == "listchannel" {
 		if len(command) > 3 {
@@ -259,13 +269,13 @@ func (h *NotificationsHandler) GetAllNotifications(page string, s *discordgo.Ses
 		return
 	}
 
-	pages := (len(notificationlist) / 5)+1
+	pages := (len(notificationlist) % 5)+1
 	if len(notificationlist) == 5 {
 		pages = 1
 	}
 
 	if pagenum > pages{
-		pagenum = 1
+		pagenum = pages
 	}
 
 	list := "```"
@@ -273,10 +283,10 @@ func (h *NotificationsHandler) GetAllNotifications(page string, s *discordgo.Ses
 	list = list + "---------------------------------------------------------------------------\n"
 	count := 0
 	for num, notification := range notificationlist {
-
-		count = count + 1
-
 		if num >= ((pagenum * 5)-5) {
+
+			count = count + 1
+
 			output := notification.ID + " | " + notification.Message + "\n"
 			list = list + output
 			list = list + "---------------------------------------------------------------------------\n"
@@ -313,31 +323,32 @@ func (h *NotificationsHandler) GetAllChannelNotifications(page string, s *discor
 		return
 	}
 
-	pages := (len(notificationlist) / 5)+1
+	pages := (len(notificationlist) % 5)+1
 	if len(notificationlist) == 5 {
 		pages = 1
 	}
 
 	if pagenum > pages{
-		pagenum = 1
+		pagenum = pages
 	}
 
 	list := "```\n"
-	list = list + "   ID    | Interval | MessageID |      Last Run       | Message\n"
+	list = list + "   ID    | Interval | MessageID |      Last Run       |      Next Run\n"
 	list = list + "---------------------------------------------------------------------------\n"
 	count := 0
 	for num, notification := range notificationlist {
 
 		if notification.ChannelID == m.ChannelID {
-			count = count + 1
 
 			if num >= ((pagenum * 5)-5) {
 
+				/*
 				notificationmessage, err := notificationsdb.GetNotificationFromDB(notification.Notification)
 				if err != nil {
 					s.ChannelMessageSend(m.ChannelID, "Error retrieving notification from db")
 					return
-				}
+				}*/
+				count = count + 1
 
 				timeout := notification.Timeout
 				hours := "0h"
@@ -364,18 +375,29 @@ func (h *NotificationsHandler) GetAllChannelNotifications(page string, s *discor
 
 				lastrun := notification.LastRun.UTC()
 				lastrunstring := lastrun.Format("2006-01-02 15:04:05")
-				notificationid := notification.Notification
 
-				message := notificationmessage.Message
-				if len(message) > 11 {
-					if message[10] == ' ' || message[10] == '.' || message[10] == ',' || message[10] == ':' || message[10] == ';' || message[10] == '?' || message[10] == '!'{
-						message = strings.TrimSuffix(message, string(message[11]))
-					} else {
-						message = strings.TrimSuffix(message, string(message[10]))
-					}
+				hoursint, minutesint, err := h.ParseTimeout(timeout)
+				if err != nil{
+					fmt.Println("Error parsing timeout for channel notification: " + notification.ID)
 				}
 
-				output := notification.ID + " | " + timeout + "| " + notificationid + "  | " + lastrunstring + " | " + message + "\n"
+				if hoursint > 0 {
+					minutesint = (hoursint * 60) + minutesint
+				}
+
+				interval := time.Duration(minutesint*60*1000*1000*1000)
+				nextruntime := time.Now().Add(interval)
+				nextrun := nextruntime.UTC().Format("2006-01-02 15:04:05")
+
+				notificationid := notification.Notification
+
+				/*
+				message := notificationmessage.Message
+				if len(message) > 13 {
+						message = truncateString(message, 13)
+				}*/
+
+				output := notification.ID + " | " + timeout + "| " + notificationid + "  | " + lastrunstring + " | " + nextrun + "\n"
 				list = list + output
 				list = list + "---------------------------------------------------------------------------\n"
 
@@ -478,34 +500,35 @@ func (h *NotificationsHandler) GetAllChannelNotificationsFor(channelname string,
 		return
 	}
 
-	pages := (len(notificationlist) / 10)+1
-	if len(notificationlist) == 10 {
+	pages := (len(notificationlist) % 5) + 1
+	if len(notificationlist) == 5 {
 		pages = 1
 	}
 
 	if pagenum > pages{
-		pagenum = 1
+		pagenum = pages
 	}
 
 
 
 	list := ":bulb: Channel Notifications for " + channelmention + ": \n"
 	list = list + "```\n"
-	list = list + "   ID    | Interval | MessageID |      Last Run       | Message\n"
+	list = list + "   ID    | Interval | MessageID |      Last Run       |      Next Run\n"
 	list = list + "---------------------------------------------------------------------------\n"
 	count := 0
 	for num, notification := range notificationlist {
 
 		if notification.ChannelID == channel.ID {
-			count = count + 1
 
-			if num >= ((pagenum * 10)-10) {
+			if num >= ((pagenum * 5)-5) {
+				count = count + 1
 
+				/*
 				notificationmessage, err := notificationsdb.GetNotificationFromDB(notification.Notification)
 				if err != nil {
 					s.ChannelMessageSend(m.ChannelID, "Error retrieving notification from db")
 					return
-				}
+				}*/
 
 				timeout := notification.Timeout
 				hours := "0h"
@@ -532,22 +555,34 @@ func (h *NotificationsHandler) GetAllChannelNotificationsFor(channelname string,
 
 				lastrun := notification.LastRun.UTC()
 				lastrunstring := lastrun.Format("2006-01-02 15:04:05")
-				notificationid := notification.Notification
 
-				message := notificationmessage.Message
-				if len(message) > 11 {
-					if message[10] == ' ' || message[10] == '.' || message[10] == ',' || message[10] == ':' || message[10] == ';' || message[10] == '?' || message[10] == '!'{
-						message = strings.TrimSuffix(message, string(message[11]))
-					} else {
-						message = strings.TrimSuffix(message, string(message[10]))
-					}
+				hoursint, minutesint, err := h.ParseTimeout(timeout)
+				if err != nil{
+					fmt.Println("Error parsing timeout for channel notification: " + notification.ID)
 				}
 
-				output := notification.ID + " | " + timeout + "| " + notificationid + "  | " + lastrunstring + " | " + message + "\n"
+				if hoursint > 0 {
+					minutesint = (hoursint * 60) + minutesint
+				}
+
+				interval := time.Duration(minutesint*60*1000*1000*1000)
+				nextruntime := time.Now().Add(interval)
+				nextrun := nextruntime.UTC().Format("2006-01-02 15:04:05")
+
+
+				notificationid := notification.Notification
+
+				/*
+				message := notificationmessage.Message
+				if len(message) > 13 {
+					message = truncateString(message, 13)
+				}*/
+
+				output := notification.ID + " | " + timeout + "| " + notificationid + "  | " + lastrunstring + " | " + nextrun + "\n"
 				list = list + output
 				list = list + "---------------------------------------------------------------------------\n"
 
-				if count == 10{
+				if count == 5{
 					list = list + "```"
 					list = list + "Page " + strconv.Itoa(pagenum) + " of " + strconv.Itoa(pages)
 					s.ChannelMessageSend(m.ChannelID, list)
@@ -665,6 +700,28 @@ func (h *NotificationsHandler) ViewNotificationMessageID(notificationid string, 
 	return
 }
 
+
+// ViewNotificationMessageID function
+func (h *NotificationsHandler) GetAllLinkedChannels(notificationid string, s *discordgo.Session, m *discordgo.MessageCreate) {
+
+	notificationsdb := Notifications{db: h.db}
+	notification, err := notificationsdb.GetNotificationFromDB(notificationid)
+	if err != nil{
+		s.ChannelMessageSend(m.ChannelID, err.Error())
+		return
+	}
+
+	linkedchannels, err := notificationsdb.GetNotificationLinkedChannels(notification.ID, s)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, err.Error())
+		return
+	}
+
+	output := "Linked channels for notification id: " + notificationid + " - " + linkedchannels + "\n"
+
+	s.ChannelMessageSend(m.ChannelID, output)
+	return
+}
 
 // CheckNotifications function
 func (h *NotificationsHandler) CheckNotifications(s *discordgo.Session) {
