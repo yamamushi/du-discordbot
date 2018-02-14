@@ -269,9 +269,9 @@ func (h *NotificationsHandler) GetAllNotifications(page string, s *discordgo.Ses
 		return
 	}
 
-	pages := (len(notificationlist) % 5)+1
-	if len(notificationlist) == 5 {
-		pages = 1
+	pages := (len(notificationlist)/5)
+	if len(notificationlist) % 5 != 0 {
+		pages = pages + 1
 	}
 
 	if pagenum > pages{
@@ -323,9 +323,9 @@ func (h *NotificationsHandler) GetAllChannelNotifications(page string, s *discor
 		return
 	}
 
-	pages := (len(notificationlist) % 5)+1
-	if len(notificationlist) == 5 {
-		pages = 1
+	pages := (len(notificationlist)/5)
+	if len(notificationlist) % 5 != 0 {
+		pages = pages + 1
 	}
 
 	if pagenum > pages{
@@ -500,9 +500,9 @@ func (h *NotificationsHandler) GetAllChannelNotificationsFor(channelname string,
 		return
 	}
 
-	pages := (len(notificationlist) % 5) + 1
-	if len(notificationlist) == 5 {
-		pages = 1
+	pages := (len(notificationlist)/5)
+	if len(notificationlist) % 5 != 0 {
+		pages = pages + 1
 	}
 
 	if pagenum > pages{
