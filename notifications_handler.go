@@ -323,8 +323,15 @@ func (h *NotificationsHandler) GetAllChannelNotifications(page string, s *discor
 		return
 	}
 
-	pages := (len(notificationlist)/5)
-	if len(notificationlist) % 5 != 0 {
+	listsize := 0
+	for _, notification := range notificationlist {
+		if notification.ChannelID == m.ChannelID{
+			listsize = listsize + 1
+		}
+	}
+
+	pages := (listsize/5)
+	if listsize % 5 != 0 {
 		pages = pages + 1
 	}
 
@@ -386,7 +393,7 @@ func (h *NotificationsHandler) GetAllChannelNotifications(page string, s *discor
 				}
 
 				interval := time.Duration(minutesint*60*1000*1000*1000)
-				nextruntime := time.Now().Add(interval)
+				nextruntime := notification.LastRun.Add(interval)
 				nextrun := nextruntime.UTC().Format("2006-01-02 15:04:05")
 
 				notificationid := notification.Notification
@@ -500,15 +507,21 @@ func (h *NotificationsHandler) GetAllChannelNotificationsFor(channelname string,
 		return
 	}
 
-	pages := (len(notificationlist)/5)
-	if len(notificationlist) % 5 != 0 {
+	listsize := 0
+	for _, notification := range notificationlist {
+		if notification.ChannelID == channel.ID {
+			listsize = listsize + 1
+		}
+	}
+
+	pages := (listsize/5)
+	if listsize % 5 != 0 {
 		pages = pages + 1
 	}
 
 	if pagenum > pages{
 		pagenum = pages
 	}
-
 
 
 	list := ":bulb: Channel Notifications for " + channelmention + ": \n"
@@ -566,7 +579,7 @@ func (h *NotificationsHandler) GetAllChannelNotificationsFor(channelname string,
 				}
 
 				interval := time.Duration(minutesint*60*1000*1000*1000)
-				nextruntime := time.Now().Add(interval)
+				nextruntime := notification.LastRun.Add(interval)
 				nextrun := nextruntime.UTC().Format("2006-01-02 15:04:05")
 
 

@@ -1,5 +1,6 @@
 package main
 
+/*
 import (
 	"errors"
 	"github.com/bwmarrin/discordgo"
@@ -749,3 +750,4 @@ func (h *MusicHandler) StateManager(s *discordgo.Session, m *discordgo.MessageCr
 		}
 	}
 }
+*/

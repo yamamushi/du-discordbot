@@ -1,5 +1,6 @@
 package main
 
+/*
 import (
 	"bytes"
 	"errors"
@@ -9,13 +10,13 @@ import (
 	"os/exec"
 	"strings"
 )
-
+*/
 /*
 
 These functions help with audio conversion and prepare files for transmission
 
 */
-
+/*
 // MakeAudioBuffer will return a [][]byte for the provided ogg/opus path
 func MakeAudioBuffer(path string) (output [][]byte, err error) {
 	reader, err := os.Open(path)
@@ -83,3 +84,4 @@ func ConvertAudio(from string, to string) (err error) {
 	//io.Copy(os.Stdout, &b2)
 	return nil
 }
+*/

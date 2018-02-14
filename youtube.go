@@ -1,6 +1,6 @@
 package main
 
-import (
+/*import (
 	"errors"
 	"fmt"
 	"github.com/rylio/ytdl"
@@ -13,8 +13,7 @@ import (
 
 This is a set of helper functions for parsing youtube links and id's into mp4 files for later conversion
 
-*/
-
+/*
 // YoutubeInterface is our way of interacting with YouTube, and the means by which we
 // store retrieved video information in our database.
 type YoutubeInterface struct {
@@ -205,3 +204,4 @@ func (h *YoutubeInterface) GetVideoID(url string) (id string, err error) {
 	}
 	return vid.ID, nil
 }
+*/

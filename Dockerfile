@@ -24,8 +24,8 @@ RUN go get github.com/satori/go.uuid
 RUN go get github.com/anaskhan96/soup
 RUN go get github.com/lunixbochs/vtclean
 RUN go get github.com/yuin/gopher-lua
-RUN go get github.com/jonas747/ogg
-RUN go get -u github.com/rylio/ytdl/...
+#RUN go get github.com/jonas747/ogg
+#RUN go get -u github.com/rylio/ytdl/...
 
 # This is a fork of gofeed that allows for custom user-agent strings in requests to work with sites that filter these
 RUN go get github.com/yamamushi/gofeed
