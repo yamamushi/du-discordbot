@@ -14,6 +14,7 @@ gh-md-toc
 
 # Project-local glide cache, RE: https://github.com/Masterminds/glide/issues/736
 .glide/
+vendor/
 
 # JetBrains
 .idea/
@@ -22,6 +23,7 @@ gh-md-toc
 notes
 deploy.sh
 tmp/
+
 
 # OS-Specific
 
