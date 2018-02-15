@@ -231,7 +231,7 @@ func (h *NotificationsHandler) AddNotification(command []string, s *discordgo.Se
 		return
 	}
 
-	s.ChannelMessageSend(m.ChannelID, "Added message to notifications list")
+	s.ChannelMessageSend(m.ChannelID, "Added message to notifications list with id: " + id[0])
 	return
 
 }

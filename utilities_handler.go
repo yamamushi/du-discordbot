@@ -195,8 +195,9 @@ func (h *UtilitiesHandler) GetCountdownStatus() (output string) {
 
 	output = "Current Important Countdowns: ```\n"
 	//output = output + "Time Until Founders Pack Pledging Ends: " + strconv.Itoa(daysuntilpledges) + " days (Approx: " + TruncateTime(exacttimeuntilpledges, time.Second).String() + ")\n"
-	output = output + "Founders pledging has ended, stay tuned for supporter packs in Q4 2017!\n"
-	output = output + "Gold and higher Founders can refer to the forums for the Pre-Alpha Testing Schedule.\n"
+	output = output + "Founders pledging has ended, stay tuned for supporter packs in Q1 2018!\n"
+	output = output + "Gold and higher Founders can refer to the forums for the Pre-Alpha Testing Schedule. They can also use the ~forumauth command to gain" +
+		"access to the NDA channels of this discord.\n"
 	//output = output + "Time Until ATV Pre-Alpha Release      : " + strconv.Itoa(daysuntilatvalpha) + " days (Approx: " + TruncateTime(exacttimeuntilatvalpha, time.Second).String() + ")\n"
 	//output = output + "Time Until ATV Pre-Alpha Release      : ATV in Pre-Alpha, Have Fun!\n"
 	//output = output + "Time Until Pre-Alpha Release          : " + strconv.Itoa(daysuntilprealpha) + " days (Approx: " + TruncateTime(exacttimeuntilprealpha, time.Second).String() + ")\n"
@@ -216,7 +217,7 @@ func (h *UtilitiesHandler) GetPledgingStatus() (output string) {
 
 	output = "Current Pledging Information: ```\n"
 	//output = output + "Time Until Founders Pack Pledging Ends: " + strconv.Itoa(daysuntilpledges) + " days (Exactly: " + TruncateTime(exacttimeuntilpledges, time.Second).String() + ")\n"
-	output = output + "Founders pledging has ended, stay tuned for supporter packs in Q4 2017!"
+	output = output + "Founders pledging has ended, stay tuned for supporter packs in Q1 2018!"
 	output = output + "```\n"
 
 	return output
@@ -247,22 +248,28 @@ func (h *UtilitiesHandler) FinalCountdown() (output string){
 func (h *UtilitiesHandler) NovaWrimo() (output string){
 
 	output = ":rotating_light: :rotating_light: :rotating_light: !!!"
+	/*
 	output += "\n" + "NovaWrimo 2017 is now live!"
 	output += "\n" + "Enter for your chance to win a free Gold Founders Pledge! Find out more at the link below:\n"
 	output += "\n" + "https://board.dualthegame.com/index.php?/topic/10415-novawrimo-contest-2016-rules-to-participate/"
+	*/
+	output += "\n" + "Novawrimo 2017 has completed, stay tuned for another in the future!"
+
 	return output
 }
 
 func (h *UtilitiesHandler) Events() (output string){
 
 	output = ":rotating_light: :rotating_light: :rotating_light: !!! "
+
+	/*
 	output += "\n" + "Current Events in Dual Universe!"
 	output += "\n" + "```"
 
 	output += "\n" + "It's contest season in Dual Universe! Take part in the following event(s) for your"
 	output += "opportunity to win cool stuff!"
 	output += "\n" + "NovaWrimo 2017 | https://board.dualthegame.com/index.php?/topic/10415-novawrimo-contest-2016-rules-to-participate/ "
-
+	*/
 	output += "\n\n" + "- News -"
 
 	output += "\n" + "As of December 2017, closed pre-alpha testing is currently taking place under a strict NDA policy. "
