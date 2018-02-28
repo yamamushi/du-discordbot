@@ -2,8 +2,8 @@ package main
 
 import (
 	"github.com/bwmarrin/discordgo"
-	"strings"
 	"strconv"
+	"strings"
 )
 
 // DevDiaryHandler struct
@@ -63,7 +63,7 @@ func (h *InterviewHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate
 		}
 
 		id, err := strconv.Atoi(payload[0])
-		if err != nil{
+		if err != nil {
 			s.ChannelMessageSend(m.ChannelID, "Invalid input supplied")
 			return
 		}
@@ -75,7 +75,6 @@ func (h *InterviewHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate
 	}
 
 }
-
 
 func (h *InterviewHandler) GetList() (list string) {
 
@@ -99,7 +98,6 @@ func (h *InterviewHandler) GetList() (list string) {
 	message = message + "\n```"
 	return message
 }
-
 
 func (h *InterviewHandler) GetForID(id int) (url string, author string, date string) {
 
@@ -136,7 +134,7 @@ func (h *InterviewHandler) GetForID(id int) (url string, author string, date str
 	case 15:
 		return "https://www.youtube.com/watch?v=W8cLaCn5A94", "IGN", "Mar 04 2017"
 	default:
-		return "No Record Found","nil","nil"
+		return "No Record Found", "nil", "nil"
 	}
 
 }

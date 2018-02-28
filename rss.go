@@ -301,8 +301,8 @@ func (h *RSS) Subscribe(url string, title string, channel string, repeatposts bo
 	}
 
 	uuid, err := GetUUID()
-	if err != nil{
-		return errors.New( "Fatal Error generating UUID: " + err.Error())
+	if err != nil {
+		return errors.New("Fatal Error generating UUID: " + err.Error())
 	}
 	rssfeed := RSSFeed{ID: uuid, URL: url, Title: title, Description: feed.Description,
 		Created: time.Now().String(), Updated: feed.Updated, Published: feed.Published,

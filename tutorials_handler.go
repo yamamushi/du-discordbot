@@ -2,8 +2,8 @@ package main
 
 import (
 	"github.com/bwmarrin/discordgo"
-	"strings"
 	"strconv"
+	"strings"
 )
 
 // DevDiaryHandler struct
@@ -63,7 +63,7 @@ func (h *TutorialHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate)
 		}
 
 		id, err := strconv.Atoi(payload[0])
-		if err != nil{
+		if err != nil {
 			s.ChannelMessageSend(m.ChannelID, "Invalid input supplied")
 			return
 		}
@@ -75,7 +75,6 @@ func (h *TutorialHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate)
 	}
 
 }
-
 
 func (h *TutorialHandler) GetList() (list string) {
 
@@ -93,31 +92,30 @@ func (h *TutorialHandler) GetList() (list string) {
 	return message
 }
 
-
 func (h *TutorialHandler) GetForID(id int) (url string, title string, date string) {
 
 	switch id {
 
 	case 1:
 		return "https://www.youtube.com/watch?v=wCpzLs4vlis",
-		"Dual Universe Pre-Alpha Tutorial: Tool & UI Basics", "Oct 19 2017"
+			"Dual Universe Pre-Alpha Tutorial: Tool & UI Basics", "Oct 19 2017"
 	case 2:
 		return "https://www.youtube.com/watch?v=V3puZXotLIw",
-		"Dual Universe Pre-Alpha Tutorial: Atmospheric Ship Building", "Oct 20 2017"
+			"Dual Universe Pre-Alpha Tutorial: Atmospheric Ship Building", "Oct 20 2017"
 	case 3:
 		return "https://www.youtube.com/watch?v=jPRx6WQlVQc",
-		"Dual Universe Pre-Alpha Tutorial: Interactive Elements & Linking", "Oct 20 2017"
+			"Dual Universe Pre-Alpha Tutorial: Interactive Elements & Linking", "Oct 20 2017"
 	case 4:
 		return "https://www.youtube.com/watch?v=rdJQjiQXO8w",
-		"Dual Universe Pre-Alpha Tutorial: Rights Management, Outposts & Territories", "Oct 20 2017"
+			"Dual Universe Pre-Alpha Tutorial: Rights Management, Outposts & Territories", "Oct 20 2017"
 	case 5:
 		return "https://www.youtube.com/watch?v=sbvJPuo9npE",
-		"Dual Universe Pre-Alpha Tutorial: Lua Scripting", "Nov 24 2017"
+			"Dual Universe Pre-Alpha Tutorial: Lua Scripting", "Nov 24 2017"
 	case 6:
 		return "https://www.youtube.com/watch?v=mEh3TzRPCyA",
 			"Dual Universe Pre-Alpha Tutorial: Blueprint 101 (Preview)", "Feb 09 2017"
 	default:
-		return "No Record Found","nil","nil"
+		return "No Record Found", "nil", "nil"
 	}
 
 }

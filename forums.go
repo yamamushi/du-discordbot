@@ -2,9 +2,9 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"github.com/anaskhan96/soup"
 	"strings"
-	"fmt"
 )
 
 /*

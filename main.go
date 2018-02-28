@@ -11,9 +11,9 @@ import (
 	"github.com/asdine/storm"
 	"github.com/bwmarrin/discordgo"
 
+	"io/ioutil"
 	"net/http"
 	_ "net/http/pprof"
-	"io/ioutil"
 )
 
 // Variables used for command line parameters
@@ -134,7 +134,6 @@ func main() {
 	bankhandler := BankHandler{db: &dbhandler, conf: centralbank.conf, com: &commandhandler, logchan: logchannel,
 		user: &userhandler, callback: &callbackhandler, bank: &centralbank, wallet: &wallethandler}
 	dg.AddHandler(bankhandler.Read)
-
 
 	// Initalize our Logger
 	fmt.Println("Initializing Logger")

@@ -186,7 +186,7 @@ func (h *BankHandler) Prompt(s *discordgo.Session, m *discordgo.MessageCreate) {
 	payload = channel.ID
 	m.ChannelID = channel.ID
 	uuid, err := GetUUID()
-	if err != nil{
+	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, "Fatal Error generating UUID")
 		return
 	}

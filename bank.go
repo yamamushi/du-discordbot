@@ -72,7 +72,7 @@ func (h *Bank) CreateBank() (err error) {
 
 	// Loans are disabled for now!
 	uuid, err := GetUUID()
-	if err != nil{
+	if err != nil {
 		return errors.New("Fatal Error generating UUID")
 	}
 	mainrecord := BankRecord{ID: uuid, Pin: h.conf.BankConfig.Pin,

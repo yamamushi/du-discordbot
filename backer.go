@@ -3,29 +3,25 @@ package main
 import (
 	"crypto/sha256"
 	"encoding/base64"
-	"io"
 	"errors"
 	"github.com/anaskhan96/soup"
+	"io"
 	"strings"
 )
 
 type BackerInterface struct {
-
-	db	*DBHandler
-
+	db *DBHandler
 }
-
 
 type BackerRecord struct {
-	UserID          string `storm:"id"`
-	HashedID		string
-	BackerStatus	string
-	ForumProfile	string
-	ATV				string
-	PreAlpha		string
-	Validated		int
+	UserID       string `storm:"id"`
+	HashedID     string
+	BackerStatus string
+	ForumProfile string
+	ATV          string
+	PreAlpha     string
+	Validated    int
 }
-
 
 // SaveRecordToDB function
 func (h *BackerInterface) SaveRecordToDB(record BackerRecord) (err error) {
@@ -70,7 +66,7 @@ func (h *BackerInterface) UniqueProfileCheck(userid string, profileurl string) (
 	userrecords := []BackerRecord{}
 	err = db.Find("ForumProfile", profileurl, &userrecords)
 	if err != nil {
-		if err.Error() == "not found"{
+		if err.Error() == "not found" {
 			return nil
 		}
 		return err
@@ -89,7 +85,6 @@ func (h *BackerInterface) UniqueProfileCheck(userid string, profileurl string) (
 	return nil
 }
 
-
 // UserHasRecord function
 func (h *BackerInterface) UserHasRecord(userid string) bool {
 
@@ -104,12 +99,11 @@ func (h *BackerInterface) UserHasRecord(userid string) bool {
 	return true
 }
 
-
 func (h *BackerInterface) UserValidated(userid string) bool {
 
-	if !h.UserHasRecord(userid){
+	if !h.UserHasRecord(userid) {
 		err := h.NewPlayerRecord(userid)
-		if err != nil{
+		if err != nil {
 			return false
 		}
 	}
@@ -139,10 +133,9 @@ func (h *BackerInterface) SetValidatedStatus(userid string, validated int) (err 
 	return nil
 }
 
-
 // UserHasRecord function
 func (h *BackerInterface) GetBackerStatus(userid string) (status string, err error) {
-	if !h.UserHasRecord(userid){
+	if !h.UserHasRecord(userid) {
 		return "", errors.New("Error: No User Record Exists!")
 	}
 	record, err := h.GetRecordFromDB(userid)
@@ -167,10 +160,9 @@ func (h *BackerInterface) SetBackerStatus(userid string, backerstatus string) (e
 	return nil
 }
 
-
 // GetATVStatus function
 func (h *BackerInterface) GetATVStatus(userid string) (status string, err error) {
-	if !h.UserHasRecord(userid){
+	if !h.UserHasRecord(userid) {
 		return "", errors.New("Error: No User Record Exists!")
 	}
 	record, err := h.GetRecordFromDB(userid)
@@ -195,10 +187,9 @@ func (h *BackerInterface) SetATVStatus(userid string, atvstatus string) (err err
 	return nil
 }
 
-
 // GetATVStatus function
 func (h *BackerInterface) GetPreAlphaStatus(userid string) (status string, err error) {
-	if !h.UserHasRecord(userid){
+	if !h.UserHasRecord(userid) {
 		return "", errors.New("Error: No User Record Exists!")
 	}
 	record, err := h.GetRecordFromDB(userid)
@@ -225,7 +216,7 @@ func (h *BackerInterface) SetPreAlphaStatus(userid string, prealphastatus string
 
 // UserHasRecord function
 func (h *BackerInterface) GetForumProfile(userid string) (profileurl string, err error) {
-	if !h.UserHasRecord(userid){
+	if !h.UserHasRecord(userid) {
 		return "", errors.New("Error: No User Record Exists!")
 	}
 	record, err := h.GetRecordFromDB(userid)
@@ -258,10 +249,6 @@ func (h *BackerInterface) SetForumProfile(userid string, profileurl string) (err
 	return nil
 }
 
-
-
-
-
 func (h *BackerInterface) HashUserID(userid string) string {
 
 	hasher := sha256.New()
@@ -287,7 +274,7 @@ func (h *BackerInterface) ResetUser(userid string) error {
 	record.PreAlpha = "false"
 
 	err = h.SaveRecordToDB(record)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 
@@ -297,14 +284,14 @@ func (h *BackerInterface) ResetUser(userid string) error {
 
 func (h *BackerInterface) ForumAuth(url string, userid string) (err error) {
 
-	if !h.UserHasRecord(userid){
+	if !h.UserHasRecord(userid) {
 		err := h.NewPlayerRecord(userid)
-		if err != nil{
+		if err != nil {
 			return err
 		}
 	}
 
-	if !strings.HasPrefix(url, "https://board.dualthegame.com/index.php?/profile/"){
+	if !strings.HasPrefix(url, "https://board.dualthegame.com/index.php?/profile/") {
 		return errors.New("expected url from https://board.dualthegame.com/index.php?/profile/")
 	}
 
@@ -342,7 +329,7 @@ func (h *BackerInterface) ForumAuth(url string, userid string) (err error) {
 		return err
 	}
 
-	if backerstatus != "" || atvstatus == "true" || prealphastatus == "true"{
+	if backerstatus != "" || atvstatus == "true" || prealphastatus == "true" {
 		err = h.SetValidatedStatus(userid, 1)
 		if err != nil {
 			//fmt.Println("Setting validated status")
@@ -352,27 +339,24 @@ func (h *BackerInterface) ForumAuth(url string, userid string) (err error) {
 	return nil
 }
 
-
 func (h *BackerInterface) CheckUserValidation(userid string) (err error) {
 
 	record, err := h.GetRecordFromDB(userid)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 
 	validation, err := h.GetValidationString(record)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 
 	if validation != record.HashedID {
-		return errors.New("invalid user validation token found: " + validation + " expected: " + record.HashedID )
+		return errors.New("invalid user validation token found: " + validation + " expected: " + record.HashedID)
 	}
 
 	return nil
 }
-
-
 
 // URL Interaction Functions
 
@@ -395,14 +379,14 @@ func (h *BackerInterface) GetValidationString(record BackerRecord) (validation s
 				for _, comments := range commenters {
 					content := comments.FindAll("span")
 					if len(content) > 0 {
-						if content[0].Attrs()["title"] == "Status Update"{
+						if content[0].Attrs()["title"] == "Status Update" {
 							commenterurls := comments.FindAll("a")
 							if len(commenterurls) > 0 {
 								if commenterurls[0].Attrs()["href"] == record.ForumProfile {
 									commentp := activityitem.Find("div", "class", "ipsStreamItem_snippet").FindAll("p")
 									if len(commentp) > 0 {
 										message := commentp[0].Text()
-										if strings.Contains(message, "discordauth"){
+										if strings.Contains(message, "discordauth") {
 											//fmt.Println(message)
 											fields := strings.Split(message, ":")
 											if len(fields) == 2 {
@@ -415,7 +399,7 @@ func (h *BackerInterface) GetValidationString(record BackerRecord) (validation s
 									span := activityitem.Find("div", "class", "ipsStreamItem_snippet").FindAll("span")
 									if len(span) > 0 {
 										message := span[0].Text()
-										if strings.Contains(message, "discordauth"){
+										if strings.Contains(message, "discordauth") {
 											fields := strings.Split(message, ":")
 											if len(fields) == 2 {
 												checksum := strings.TrimSuffix(fields[1], "\n")
@@ -438,30 +422,29 @@ func (h *BackerInterface) GetValidationString(record BackerRecord) (validation s
 
 func (h *BackerInterface) CheckStatus(userid string) (err error) {
 
-
 	record, err := h.GetRecordFromDB(userid)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 
 	backerstatus := h.GetBackerString(record)
 	if backerstatus != "" {
 		err = h.SetBackerStatus(userid, backerstatus)
-		if err != nil{
+		if err != nil {
 			return err
 		}
 	}
 
 	if h.GetATVString(record) {
 		err = h.SetATVStatus(userid, "true")
-		if err != nil{
+		if err != nil {
 			return err
 		}
 	}
 
 	if h.GetPreAlphaString(record) {
 		err = h.SetPreAlphaStatus(userid, "true")
-		if err != nil{
+		if err != nil {
 			return err
 		}
 	}
@@ -469,8 +452,7 @@ func (h *BackerInterface) CheckStatus(userid string) (err error) {
 	return nil
 }
 
-
-func (h *BackerInterface) GetBackerString(record BackerRecord) (status string){
+func (h *BackerInterface) GetBackerString(record BackerRecord) (status string) {
 
 	resp, err := soup.Get(record.ForumProfile) // Append page=1000 so we get the last page
 	if err != nil {
@@ -489,11 +471,11 @@ func (h *BackerInterface) GetBackerString(record BackerRecord) (status string){
 			if len(inner_items) > 0 {
 				for _, pad := range inner_items {
 					pad_titles := pad.Find("span", "class", "ipsDataItem_generic ipsDataItem_size3 ipsType_break").FindAll("strong")
-					pad_contents :=  pad.FindAll("div", "class", "ipsType_break ipsContained")
+					pad_contents := pad.FindAll("div", "class", "ipsType_break ipsContained")
 					if len(pad_titles) > 0 {
-						for _, title := range pad_titles{
+						for _, title := range pad_titles {
 							if title.Text() == "backer_title" {
-								if len(pad_contents) > 0{
+								if len(pad_contents) > 0 {
 									//fmt.Println(pad_contents[0].Text())
 									return pad_contents[0].Text()
 								}
@@ -501,15 +483,14 @@ func (h *BackerInterface) GetBackerString(record BackerRecord) (status string){
 						}
 					}
 				}
- 			}
+			}
 		}
 	}
 
 	return ""
 }
 
-
-func (h *BackerInterface) GetPreAlphaString(record BackerRecord) (status bool){
+func (h *BackerInterface) GetPreAlphaString(record BackerRecord) (status bool) {
 
 	resp, err := soup.Get(record.ForumProfile) // Append page=1000 so we get the last page
 	if err != nil {
@@ -537,8 +518,7 @@ func (h *BackerInterface) GetPreAlphaString(record BackerRecord) (status bool){
 	return false
 }
 
-
-func (h *BackerInterface) GetATVString(record BackerRecord) (status bool){
+func (h *BackerInterface) GetATVString(record BackerRecord) (status bool) {
 
 	resp, err := soup.Get(record.ForumProfile) // Append page=1000 so we get the last page
 	if err != nil {

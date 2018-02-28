@@ -13,7 +13,7 @@ type Config struct {
 	DUBotConfig   dubotConfig    `toml:"du-bot"`
 	BankConfig    bankConfig     `toml:"bank"`
 	CasinoConfig  casinoConfig   `toml:"casino"`
-	RolesConfig	  rolesConfig	 `toml:"roles"`
+	RolesConfig   rolesConfig    `toml:"roles"`
 }
 
 // discordConfig struct
@@ -35,7 +35,7 @@ type dubotConfig struct {
 	CP               string        `toml:"command_prefix"`
 	Playing          string        `toml:"default_now_playing"`
 	RSSTimeout       time.Duration `toml:"rss_fetch_timeout"`
-	Notifications	 time.Duration `toml:"notifications_update_timeout"`
+	Notifications    time.Duration `toml:"notifications_update_timeout"`
 	PerPageCount     int           `toml:"per_page_count"`
 	LuaTimeout       int           `toml:"lua_timeout"`
 	Profiler         bool          `toml:"enable_profiler"`
@@ -65,19 +65,19 @@ type casinoConfig struct {
 
 // rolesConfig struct
 type rolesConfig struct {
-	ATVRoleID				string	`toml:"atv_role"`
-	IronRoleID				string	`toml:"iron_role"`
-	BronzeRoleID			string	`toml:"bronze_role"`
-	SilverRoleID			string	`toml:"silver_role"`
-	GoldRoleID				string	`toml:"gold_role"`
-	SapphireRoleID			string	`toml:"sapphire_role"`
-	RubyRoleID				string	`toml:"ruby_role"`
-	EmeraldRoleID			string	`toml:"emerald_role"`
-	DiamondRoleID			string	`toml:"diamond_role"`
-	KyriumRoleID			string	`toml:"kyrium_role"`
-	ForumLinkedRoleID		string	`toml:"forumlinked_role"`
-	ATVForumLinkedRoleID	string	`toml:"atvforumlinked_role"`
-	PreAlphaForumLinkedRole	string	`toml:"prealpha_role"`
+	ATVRoleID               string `toml:"atv_role"`
+	IronRoleID              string `toml:"iron_role"`
+	BronzeRoleID            string `toml:"bronze_role"`
+	SilverRoleID            string `toml:"silver_role"`
+	GoldRoleID              string `toml:"gold_role"`
+	SapphireRoleID          string `toml:"sapphire_role"`
+	RubyRoleID              string `toml:"ruby_role"`
+	EmeraldRoleID           string `toml:"emerald_role"`
+	DiamondRoleID           string `toml:"diamond_role"`
+	KyriumRoleID            string `toml:"kyrium_role"`
+	ForumLinkedRoleID       string `toml:"forumlinked_role"`
+	ATVForumLinkedRoleID    string `toml:"atvforumlinked_role"`
+	PreAlphaForumLinkedRole string `toml:"prealpha_role"`
 }
 
 // ReadConfig function

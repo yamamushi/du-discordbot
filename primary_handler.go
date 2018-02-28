@@ -176,7 +176,7 @@ func (h *PrimaryHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) 
 	}
 
 	if command == cp+"time" {
-		s.ChannelMessageSend(m.ChannelID, "Current UTC Time: " + time.Now().UTC().Format("2006-01-02 15:04:05"))
+		s.ChannelMessageSend(m.ChannelID, "Current UTC Time: "+time.Now().UTC().Format("2006-01-02 15:04:05"))
 		return
 	}
 
@@ -186,25 +186,25 @@ func (h *PrimaryHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) 
 	}
 
 	/*
-	if command == cp+"follow" {
-		if CheckPermissions("follow", m.ChannelID, &user, s, h.command) {
-			s.ChannelMessageSend(m.ChannelID, "Not yet implemented!")
-			return
-		}
+		if command == cp+"follow" {
+			if CheckPermissions("follow", m.ChannelID, &user, s, h.command) {
+				s.ChannelMessageSend(m.ChannelID, "Not yet implemented!")
+				return
+			}
 
-		if !user.Admin {
-			return
-		}
-		if len(command) < 2 {
-			s.ChannelMessageSend(m.ChannelID, "Command usage: follow <user>")
-			return
-		}
+			if !user.Admin {
+				return
+			}
+			if len(command) < 2 {
+				s.ChannelMessageSend(m.ChannelID, "Command usage: follow <user>")
+				return
+			}
 
-		forum := ForumIntegration{}
-		forum.FollowUser(message[1])
-		s.ChannelMessageSend(m.ChannelID, "Callback launched")
-		return
-	}*/
+			forum := ForumIntegration{}
+			forum.FollowUser(message[1])
+			s.ChannelMessageSend(m.ChannelID, "Callback launched")
+			return
+		}*/
 }
 
 // RegisterCommands function

@@ -6,20 +6,17 @@ import (
 )
 
 type BackerHandler struct {
-
-	db *DBHandler
-	callback *CallbackHandler
-	conf *Config
+	db              *DBHandler
+	callback        *CallbackHandler
+	conf            *Config
 	backerInterface *BackerInterface
 }
 
-
-func (h *BackerHandler) Init(){
+func (h *BackerHandler) Init() {
 
 	h.backerInterface = &BackerInterface{db: h.db}
 
 }
-
 
 func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
@@ -34,7 +31,7 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	if command == "backerauth" || command == "atvauth" || command == "forumauth"{
+	if command == "backerauth" || command == "atvauth" || command == "forumauth" {
 
 		userprivatechannel, err := s.UserChannelCreate(m.Author.ID)
 		if err != nil {
@@ -49,10 +46,10 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		output += ":one: To complete this process, please post the following text on your " +
 			"public message feed through your **forum profile**:"
 		output += "\n```"
-		output += "discordauth:"+hashedid+"```"
+		output += "discordauth:" + hashedid + "```"
 		output += ":bulb: If you do not see the public message feed on your profile, you need to enable status " +
 			"updates in your forum account settings.\n It's the first option in Basic Info at the top of the " +
-				"**edit profile** settings window. You can disable it after this registration process is complete."
+			"**edit profile** settings window. You can disable it after this registration process is complete."
 
 		output += "\n\n:two: Once you have posted your discordauth key, please reply to this message with the " +
 			"following **command** to complete the validation process:\n"
@@ -78,7 +75,7 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 			return
 		}
 
-		if h.backerInterface.UserValidated(m.Author.ID){
+		if h.backerInterface.UserValidated(m.Author.ID) {
 			s.ChannelMessageSend(m.ChannelID, "Error: user already validated, contact a discord admin!")
 			return
 		}
@@ -93,8 +90,8 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		if h.backerInterface.UserValidated(m.Author.ID) {
 
 			err := h.UpdateRoles(s, m, m.Author.ID)
-			if err != nil{
-				s.ChannelMessageSend(userprivatechannel.ID, "Could not update user roles: " + err.Error() + " , please contact a discord administrator")
+			if err != nil {
+				s.ChannelMessageSend(userprivatechannel.ID, "Could not update user roles: "+err.Error()+" , please contact a discord administrator")
 				return
 			}
 
@@ -112,11 +109,11 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 			return
 		}
 		if len(m.Mentions) < 1 {
-			s.ChannelMessageSend(m.ChannelID, command + " expects a user mention.")
+			s.ChannelMessageSend(m.ChannelID, command+" expects a user mention.")
 			return
 		}
 		if len(m.Mentions) > 1 {
-			s.ChannelMessageSend(m.ChannelID, command + " too many users selected.")
+			s.ChannelMessageSend(m.ChannelID, command+" too many users selected.")
 			return
 		}
 
@@ -124,23 +121,23 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 		message := m.Mentions[0].Username + "||" + m.Mentions[0].ID
 		uuid, err := GetUUID()
-		if err != nil{
-			s.ChannelMessageSend(m.ChannelID, "Fatal Error generating UUID: " + err.Error())
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Fatal Error generating UUID: "+err.Error())
 			return
 		}
 		h.callback.Watch(h.ResetBackerConfirm, uuid, message, s, m)
 		return
 	}
-	if command == "forumrole" || command == "rerunforumrole" || command == "runroles"{
-		if !user.Admin{
+	if command == "forumrole" || command == "rerunforumrole" || command == "runroles" {
+		if !user.Admin {
 			return
 		}
 		if len(m.Mentions) < 1 {
-			s.ChannelMessageSend(m.ChannelID, command + " expects a user mention.")
+			s.ChannelMessageSend(m.ChannelID, command+" expects a user mention.")
 			return
 		}
 		if len(m.Mentions) > 1 {
-			s.ChannelMessageSend(m.ChannelID, command + " too many users selected.")
+			s.ChannelMessageSend(m.ChannelID, command+" too many users selected.")
 			return
 		}
 
@@ -149,13 +146,13 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 			return
 		}
 
-			err := h.UpdateRoles(s, m, m.Mentions[0].ID)
-		if err != nil{
-			s.ChannelMessageSend(m.ChannelID, "Could not update user roles: " + err.Error() + " , please contact a discord administrator")
+		err := h.UpdateRoles(s, m, m.Mentions[0].ID)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Could not update user roles: "+err.Error()+" , please contact a discord administrator")
 			return
 		}
 
-		s.ChannelMessageSend(m.ChannelID, "Roles for " + m.Mentions[0].Mention() + " updated.")
+		s.ChannelMessageSend(m.ChannelID, "Roles for "+m.Mentions[0].Mention()+" updated.")
 		return
 	}
 	if command == "forumprofile" {
@@ -163,11 +160,11 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		//	return
 		//}
 		if len(m.Mentions) < 1 {
-			s.ChannelMessageSend(m.ChannelID, command + " expects a user mention.")
+			s.ChannelMessageSend(m.ChannelID, command+" expects a user mention.")
 			return
 		}
 		if len(m.Mentions) > 1 {
-			s.ChannelMessageSend(m.ChannelID, command + " too many users selected.")
+			s.ChannelMessageSend(m.ChannelID, command+" too many users selected.")
 			return
 		}
 
@@ -177,8 +174,8 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		}
 
 		record, err := h.backerInterface.GetRecordFromDB(m.Mentions[0].ID)
-		if err != nil{
-			s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 			return
 		}
 
@@ -196,7 +193,7 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 	if command == "forumprofilebyid" {
-		if !user.Admin{
+		if !user.Admin {
 			return
 		}
 
@@ -213,14 +210,14 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		}
 
 		record, err := h.backerInterface.GetRecordFromDB(mentionid)
-		if err != nil{
-			s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 			return
 		}
 
 		member, err := s.State.Member(h.conf.DiscordConfig.GuildID, mentionid)
 		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+			s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 			return
 		}
 
@@ -240,7 +237,7 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 	if command == "debugroles" {
-		if !user.Admin{
+		if !user.Admin {
 			return
 		}
 
@@ -253,7 +250,7 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		//fmt.Println("Roles List:")
 
 		output := ":bulb: Roles for this server\n```"
-		for _, role := range s.State.Guilds[0].Roles{
+		for _, role := range s.State.Guilds[0].Roles {
 			output = output + "\n" + role.Name + " : " + role.ID
 		}
 		output = output + "\n```\n"
@@ -271,7 +268,7 @@ func (h *BackerHandler) ResetBackerConfirm(payload string, s *discordgo.Session,
 	}
 
 	if m.Content == "Y" || m.Content == "y" {
-		splitpayload := strings.Split(payload,"||")
+		splitpayload := strings.Split(payload, "||")
 		username := splitpayload[0]
 		userid := splitpayload[1]
 
@@ -295,7 +292,7 @@ func (h *BackerHandler) ResetBackerConfirm(payload string, s *discordgo.Session,
 
 		err = h.backerInterface.ResetUser(userid)
 		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, "Could not reset user: " + userid + " : " + err.Error())
+			s.ChannelMessageSend(m.ChannelID, "Could not reset user: "+userid+" : "+err.Error())
 			return
 		}
 
@@ -333,13 +330,13 @@ func (h *BackerHandler) ResetBackerConfirm(payload string, s *discordgo.Session,
 			s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
 		}
 
-		if atvStatus == "true"{
+		if atvStatus == "true" {
 			s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.ATVRoleID)
 			s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.ATVForumLinkedRoleID)
 			s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
 		}
 
-		if prealphaStatus == "true"{
+		if prealphaStatus == "true" {
 			s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
 		}
 
@@ -353,8 +350,7 @@ func (h *BackerHandler) ResetBackerConfirm(payload string, s *discordgo.Session,
 	return
 }
 
-
-func (h *BackerHandler) UpdateRoles(s *discordgo.Session, m *discordgo.MessageCreate, userid string) (err error){
+func (h *BackerHandler) UpdateRoles(s *discordgo.Session, m *discordgo.MessageCreate, userid string) (err error) {
 
 	atvStatus, err := h.backerInterface.GetATVStatus(userid)
 	if err != nil {
@@ -405,11 +401,11 @@ func (h *BackerHandler) UpdateRoles(s *discordgo.Session, m *discordgo.MessageCr
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
 	}
 
-	if prealphaStatus == "true"{
+	if prealphaStatus == "true" {
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
 	}
 
-	if atvStatus == "true"{
+	if atvStatus == "true" {
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.ATVRoleID)
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.ATVForumLinkedRoleID)
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)

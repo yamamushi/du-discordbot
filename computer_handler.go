@@ -51,7 +51,7 @@ func (h *ComputerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate)
 		if payload[0] == "nude" && payload[1] == "tayne" {
 			s.ChannelMessageSend(m.ChannelID, "This is not suitable for work. Are you sure?")
 			uuid, err := GetUUID()
-			if err != nil{
+			if err != nil {
 				s.ChannelMessageSend(m.ChannelID, "Fatal Error generating UUID")
 				return
 			}
@@ -98,8 +98,8 @@ func (h *ComputerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate)
 			s.ChannelMessageSend(m.ChannelID, "I have a BETA sequence\nI have been working on\nWould you like to see it?")
 
 			uuid, err := GetUUID()
-			if err != nil{
-				s.ChannelMessageSend(m.ChannelID, "Fatal Error generating UUID: " + err.Error())
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "Fatal Error generating UUID: "+err.Error())
 				return
 			}
 			h.callback.Watch(h.TayneResponse, uuid, "", s, m)

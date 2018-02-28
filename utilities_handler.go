@@ -225,7 +225,7 @@ func (h *UtilitiesHandler) GetPledgingStatus() (output string) {
 }
 
 // GetParisTime function
-func (h *UtilitiesHandler) GetParisTime() (output string){
+func (h *UtilitiesHandler) GetParisTime() (output string) {
 
 	paris, err := time.LoadLocation("Europe/Paris")
 	if err != nil {
@@ -238,48 +238,45 @@ func (h *UtilitiesHandler) GetParisTime() (output string){
 	return output
 }
 
-
-func (h *UtilitiesHandler) FinalCountdown() (output string){
+func (h *UtilitiesHandler) FinalCountdown() (output string) {
 
 	return ":rotating_light: :rotating_light: :rotating_light: !!! https://www.youtube.com/watch?v=9jK-NcRmVcw"
 
 }
 
-func (h *UtilitiesHandler) NovaWrimo() (output string){
+func (h *UtilitiesHandler) NovaWrimo() (output string) {
 
 	output = ":rotating_light: :rotating_light: :rotating_light: !!!"
 	/*
-	output += "\n" + "NovaWrimo 2017 is now live!"
-	output += "\n" + "Enter for your chance to win a free Gold Founders Pledge! Find out more at the link below:\n"
-	output += "\n" + "https://board.dualthegame.com/index.php?/topic/10415-novawrimo-contest-2016-rules-to-participate/"
+		output += "\n" + "NovaWrimo 2017 is now live!"
+		output += "\n" + "Enter for your chance to win a free Gold Founders Pledge! Find out more at the link below:\n"
+		output += "\n" + "https://board.dualthegame.com/index.php?/topic/10415-novawrimo-contest-2016-rules-to-participate/"
 	*/
 	output += "\n" + "Novawrimo 2017 has completed, stay tuned for another in the future!"
 
 	return output
 }
 
-func (h *UtilitiesHandler) Events() (output string){
+func (h *UtilitiesHandler) Events() (output string) {
 
 	output = ":rotating_light: :rotating_light: :rotating_light: !!! "
 
 	/*
-	output += "\n" + "Current Events in Dual Universe!"
-	output += "\n" + "```"
+		output += "\n" + "Current Events in Dual Universe!"
+		output += "\n" + "```"
 
-	output += "\n" + "It's contest season in Dual Universe! Take part in the following event(s) for your"
-	output += "opportunity to win cool stuff!"
-	output += "\n" + "NovaWrimo 2017 | https://board.dualthegame.com/index.php?/topic/10415-novawrimo-contest-2016-rules-to-participate/ "
+		output += "\n" + "It's contest season in Dual Universe! Take part in the following event(s) for your"
+		output += "opportunity to win cool stuff!"
+		output += "\n" + "NovaWrimo 2017 | https://board.dualthegame.com/index.php?/topic/10415-novawrimo-contest-2016-rules-to-participate/ "
 	*/
 	output += "\n\n" + "- News -"
 
 	output += "\n" + "As of December 2017, closed pre-alpha testing is currently taking place under a strict NDA policy. "
 	output += "If you have a Gold or higher level Founders Pledge, you are currently eligible to take part in these closed tests."
 	output += "\n\n" + "Those who would like to discuss testing in this discord can run ~forumauth to authenticate your gold+ account "
-	output +=  "on the forums."
-
+	output += "on the forums."
 
 	output += "\n" + "```"
-
 
 	return output
 }
