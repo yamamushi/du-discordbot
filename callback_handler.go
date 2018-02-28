@@ -42,10 +42,7 @@ func (c *CallbackHandler) Watch(Handler func(string, *discordgo.Session, *discor
 func (c *CallbackHandler) UnWatch(User string, ChannelID string, MessageID string) {
 
 	// Clear user element by iterating
-	var next *list.Element
-	for e := c.WatchList.Front(); e != nil; e = next {
-		next = e.Next()
-
+	for e := c.WatchList.Front(); e != nil; e = e.Next() {
 		r := reflect.ValueOf(e.Value)
 		user := reflect.Indirect(r).FieldByName("User")
 		channel := reflect.Indirect(r).FieldByName("ChannelID")
@@ -60,9 +57,7 @@ func (c *CallbackHandler) UnWatch(User string, ChannelID string, MessageID strin
 // Read function
 func (c *CallbackHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
-	var next *list.Element
-	for e := c.WatchList.Front(); e != nil; e = next {
-
+	for e := c.WatchList.Front(); e != nil; e = e.Next() {
 		r := reflect.ValueOf(e.Value)
 		user := reflect.Indirect(r).FieldByName("User")
 		channelid := reflect.Indirect(r).FieldByName("ChannelID")
