@@ -65,6 +65,9 @@ type casinoConfig struct {
 
 // rolesConfig struct
 type rolesConfig struct {
+	PatronRoleID            string `toml:"patron_role"`
+	SponsorRoleID           string `toml:"sponsor_role"`
+	ContributorRoleID       string `toml:"contributor_role"`
 	ATVRoleID               string `toml:"atv_role"`
 	IronRoleID              string `toml:"iron_role"`
 	BronzeRoleID            string `toml:"bronze_role"`

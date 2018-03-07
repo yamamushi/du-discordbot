@@ -730,41 +730,41 @@ func (h *NotificationsHandler) CheckNotifications(s *discordgo.Session) {
 		notificationlist, err := notificationsdb.GetAllChannelNotifications()
 		if err != nil {
 			fmt.Println("Error reading from channel notifications database: " + err.Error())
-		}
+		} else {
+			for _, channelnotification := range notificationlist {
 
-		for _, channelnotification := range notificationlist {
+				//fmt.Println("Reading Notification")
 
-			//fmt.Println("Reading Notification")
+				timeout := channelnotification.Timeout
 
-			timeout := channelnotification.Timeout
-
-			hours, minutes, err := h.ParseTimeout(timeout)
-			if err != nil {
-				fmt.Println("Error parsing timeout for channel notification: " + channelnotification.ID)
-			}
-
-			if hours > 0 {
-				minutes = (hours * 60) + minutes
-			}
-
-			interval := time.Duration(minutes * 60 * 1000 * 1000 * 1000)
-			//fmt.Println("Interval: " + strconv.Itoa(interval))
-
-			diff := time.Now().Sub(channelnotification.LastRun)
-			if diff > interval {
-
-				notification, err := notificationsdb.GetNotificationFromDB(channelnotification.Notification)
+				hours, minutes, err := h.ParseTimeout(timeout)
 				if err != nil {
-					fmt.Println("Error reading from notifications database: " + err.Error())
-				}
-				s.ChannelMessageSend(channelnotification.ChannelID, notification.Message)
+					fmt.Println("Error parsing timeout for channel notification: " + channelnotification.ID)
+				} else {
+					if hours > 0 {
+						minutes = (hours * 60) + minutes
+					}
 
-				channelnotification.LastRun = time.Now()
-				notificationsdb.UpdateChannelNotification(channelnotification)
+					interval := time.Duration(minutes * 60 * 1000 * 1000 * 1000)
+					//fmt.Println("Interval: " + strconv.Itoa(interval))
+
+					diff := time.Now().Sub(channelnotification.LastRun)
+					if diff > interval {
+
+						notification, err := notificationsdb.GetNotificationFromDB(channelnotification.Notification)
+						if err != nil {
+							fmt.Println("Error reading from notifications database: " + err.Error())
+						} else {
+							s.ChannelMessageSend(channelnotification.ChannelID, notification.Message)
+
+							channelnotification.LastRun = time.Now()
+							notificationsdb.UpdateChannelNotification(channelnotification)
+						}
+					}
+				}
 			}
 		}
 	}
-
 }
 
 // ParseTimeout function
