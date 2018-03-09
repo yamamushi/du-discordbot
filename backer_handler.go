@@ -297,23 +297,23 @@ func (h *BackerHandler) ResetBackerConfirm(payload string, s *discordgo.Session,
 		}
 
 		if backerStatus == "Iron Founder" {
-			s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.IronRoleID)
+			s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.IronRoleID)
 
 		} else if backerStatus == "Contributor" {
-			s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.ContributorRoleID)
+			s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.ContributorRoleID)
 
 		} else if backerStatus == "Bronze Founder" {
-			s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.BronzeRoleID)
+			s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.BronzeRoleID)
 
 		} else if backerStatus == "Sponsor" {
-			s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.SponsorRoleID)
+			s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.SponsorRoleID)
 
 		} else if backerStatus == "Silver Founder" {
-			s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.SilverRoleID)
+			s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.SilverRoleID)
 
 		} else if backerStatus == "Patron" {
-			s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PatronRoleID)
-			s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
+			s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PatronRoleID)
+			s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
 
 		} else if backerStatus == "Gold Founder" {
 			s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.GoldRoleID)
@@ -433,5 +433,19 @@ func (h *BackerHandler) UpdateRoles(s *discordgo.Session, m *discordgo.MessageCr
 	}
 
 	s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.ForumLinkedRoleID)
+	h.NotifyNDAChannelOnAuth(s, userid)
 	return nil
+}
+
+
+func (h *BackerHandler) NotifyNDAChannelOnAuth(s *discordgo.Session, userid string){
+
+	user, err := s.User(userid)
+	if err != nil {
+		return
+	}
+
+	s.ChannelMessageSend(h.conf.RolesConfig.NDAChannelID, user.Mention() + " has been authorized as having pre-alpha " +
+							"access, and can now use the NDA Discord channels. Congrats!")
+	return
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/bwmarrin/discordgo"
 	"strings"
+	//"fmt"
 )
 
 // MemeHandler struct -> This operates without relying on a command string.
@@ -23,17 +24,28 @@ func (h *MemeHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	message := strings.ToLower(m.Content)
+	//fmt.Print(message)
 
 	if strings.Contains(message, "lord jc") {
 		s.ChannelMessageSend(m.ChannelID, "Yes, my child? \n http://i.imgur.com/DYq8TNe.jpg")
 		return
 	}
-	if strings.Contains(message, "jc") {
-		s.ChannelMessageSend(m.ChannelID, "<:jc:236526936573214720>")
-		return
+	if MessageHasMeme(message, "jc") {
+		s.MessageReactionAdd(m.ChannelID, m.Message.ID, ":jc:236526936573214720")
 	}
-	if strings.Contains(message, "nyzaltar") {
-		s.ChannelMessageSend(m.ChannelID, "<:nyzaltar:236531709632315402>")
-		return
+	if MessageHasMeme(message, "nyzaltar") {
+		s.MessageReactionAdd(m.ChannelID, m.Message.ID, ":nyzaltar:236531709632315402")
 	}
+	if MessageHasMeme(message, "oli") {
+		s.MessageReactionAdd(m.ChannelID, m.Message.ID, ":oli:421481974201319424")
+	}
+	if MessageHasMeme(message, "vape") {
+		s.MessageReactionAdd(m.ChannelID, m.Message.ID, ":vapenation:360989703215775754")
+	}
+	if MessageHasMeme(message, "thanks") || MessageHasMeme(message, "thank you") ||
+		MessageHasMeme(message, "danke") || MessageHasMeme(message, "gracias") ||
+			MessageHasMeme(message, "tom hanks"){
+		s.MessageReactionAdd(m.ChannelID, m.Message.ID, ":thanks:297438919165739019")
+	}
+	return
 }

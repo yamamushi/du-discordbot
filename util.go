@@ -264,3 +264,29 @@ func truncateString(str string, num int) string {
 	}
 	return bnoden
 }
+
+//
+func MessageHasMeme(message string, meme string) bool {
+	if strings.HasPrefix(message, meme) {
+		return true
+	}
+	if strings.HasSuffix(message, meme) {
+		return true
+	}
+	if strings.Contains(message, " "+meme+" ") {
+		return true
+	}
+	if strings.Contains(message, " "+meme+"-")||strings.Contains(message, " "+meme+",")||strings.Contains(message, " "+meme+".") {
+		return true
+	}
+	if strings.Contains(message, " "+meme+":")|| strings.Contains(message, " "+meme+";")||strings.Contains(message, " "+meme+"+"){
+		return true
+	}
+	if strings.Contains(message, " "+meme+"=")||strings.Contains(message, " "+meme+"?")||strings.Contains(message, " "+meme+"/"){
+		return true
+	}
+	if strings.Contains(message, " "+meme+"!")||strings.Contains(message, " "+meme+"'")||strings.Contains(message, " "+meme+"\""){
+		return true
+	}
+	return false
+}
