@@ -155,6 +155,46 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		s.ChannelMessageSend(m.ChannelID, "Roles for "+m.Mentions[0].Mention()+" updated.")
 		return
 	}
+	if command == "adminlink" {
+		if !user.Admin{
+			return
+		}
+		if len(m.Mentions) < 1 {
+			s.ChannelMessageSend(m.ChannelID, command+" expects a user mention.")
+			return
+		}
+		if len(payload) < 2 {
+			s.ChannelMessageSend(m.ChannelID, "Error: <adminlink> requires an argument!")
+			return
+		}
+		if h.backerInterface.UserValidated(m.Mentions[0].ID) {
+			s.ChannelMessageSend(m.ChannelID, "Error: user already validated!")
+			return
+		}
+
+		err = h.backerInterface.ForumAuth(payload[1], m.Mentions[0].ID)
+		if err != nil {
+			output := "Error validating account: " + err.Error()
+			s.ChannelMessageSend(m.ChannelID, output)
+			return
+		}
+
+		if h.backerInterface.UserValidated(m.Mentions[0].ID) {
+
+			err := h.UpdateRoles(s, m, m.Mentions[0].ID)
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "Could not update user roles: "+err.Error())
+				return
+			}
+
+			output := "User account validated, discord roles will be adjusted accordingly."
+			s.ChannelMessageSend(m.ChannelID, output)
+			return
+		}
+
+		s.ChannelMessageSend(m.ChannelID, "Could not validate account.")
+		return
+	}
 	if command == "forumprofile" {
 		//if !user.Admin{
 		//	return
@@ -377,63 +417,63 @@ func (h *BackerHandler) UpdateRoles(s *discordgo.Session, m *discordgo.MessageCr
 		return err
 	}
 
-
+	notify := false
 	if backerStatus == "Iron Founder" {
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.IronRoleID)
-
 	} else if backerStatus == "Contributor" {
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.ContributorRoleID)
-
 	} else if backerStatus == "Bronze Founder" {
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.BronzeRoleID)
-
 	} else if backerStatus == "Sponsor" {
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.SponsorRoleID)
-
 	} else if backerStatus == "Silver Founder" {
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.SilverRoleID)
-
 	} else if backerStatus == "Patron" {
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PatronRoleID)
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
-
+		notify = true
 	} else if backerStatus == "Gold Founder" {
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.GoldRoleID)
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
-
+		notify = true
 	} else if backerStatus == "Sapphire Founder" {
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.SapphireRoleID)
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
-
+		notify = true
 	} else if backerStatus == "Ruby Founder" {
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.RubyRoleID)
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
-
+		notify = true
 	} else if backerStatus == "Emerald Founder" {
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.EmeraldRoleID)
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
-
+		notify = true
 	} else if backerStatus == "Diamond Founder" {
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.DiamondRoleID)
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
-
+		notify = true
 	} else if backerStatus == "Kyrium Founder" {
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.KyriumRoleID)
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
+		notify = true
 	}
 
 	if prealphaStatus == "true" {
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
+		notify = true
 	}
 
 	if atvStatus == "true" {
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.ATVRoleID)
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.ATVForumLinkedRoleID)
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
+		notify = true
 	}
 
 	s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.ForumLinkedRoleID)
-	h.NotifyNDAChannelOnAuth(s, userid)
+	if notify {
+		h.NotifyNDAChannelOnAuth(s, userid)
+	}
 	return nil
 }
 

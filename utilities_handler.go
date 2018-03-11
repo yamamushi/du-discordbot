@@ -11,6 +11,7 @@ import (
 	//"strconv"
 	"strings"
 	"time"
+	"strconv"
 )
 
 // UtilitiesHandler struct
@@ -100,6 +101,21 @@ func (h *UtilitiesHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate
 	if command == "events" {
 		s.ChannelMessageSend(m.ChannelID, h.Events())
 		return
+	}
+	if command == "estimatesutime" || command == "sutime" || command == "su-convert" {
+		if VerifyNDAChannel(m.ChannelID, h.conf){
+			if len(payload) < 1 {
+				s.ChannelMessageSend(m.ChannelID, command + " expects an argument: <su>")
+				return
+			}
+			estimate, err := h.SUToMinutes(payload[0])
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "argument must be a number value")
+				return
+			}
+			s.ChannelMessageSend(m.ChannelID, "Estimated travel time: " + estimate)
+			return
+		}
 	}
 
 }
@@ -279,4 +295,18 @@ func (h *UtilitiesHandler) Events() (output string) {
 	output += "\n" + "```"
 
 	return output
+}
+
+func (h *UtilitiesHandler) SUToMinutes(distance string) (conversion string, err error){
+	distanceInt, err := strconv.Atoi(distance)
+	if err != nil {
+		distanceFloat, err := strconv.ParseFloat(distance, 64)
+		if err != nil {
+			return "", err
+		}
+		distanceInt = int(distanceFloat + 0.5)
+	}
+	secondsInt := distanceInt * 36
+	duration := time.Duration(time.Second * time.Duration(secondsInt))
+	return duration.String(), nil
 }

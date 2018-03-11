@@ -290,3 +290,11 @@ func MessageHasMeme(message string, meme string) bool {
 	}
 	return false
 }
+
+func VerifyNDAChannel(channelID string, conf *Config) (bool) {
+	if channelID == conf.RolesConfig.NDAChannelID {
+		return true
+	}
+
+	return false
+}

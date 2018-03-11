@@ -42,10 +42,12 @@ func (h *MemeHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if MessageHasMeme(message, "vape") {
 		s.MessageReactionAdd(m.ChannelID, m.Message.ID, ":vapenation:360989703215775754")
 	}
+	/*
 	if MessageHasMeme(message, "thanks") || MessageHasMeme(message, "thank you") ||
 		MessageHasMeme(message, "danke") || MessageHasMeme(message, "gracias") ||
 			MessageHasMeme(message, "tom hanks"){
 		s.MessageReactionAdd(m.ChannelID, m.Message.ID, ":thanks:297438919165739019")
 	}
+	*/
 	return
 }

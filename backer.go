@@ -7,6 +7,8 @@ import (
 	"github.com/anaskhan96/soup"
 	"io"
 	"strings"
+	//"fmt"
+	//"strconv"
 )
 
 type BackerInterface struct {
@@ -386,6 +388,8 @@ func (h *BackerInterface) GetValidationString(record BackerRecord) (validation s
 									commentp := activityitem.Find("div", "class", "ipsStreamItem_snippet").FindAll("p")
 									if len(commentp) > 0 {
 										message := commentp[0].Text()
+										//fmt.Print(message)
+										//fmt.Println(strconv.Itoa(len(commentp)))
 										if strings.Contains(message, "discordauth") {
 											//fmt.Println(message)
 											fields := strings.Split(message, ":")
@@ -399,6 +403,22 @@ func (h *BackerInterface) GetValidationString(record BackerRecord) (validation s
 									span := activityitem.Find("div", "class", "ipsStreamItem_snippet").FindAll("span")
 									if len(span) > 0 {
 										message := span[0].Text()
+										//fmt.Print(message)
+										//fmt.Println(strconv.Itoa(len(span)))
+										if strings.Contains(message, "discordauth") {
+											fields := strings.Split(message, ":")
+											if len(fields) == 2 {
+												checksum := strings.TrimSuffix(fields[1], "\n")
+												return checksum, nil
+											}
+										}
+									}
+
+									code := activityitem.Find("div", "class", "ipsStreamItem_snippet").FindAll("code")
+									if len(code) > 0 {
+										message := code[0].Text()
+										//fmt.Print(message)
+										//fmt.Println(strconv.Itoa(len(code)))
 										if strings.Contains(message, "discordauth") {
 											fields := strings.Split(message, ":")
 											if len(fields) == 2 {
