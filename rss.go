@@ -392,31 +392,46 @@ func (h *RSS) GetLatestItem(url string, channel string) (rssitem RSSItem, err er
 
 			feedAuthor := strings.TrimPrefix(rssfeed.Author, "https://twitter.com/")
 
-			for _, item := range feed.Items {
-
-				author := strings.Split(strings.TrimPrefix(item.Link, "https://twitter.com/"), "/")[0]
-
-				if author == feedAuthor {
-					rssitem.Twitter = true
-					rssitem.Reddit = false
-					rssitem.Youtube = false
-					rssitem.Forum = false
-					rssitem.Author = "@" + feedAuthor
-					rssitem.Link = item.Link
-					rssitem.Title = item.Title
-					rssitem.Published = item.Published
-					rssitem.Content = item.Content
-					rssitem.Description = item.Description
-
-					rssfeed.LastItem = item.Link
-					h.UpdateLastRun(time.Now(), rssfeed)
-
-					return rssitem, nil
+			var i = 0
+			if len(feed.Items) > 1 {
+				firstItemPubDate, err := time.Parse("Mon _2 Jan 2006 15:04:05 +0000", strings.Replace(feed.Items[0].Published, ",", "", -1))
+				if err != nil {
+					return rssitem, err
 				}
+				secondItemPubDate, err := time.Parse("Mon _2 Jan 2006 15:04:05 +0000", strings.Replace(feed.Items[1].Published, ",", "", -1))
+				if err != nil {
+					return rssitem, err
+				}
+				if firstItemPubDate.Before(secondItemPubDate) {
+					i = 1
+				}
+			}
 
+			item := feed.Items[i]
+
+			author := strings.Split(strings.TrimPrefix(item.Link, "https://twitter.com/"), "/")[0]
+
+			if author == feedAuthor {
+				rssitem.Twitter = true
+				rssitem.Reddit = false
+				rssitem.Youtube = false
+				rssitem.Forum = false
+				rssitem.Author = "@" + feedAuthor
+				rssitem.Link = item.Link
+				rssitem.Title = item.Title
+				rssitem.Published = item.Published
+				rssitem.Content = item.Content
+				rssitem.Description = item.Description
+
+				rssfeed.LastItem = item.Link
 				h.UpdateLastRun(time.Now(), rssfeed)
+
 				return rssitem, nil
 			}
+
+			h.UpdateLastRun(time.Now(), rssfeed)
+			return rssitem, nil
+
 		} else if rssfeed.Reddit {
 
 			// The first two items on Reddit's RSS will be stickied posts, weird.

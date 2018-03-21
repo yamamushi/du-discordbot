@@ -50,7 +50,6 @@ func (h *RSSHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if strings.HasPrefix(m.Content, cp+"rss") {
 		if h.registry.CheckPermission("rss", m.ChannelID, user) {
-
 			command := strings.Fields(m.Content)
 
 			// Grab our sender ID to verify if this user has permission to use this command
@@ -126,7 +125,7 @@ func (h *RSSHandler) ParseCommand(command []string, s *discordgo.Session, m *dis
 
 	if command[1] == "list" && len(command) == 2 {
 		formatted := h.GetRSSList(m.ChannelID)
-		s.ChannelMessageSend(m.ChannelID, formatted)
+		s.ChannelMessageSend(m.ChannelID, "RSS Feeds for this channel: " +formatted)
 		return
 	}
 

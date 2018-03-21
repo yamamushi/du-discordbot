@@ -7,6 +7,8 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"strings"
 	"time"
+	"os"
+	"errors"
 )
 
 // minDuration and maxDuration const for rounding
@@ -297,4 +299,45 @@ func VerifyNDAChannel(channelID string, conf *Config) (bool) {
 	}
 
 	return false
+}
+
+func CreateDirIfNotExist(dir string) (err error){
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		err = os.MkdirAll(dir, 0755)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// getRoleIDByName function
+func getRoleIDByName(s *discordgo.Session, guildID string, name string) (roleid string, err error) {
+	name = strings.Title(name)
+	roles, err := s.GuildRoles(guildID)
+	if err != nil {
+		return "", err
+	}
+	for _, role := range roles {
+		if role.Name == name {
+			return role.ID, nil
+		}
+	}
+	return "", errors.New("Role ID Not Found: " + name)
+}
+
+
+// getChannelIDByName function
+func getChannelIDByName(s *discordgo.Session, guildID string, name string) (roleid string, err error) {
+	//name = strings.Title(name)
+	channels, err := s.GuildChannels(guildID)
+	if err != nil {
+		return "", err
+	}
+	for _, channel := range channels {
+		if channel.Name == name {
+			return channel.ID, nil
+		}
+	}
+	return "", errors.New("Channel ID Not Found: " + name)
 }

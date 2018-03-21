@@ -82,6 +82,10 @@ func (h *PrimaryHandler) Init() error {
 	h.dg.AddHandler(notifications.Read)
 	go notifications.CheckNotifications(h.dg)
 
+	fmt.Println("Adding Lander Handler")
+	landingzone := LanderHandler{}
+	h.dg.AddHandler(landingzone.Read)
+
 	//fmt.Println("Adding Music Handler")
 	//musichandler := MusicHandler{db: h.db, user: h.user, registry: h.command.registry,
 	//	wallet: h.bankhandler.wallet, channel: h.channel, conf: h.conf}

@@ -12,6 +12,8 @@ import (
 	"strings"
 	"time"
 	"strconv"
+	"os"
+	"io"
 )
 
 // UtilitiesHandler struct
@@ -116,6 +118,20 @@ func (h *UtilitiesHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate
 			s.ChannelMessageSend(m.ChannelID, "Estimated travel time: " + estimate)
 			return
 		}
+	}
+	if command == "profilemosaic" {
+		if !user.Owner {
+			return
+		}
+		s.ChannelMessageSend(m.ChannelID, "Storing profile images cache")
+		// Grab our mosaic images
+		err = h.GenerateImageCache(s, m)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error storing images: "+err.Error())
+			return
+		}
+		s.ChannelMessageSend(m.ChannelID, "Images stored")
+		return
 	}
 
 }
@@ -309,4 +325,53 @@ func (h *UtilitiesHandler) SUToMinutes(distance string) (conversion string, err 
 	secondsInt := distanceInt * 36
 	duration := time.Duration(time.Second * time.Duration(secondsInt))
 	return duration.String(), nil
+}
+
+// GenerateImageCache function
+func (h * UtilitiesHandler) GenerateImageCache(s *discordgo.Session, m *discordgo.MessageCreate) (err error){
+
+	// Create directory if not exists
+	profile_pics_dir := "./profile_pics"
+	err = CreateDirIfNotExist(profile_pics_dir)
+	if err != nil {
+		return err
+	}
+
+	guild, err := s.Guild(s.State.Guilds[0].ID)
+	for i, member := range guild.Members{
+		photourl := member.User.AvatarURL("")
+		response, err := http.Get(photourl)
+		if err != nil {
+			return err
+		}
+
+		defer response.Body.Close()
+
+		if response.ContentLength > 0 {
+
+			filetype := strings.Split(photourl, ".")
+
+			username := strings.Replace(member.User.Username, "/", "_", -1)
+			picpath := profile_pics_dir+"/"+username+"."+filetype[len(filetype)-1]
+
+			if _, err := os.Stat(picpath); os.IsNotExist(err) {
+				if 50 % i == 0 {
+					time.Sleep(time.Duration(time.Second*10))
+				}
+				//open a file for writing
+				file, err := os.Create(picpath)
+				if err != nil {
+					return err
+				}
+				// Use io.Copy to just dump the response body to the file. This supports huge files
+				_, err = io.Copy(file, response.Body)
+				if err != nil {
+					return err
+				}
+				file.Close()
+			}
+		}
+	}
+
+	return nil
 }

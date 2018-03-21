@@ -51,7 +51,10 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 			"updates in your forum account settings.\n It's the first option in Basic Info at the top of the " +
 			"**edit profile** settings window. You can disable it after this registration process is complete."
 
-		output += "\n\n:two: Once you have posted your discordauth key, please reply to this message with the " +
+		output += "\n:bulb: If your forum account needs moderator approval, post an introduction message in the Arkship Pub " +
+			"subforum so everyone knows you're a real person."
+
+			output += "\n\n:two: Once you have posted your discordauth key, please reply to this message with the " +
 			"following **command** to complete the validation process:\n"
 		output += "```"
 		output += "~linkprofile <url of your forum profile>"
