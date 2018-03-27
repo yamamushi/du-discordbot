@@ -25,6 +25,7 @@ RUN go get gopkg.in/oleiade/lane.v1
 RUN go get github.com/satori/go.uuid
 RUN go get github.com/lunixbochs/vtclean
 RUN go get github.com/yuin/gopher-lua
+RUN go get github.com/wcharczuk/go-chart
 #RUN go get github.com/jonas747/ogg
 #RUN go get -u github.com/rylio/ytdl/...
 

@@ -182,7 +182,11 @@ func (h *NotificationsHandler) ParseCommand(command []string, s *discordgo.Sessi
 			h.GetAllChannelNotificationsFor(command[2], page, s, m)
 			return
 		}
-		h.GetAllChannelNotificationsFor(command[2], "1", s, m)
+		if len(command) > 2 {
+			h.GetAllChannelNotificationsFor(command[2], "1", s, m)
+			return
+		}
+		h.GetAllChannelNotificationsFor(m.ChannelID, "1", s, m)
 		return
 	}
 

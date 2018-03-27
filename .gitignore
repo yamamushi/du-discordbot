@@ -24,6 +24,8 @@ notes
 deploy.sh
 tmp/
 profile_pics/
+stats/
+*.json
 
 # OS-Specific
 

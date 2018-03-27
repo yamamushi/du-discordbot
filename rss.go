@@ -394,11 +394,13 @@ func (h *RSS) GetLatestItem(url string, channel string) (rssitem RSSItem, err er
 
 			var i = 0
 			if len(feed.Items) > 1 {
-				firstItemPubDate, err := time.Parse("Mon _2 Jan 2006 15:04:05 +0000", strings.Replace(feed.Items[0].Published, ",", "", -1))
+				pubone := strings.Split(feed.Items[0].Published, "+")
+				firstItemPubDate, err := time.Parse("Mon _2 Jan 2006 15:04:05", strings.Replace(strings.TrimSpace(pubone[0]), ",", "", -1))
 				if err != nil {
 					return rssitem, err
 				}
-				secondItemPubDate, err := time.Parse("Mon _2 Jan 2006 15:04:05 +0000", strings.Replace(feed.Items[1].Published, ",", "", -1))
+				pubtwo := strings.Split(feed.Items[1].Published, "+")
+				secondItemPubDate, err := time.Parse( "Mon _2 Jan 2006 15:04:05", strings.Replace(strings.TrimSpace(pubtwo[0]), ",", "", -1))
 				if err != nil {
 					return rssitem, err
 				}

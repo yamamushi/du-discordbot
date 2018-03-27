@@ -86,6 +86,14 @@ func (h *PrimaryHandler) Init() error {
 	landingzone := LanderHandler{}
 	h.dg.AddHandler(landingzone.Read)
 
+	fmt.Println("Adding Stats Handler")
+	stats := StatsHandler{registry: h.command.registry, db: h.db, conf: h.conf}
+	stats.Init()
+	h.dg.AddHandler(stats.Read)
+	h.dg.AddHandler(stats.Tracker)
+	go stats.StatsWriter(h.dg)
+
+
 	//fmt.Println("Adding Music Handler")
 	//musichandler := MusicHandler{db: h.db, user: h.user, registry: h.command.registry,
 	//	wallet: h.bankhandler.wallet, channel: h.channel, conf: h.conf}
