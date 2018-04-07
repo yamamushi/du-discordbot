@@ -15,6 +15,8 @@ type StatRecord struct {
 	TotalUsers int `json:"totalusers"`
 	OnlineUsers int `json:"onlineusers"`
 	IdleUsers int `json:"idleusers"`
+	DNDUsers int `json:"dndusers"`
+	InvisibleUsers int `json:"invisibleusers"`
 	GamingUsers int `json:"gamingusers"`
 	VoiceUsers int `json:"voiceusers"`
 	MessageCount int `json:"messagecount"`
@@ -33,6 +35,15 @@ func (h *StatsDB) AddStatToDB(stat StatRecord) (err error) {
 	return err
 }
 
+// UpdateStatInDB function
+func (h *StatsDB) UpdateStatInDB(stat StatRecord) (err error) {
+	h.querylocker.Lock()
+	defer h.querylocker.Unlock()
+
+	db := h.db.rawdb.From("Statistics")
+	err = db.Update(&stat)
+	return err
+}
 
 // RemoveStatFromDB function
 func (h *StatsDB) RemoveStatFromDB(stat StatRecord) (err error) {

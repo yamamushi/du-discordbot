@@ -14,6 +14,7 @@ import (
 	"time"
 	"bytes"
 	"sync"
+	"fmt"
 )
 
 type StatsHandler struct {
@@ -71,14 +72,20 @@ func (h *StatsHandler) Tracker(s *discordgo.Session, m *discordgo.MessageCreate)
 
 func (h *StatsHandler) StatsWriter(s *discordgo.Session){
 	for true {
-		time.Sleep(time.Duration(time.Minute * 60))
+		time.Sleep(time.Duration(time.Second * 30))
 		record, err := h.GetCurrentStats(s)
 		if err == nil {
-			h.statsdb.AddStatToDB(record)
+			err = h.statsdb.AddStatToDB(record)
+			if err != nil {
+				fmt.Println(err.Error())
+			}
+			h.messageCount = 0
+			h.activeusers = []ActiveUser{}
 			//fmt.Println("Added record to database")
 			//fmt.Println(record.Date + " " + strconv.Itoa(record.TotalUsers) + " " + strconv.Itoa(record.OnlineUsers) + " " + strconv.Itoa(record.IdleUsers))
 			//fmt.Println(strconv.Itoa(record.GamingUsers) + " " + strconv.Itoa(record.VoiceUsers) + " " + strconv.Itoa(record.MessageCount) + " " + strconv.Itoa(record.ActiveUserCount))
 		}
+		time.Sleep(time.Duration(time.Minute * h.conf.DUBotConfig.StatsTimeout))
 	}
 }
 
@@ -86,15 +93,20 @@ func (h *StatsHandler) GetCurrentStats(s *discordgo.Session) (record StatRecord,
 	h.trackerlocker.Lock()
 	defer h.trackerlocker.Unlock()
 
-	guild := s.State.Guilds[0]
-
-	record.Date = time.Now().Format("2006-01-02 15:04:05")
-
-	totalUserCount, err := h.GetUserCount(guild)
+	guild, err := s.Guild(h.conf.DiscordConfig.GuildID)
 	if err != nil {
 		return record, err
 	}
-	record.TotalUsers = totalUserCount
+
+	record.Date = time.Now().Format("2006-01-02 15:04:05")
+/*
+	totalUserCount, err := h.GetUserCount(s)
+	if err != nil {
+		return record, err
+	}
+*/
+
+	record.TotalUsers = guild.MemberCount
 
 	onlineUserCount, err := h.GetOnlineCount(guild)
 	if err != nil {
@@ -120,11 +132,20 @@ func (h *StatsHandler) GetCurrentStats(s *discordgo.Session) (record StatRecord,
 	}
 	record.VoiceUsers = voiceUserCount
 
-	record.MessageCount = h.messageCount
-	h.messageCount = 0
+	invisibleUserCount, err := h.GetInvisibleCount(guild)
+	if err != nil {
+		return record, err
+	}
+	record.InvisibleUsers = invisibleUserCount
 
-	record.ActiveUserCount = len(h.activeusers)
-	h.activeusers = []ActiveUser{}
+	dndUserCount, err := h.GetDNDCount(guild)
+	if err != nil {
+		return record, err
+	}
+	record.DNDUsers = dndUserCount
+
+	record.MessageCount = h.messageCount
+	record.Engagement = len(h.activeusers)
 	return record, nil
 }
 
@@ -214,11 +235,150 @@ func (h *StatsHandler) ParseCommand(commandarray []string, s *discordgo.Session,
 		return
 	}
 	if command == "user-count" {
-		err := h.UserCountChart(s,m)
+		if len(payload) > 0 {
+			days, err := strconv.Atoi(payload[0])
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "Error: Flag should be an integer value")
+				return
+			}
+			err = h.UserCountChart(days, s,m)
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "Error generating chart: " + err.Error())
+				return
+			}
+			return
+		}
+		err := h.UserCountChart(365, s,m)
 		if err != nil {
 			s.ChannelMessageSend(m.ChannelID, "Error generating chart: " + err.Error())
 			return
 		}
+		return
+	}
+	if command == "daily-active" {
+		if len(payload) > 0 {
+			days, err := strconv.Atoi(payload[0])
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "Error: Flag should be an integer value")
+				return
+			}
+			err = h.DailyActiveChart(days, s,m)
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "Error generating chart: " + err.Error())
+				return
+			}
+			return
+		}
+		err := h.DailyActiveChart(30, s,m)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error generating chart: " + err.Error())
+			return
+		}
+		return
+	}
+	if command == "daily-online" {
+		if len(payload) > 0 {
+			days, err := strconv.Atoi(payload[0])
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "Error: Flag should be an integer value")
+				return
+			}
+			err = h.DailyOnlineChart(days, s,m)
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "Error generating chart: " + err.Error())
+				return
+			}
+			return
+		}
+		err := h.DailyOnlineChart(30, s,m)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error generating chart: " + err.Error())
+			return
+		}
+		return
+	}
+	if command == "daily-voice" {
+		if len(payload) > 0 {
+			days, err := strconv.Atoi(payload[0])
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "Error: Flag should be an integer value")
+				return
+			}
+			err = h.DailyVoiceChart(days, s,m)
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "Error generating chart: " + err.Error())
+				return
+			}
+			return
+		}
+		err := h.DailyVoiceChart(30, s,m)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error generating chart: " + err.Error())
+			return
+		}
+		return
+	}
+	if command == "daily-idle" {
+		if len(payload) > 0 {
+			days, err := strconv.Atoi(payload[0])
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "Error: Flag should be an integer value")
+				return
+			}
+			err = h.DailyIdleChart(days, s,m)
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "Error generating chart: " + err.Error())
+				return
+			}
+			return
+		}
+		err := h.DailyIdleChart(30, s,m)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error generating chart: " + err.Error())
+			return
+		}
+		return
+	}
+	if command == "show-invisible" {
+		err := h.ShowInvisibleUsers(s, m)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error generating list: " + err.Error())
+			return
+		}
+		return
+	}
+	if command == "show-dnd" {
+		err := h.ShowDNDUsers(s, m)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error generating list: " + err.Error())
+			return
+		}
+		return
+	}
+	if command == "repair-totals" {
+		db := h.db.rawdb.From("Users")
+		var user User
+		err := db.One("ID", m.Author.ID, &user)
+		if err != nil {
+			//fmt.Println("error retrieving user:" + m.Author.ID)
+			return
+		}
+		if !user.Owner {
+			s.ChannelMessageSend(m.ChannelID, "https://www.tenor.co/tewf.gif ")
+			return
+		}
+
+		guild, err := s.Guild(h.conf.DiscordConfig.GuildID)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error retrieving guild: " + err.Error())
+			return
+		}
+		err = h.RepairTotals(guild)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error repairing database: " + err.Error())
+			return
+		}
+		s.ChannelMessageSend(m.ChannelID, "Repair complete")
 		return
 	}
 }
@@ -355,25 +515,74 @@ func (h *StatsHandler) WriteImageFile(path string, b bytes.Buffer) (err error) {
 	return nil
 }
 
-func (h *StatsHandler) UserCountChart(s *discordgo.Session, m *discordgo.MessageCreate) (err error) {
-
-	records, err := h.statsdb.GetFullDB()
-	combinedRecords, err := h.CombineRecordsByDate(records)
+func (h *StatsHandler) ShowInvisibleUsers(s *discordgo.Session, m *discordgo.MessageCreate) (err error) {
+	guild, err := s.Guild(h.conf.DiscordConfig.GuildID)
 	if err != nil {
 		return err
 	}
-	//fmt.Println("Combined Record Count: " + strconv.Itoa(len(combinedRecords)))
+
+	users, err := h.GetInvisibleUsers(guild)
+	if err != nil {
+		return err
+	}
+	output := ":spy: Current Invisible Users: ```\n"
+	for _, user := range users {
+		output = output + user.ID + "\n"
+	}
+	output = output + "\n```\n"
+	s.ChannelMessageSend(m.ChannelID, output)
+	return nil
+}
+
+func (h *StatsHandler) ShowDNDUsers(s *discordgo.Session, m *discordgo.MessageCreate) (err error) {
+	guild, err := s.Guild(h.conf.DiscordConfig.GuildID)
+	if err != nil {
+		return err
+	}
+
+	users, err := h.GetDNDUsers(guild)
+	if err != nil {
+		return err
+	}
+	output := ":spy: Current Do Not Disturb Users: ```\n"
+	for _, user := range users {
+		output = output + user.ID + "\n"
+	}
+	output = output + "\n```\n"
+	s.ChannelMessageSend(m.ChannelID, output)
+	return nil
+}
+
+func (h *StatsHandler) UserCountChart(days int, s *discordgo.Session, m *discordgo.MessageCreate) (err error) {
+
+	records, err := h.statsdb.GetFullDB()
+	if err != nil {
+		return err
+	}
+	/*combinedRecords, err := h.CombineRecordsByDate(records)
+	if err != nil {
+		return err
+	}*/
+	current, err := h.GetCurrentStats(s)
+	if err != nil {
+		return err
+	}
+	//dateSplit := strings.Split(current.Date, " ")
+	//current.Date = dateSplit[0]
+	records = append(records, current)
 
 	dateValues := []time.Time{}
 	totalUsers := []float64{}
 
-	for _, record := range combinedRecords {
-		date, err := time.Parse("2006-01-02", record.Date)
+	for _, record := range records {
+		date, err := time.Parse("2006-01-02  15:04:05", record.Date)
 		if err != nil {
 			return err
 		}
-		dateValues = append(dateValues, date)
-		totalUsers = append (totalUsers, float64(record.TotalUsers))
+		if time.Since(date) < time.Duration(int64(time.Hour) * 24 * int64(days)){
+			dateValues = append(dateValues, date)
+			totalUsers = append (totalUsers, float64(record.TotalUsers))
+		}
 	}
 
 	style := chart.Style{ }
@@ -394,6 +603,7 @@ func (h *StatsHandler) UserCountChart(s *discordgo.Session, m *discordgo.Message
 			Name:      "Dates",
 			NameStyle: chart.StyleShow(),
 			Style:     style,
+			ValueFormatter: chart.TimeHourValueFormatter,
 		},
 		YAxis: chart.YAxis{
 			Name:      "Users",
@@ -406,13 +616,260 @@ func (h *StatsHandler) UserCountChart(s *discordgo.Session, m *discordgo.Message
 	filename := "./stats/TotalUsersChart-"+time.Now().Format("Jan 2 15-04-05")+".png"
 	var b bytes.Buffer
 	graph.Render(chart.PNG, &b)
-	err = h.WriteAndSend(filename, b, ":bar_chart: Total User Count ", s, m)
+	err = h.WriteAndSend(filename, b, ":bar_chart: Total User Count - " + strconv.Itoa(records[len(records)-1].TotalUsers) + " users currently registered to this discord in past "+ strconv.Itoa(days) +" days:", s, m)
+
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
+func (h *StatsHandler) DailyActiveChart(days int, s *discordgo.Session, m *discordgo.MessageCreate) (err error) {
+
+	records, err := h.statsdb.GetFullDB()
+	current, err := h.GetCurrentStats(s)
+	if err != nil {
+		return err
+	}
+	records = append(records, current)
+
+	dateValues := []time.Time{}
+	totalUsers := []float64{}
+
+	for _, record := range records {
+		date, err := time.Parse("2006-01-02 15:04:05", record.Date)
+		if err != nil {
+			return err
+		}
+		if record.ActiveUserCount > 0 {
+			record.Engagement = record.ActiveUserCount
+		}
+		if time.Since(date) < time.Duration(int64(time.Hour) * 24 * int64(days)){
+			dateValues = append(dateValues, date)
+			totalUsers = append (totalUsers, float64(record.Engagement))
+		}
+	}
+
+	style := chart.Style{ }
+	style.FillColor = drawing.Color{131,135,142, 0 }
+	style.Show = true
+	style.StrokeColor = chart.GetDefaultColor(0).WithAlpha(64)
+	style.FillColor = chart.GetDefaultColor(0).WithAlpha(64)
+	graph := chart.Chart{
+		Title: "Total User Count",
+		Background: chart.StyleShow(),
+		Series: []chart.Series{
+			chart.TimeSeries{
+				XValues: dateValues,
+				YValues: totalUsers,
+			},
+		},
+		XAxis: chart.XAxis{
+			Name:      "Dates",
+			NameStyle: chart.StyleShow(),
+			Style:     style,
+			ValueFormatter: chart.TimeHourValueFormatter,
+		},
+		YAxis: chart.YAxis{
+			Name:      "Users",
+			NameStyle: chart.StyleShow(),
+			Style:     style,
+			ValueFormatter: h.FloatNormalize,
+		},
+	}
+
+	filename := "./stats/ActiveEngagedUsersChart-"+time.Now().Format("Jan 2 15-04-05")+".png"
+	var b bytes.Buffer
+	graph.Render(chart.PNG, &b)
+	err = h.WriteAndSend(filename, b, ":bar_chart: Daily Active User Count For Past " + strconv.Itoa(days) + " Days:", s, m)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (h *StatsHandler) DailyVoiceChart(days int, s *discordgo.Session, m *discordgo.MessageCreate) (err error) {
+
+	records, err := h.statsdb.GetFullDB()
+	current, err := h.GetCurrentStats(s)
+	if err != nil {
+		return err
+	}
+	records = append(records, current)
+
+	dateValues := []time.Time{}
+	totalUsers := []float64{}
+
+	for _, record := range records {
+		date, err := time.Parse("2006-01-02 15:04:05", record.Date)
+		if err != nil {
+			return err
+		}
+		if time.Since(date) < time.Duration(int64(time.Hour) * 24 * int64(days)){
+			dateValues = append(dateValues, date)
+			totalUsers = append (totalUsers, float64(record.VoiceUsers))
+		}
+	}
+
+	style := chart.Style{ }
+	style.FillColor = drawing.Color{131,135,142, 0 }
+	style.Show = true
+	style.StrokeColor = chart.GetDefaultColor(0).WithAlpha(64)
+	style.FillColor = chart.GetDefaultColor(0).WithAlpha(64)
+	graph := chart.Chart{
+		Title: "Total User Count",
+		Background: chart.StyleShow(),
+		Series: []chart.Series{
+			chart.TimeSeries{
+				XValues: dateValues,
+				YValues: totalUsers,
+			},
+		},
+		XAxis: chart.XAxis{
+			Name:      "Dates",
+			NameStyle: chart.StyleShow(),
+			Style:     style,
+			ValueFormatter: chart.TimeHourValueFormatter,
+		},
+		YAxis: chart.YAxis{
+			Name:      "Users",
+			NameStyle: chart.StyleShow(),
+			Style:     style,
+			ValueFormatter: h.FloatNormalize,
+		},
+	}
+
+	filename := "./stats/ActiveEngagedUsersChart-"+time.Now().Format("Jan 2 15-04-05")+".png"
+	var b bytes.Buffer
+	graph.Render(chart.PNG, &b)
+	err = h.WriteAndSend(filename, b, ":bar_chart: Daily Active Voice User Count For Past " + strconv.Itoa(days) + " Days:", s, m)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (h *StatsHandler) DailyOnlineChart(days int, s *discordgo.Session, m *discordgo.MessageCreate) (err error) {
+
+	records, err := h.statsdb.GetFullDB()
+	current, err := h.GetCurrentStats(s)
+	if err != nil {
+		return err
+	}
+	records = append(records, current)
+
+	dateValues := []time.Time{}
+	totalUsers := []float64{}
+
+	for _, record := range records {
+		date, err := time.Parse("2006-01-02 15:04:05", record.Date)
+		if err != nil {
+			return err
+		}
+		if time.Since(date) < time.Duration(int64(time.Hour) * 24 * int64(days)){
+			dateValues = append(dateValues, date)
+			totalUsers = append (totalUsers, float64(record.OnlineUsers+record.IdleUsers+record.DNDUsers+record.InvisibleUsers))
+		}
+	}
+
+	style := chart.Style{ }
+	style.FillColor = drawing.Color{131,135,142, 0 }
+	style.Show = true
+	style.StrokeColor = chart.GetDefaultColor(0).WithAlpha(64)
+	style.FillColor = chart.GetDefaultColor(0).WithAlpha(64)
+	graph := chart.Chart{
+		Title: "Total User Count",
+		Background: chart.StyleShow(),
+		Series: []chart.Series{
+			chart.TimeSeries{
+				XValues: dateValues,
+				YValues: totalUsers,
+			},
+		},
+		XAxis: chart.XAxis{
+			Name:      "Dates",
+			NameStyle: chart.StyleShow(),
+			Style:     style,
+			ValueFormatter: chart.TimeHourValueFormatter,
+		},
+		YAxis: chart.YAxis{
+			Name:      "Users",
+			NameStyle: chart.StyleShow(),
+			Style:     style,
+			ValueFormatter: h.FloatNormalize,
+		},
+	}
+
+	filename := "./stats/DailyOnlineUsersChart-"+time.Now().Format("Jan 2 15-04-05")+".png"
+	var b bytes.Buffer
+	graph.Render(chart.PNG, &b)
+	err = h.WriteAndSend(filename, b, ":bar_chart: Daily Online User Count For Past " + strconv.Itoa(days) + " Days:", s, m)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (h *StatsHandler) DailyIdleChart(days int, s *discordgo.Session, m *discordgo.MessageCreate) (err error) {
+
+	records, err := h.statsdb.GetFullDB()
+	current, err := h.GetCurrentStats(s)
+	if err != nil {
+		return err
+	}
+	records = append(records, current)
+
+	dateValues := []time.Time{}
+	totalUsers := []float64{}
+
+	for _, record := range records {
+		date, err := time.Parse("2006-01-02 15:04:05", record.Date)
+		if err != nil {
+			return err
+		}
+		if time.Since(date) < time.Duration(int64(time.Hour) * 24 * int64(days)){
+			dateValues = append(dateValues, date)
+			totalUsers = append (totalUsers, float64(record.IdleUsers))
+		}
+	}
+
+	style := chart.Style{ }
+	style.FillColor = drawing.Color{131,135,142, 0 }
+	style.Show = true
+	style.StrokeColor = chart.GetDefaultColor(0).WithAlpha(64)
+	style.FillColor = chart.GetDefaultColor(0).WithAlpha(64)
+	graph := chart.Chart{
+		Title: "Total User Count",
+		Background: chart.StyleShow(),
+		Series: []chart.Series{
+			chart.TimeSeries{
+				XValues: dateValues,
+				YValues: totalUsers,
+			},
+		},
+		XAxis: chart.XAxis{
+			Name:      "Dates",
+			NameStyle: chart.StyleShow(),
+			Style:     style,
+			ValueFormatter: chart.TimeHourValueFormatter,
+		},
+		YAxis: chart.YAxis{
+			Name:      "Users",
+			NameStyle: chart.StyleShow(),
+			Style:     style,
+			ValueFormatter: h.FloatNormalize,
+		},
+	}
+
+	filename := "./stats/DailyIdleUsersChart-"+time.Now().Format("Jan 2 15-04-05")+".png"
+	var b bytes.Buffer
+	graph.Render(chart.PNG, &b)
+	err = h.WriteAndSend(filename, b, ":bar_chart: Daily Idle User Count For Past " + strconv.Itoa(days) + " Days:", s, m)
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
 // TimeValueFormatter is a ValueFormatter for timestamps.
 func (h *StatsHandler) FloatNormalize(v interface{}) string {
@@ -431,16 +888,17 @@ func (h *StatsHandler) CombineRecordsByDate(records []StatRecord) (combined []St
 			combined = append(combined, record)
 		} else {
 			found := false
-			for _, tmpRecord := range combined {
+			for i, tmpRecord := range combined {
 				if record.Date == tmpRecord.Date {
 					found = true
-					tmpRecord.Engagement = tmpRecord.Engagement + record.Engagement
-					tmpRecord.MessageCount = tmpRecord.MessageCount + record.MessageCount
-					tmpRecord.VoiceUsers = tmpRecord.VoiceUsers + record.VoiceUsers
-					tmpRecord.GamingUsers = tmpRecord.GamingUsers + record.GamingUsers
-					tmpRecord.IdleUsers = tmpRecord.IdleUsers + record.IdleUsers
-					tmpRecord.OnlineUsers = tmpRecord.OnlineUsers + record.OnlineUsers
-					tmpRecord.TotalUsers = tmpRecord.TotalUsers + record.TotalUsers
+					combined[i].Engagement = tmpRecord.Engagement + record.Engagement
+					combined[i].MessageCount = tmpRecord.MessageCount + record.MessageCount
+					combined[i].VoiceUsers = tmpRecord.VoiceUsers + record.VoiceUsers
+					combined[i].GamingUsers = tmpRecord.GamingUsers + record.GamingUsers
+					combined[i].IdleUsers = tmpRecord.IdleUsers + record.IdleUsers
+					combined[i].OnlineUsers = tmpRecord.OnlineUsers + record.OnlineUsers
+					combined[i].Engagement = tmpRecord.Engagement + record.Engagement + record.ActiveUserCount
+					combined[i].TotalUsers = record.TotalUsers
 				}
 			}
 			if !found {
@@ -448,12 +906,16 @@ func (h *StatsHandler) CombineRecordsByDate(records []StatRecord) (combined []St
 			}
 		}
 	}
-
 	return combined, nil
 }
 
-func (h *StatsHandler) GetUserCount(guild *discordgo.Guild) (count int, err error) {
-	return guild.MemberCount, nil
+func (h *StatsHandler) GetUserCount(s *discordgo.Session) (count int, err error) {
+	list, err := GetMemberList(s)
+	if err != nil {
+		return 0, err
+	}
+
+	return len(list), nil
 }
 
 func (h *StatsHandler) GetOnlineCount(guild *discordgo.Guild) (count int, err error) {
@@ -474,6 +936,42 @@ func (h *StatsHandler) GetIdleCount(guild *discordgo.Guild) (count int, err erro
 	return count, nil
 }
 
+func (h *StatsHandler) GetInvisibleCount(guild *discordgo.Guild) (count int, err error) {
+	for _, presence := range guild.Presences {
+		if presence.Status == "invisible" {
+			count = count + 1
+		}
+	}
+	return count, nil
+}
+
+func (h *StatsHandler) GetInvisibleUsers(guild *discordgo.Guild) (users []*discordgo.User, err error) {
+	for _, presence := range guild.Presences {
+		if presence.Status == "invisible" {
+			users = append(users, presence.User)
+		}
+	}
+	return users, nil
+}
+
+func (h *StatsHandler) GetDNDUsers(guild *discordgo.Guild) (users []*discordgo.User, err error) {
+	for _, presence := range guild.Presences {
+		if presence.Status == "dnd" {
+			users = append(users, presence.User)
+		}
+	}
+	return users, nil
+}
+
+func (h *StatsHandler) GetDNDCount(guild *discordgo.Guild) (count int, err error) {
+	for _, presence := range guild.Presences {
+		if presence.Status == "dnd" {
+			count = count + 1
+		}
+	}
+	return count, nil
+}
+
 func (h *StatsHandler) GetGamingCount(guild *discordgo.Guild) (count int, err error) {
 	for _, presence := range guild.Presences {
 		if presence.Game != nil {
@@ -487,4 +985,28 @@ func (h *StatsHandler) GetGamingCount(guild *discordgo.Guild) (count int, err er
 
 func (h *StatsHandler) GetVoiceCount(guild *discordgo.Guild) (count int, err error) {
 	return len(guild.VoiceStates), nil
+}
+
+func (h *StatsHandler) RepairTotals(guild *discordgo.Guild) (err error){
+	records, err := h.statsdb.GetFullDB()
+	if err != nil {
+		return err
+	}
+
+	for i, record := range records {
+
+		if record.TotalUsers == 0 {
+			//return errors.New("Found record with null value")
+			err = h.statsdb.RemoveStatFromDB(record)
+			if err != nil {
+				return err
+			}
+			records[i].TotalUsers = records[i-1].TotalUsers
+			err = h.statsdb.AddStatToDB(records[i])
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }

@@ -35,6 +35,7 @@ type dubotConfig struct {
 	CP               string        `toml:"command_prefix"`
 	Playing          string        `toml:"default_now_playing"`
 	RSSTimeout       time.Duration `toml:"rss_fetch_timeout"`
+	StatsTimeout     time.Duration `toml:"stats_fetch_timeout"`
 	Notifications    time.Duration `toml:"notifications_update_timeout"`
 	PerPageCount     int           `toml:"per_page_count"`
 	LuaTimeout       int           `toml:"lua_timeout"`
