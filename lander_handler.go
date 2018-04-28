@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/bwmarrin/discordgo"
-	"time"
+	//"time"
 )
 
 type LanderHandler struct {
@@ -27,7 +27,7 @@ func (h *LanderHandler) Read(s *discordgo.Session, m *discordgo.GuildMemberAdd){
 	s.ChannelMessageSend(landingZoneID, "Welcome to the **Dual Universe** community discord server "+
 		m.User.Mention() + "! Please take a moment to read <#"+serverinfoID+"> to find your way in to the rest of the server." +
 			" (This is just the lobby, there are other channels here)")
-
+/*
 	landedRoleID, err := getRoleIDByName(s, s.State.Guilds[0].ID, "Landed")
 	if err != nil {
 		return
@@ -53,5 +53,6 @@ func (h *LanderHandler) Read(s *discordgo.Session, m *discordgo.GuildMemberAdd){
 	time.Sleep(time.Duration(time.Second*1))
 	newcomersChannelID, err := getChannelIDByName(s, s.State.Guilds[0].ID, "newcomers" )
 	s.ChannelMessageSend(newcomersChannelID, m.User.Mention() + " has landed")
+*/
 	return
 }
