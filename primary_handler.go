@@ -82,8 +82,13 @@ func (h *PrimaryHandler) Init() error {
 	h.dg.AddHandler(notifications.Read)
 	go notifications.CheckNotifications(h.dg)
 
+	fmt.Println("Adding Config Handler")
+	confighandler := ConfigHandler{conf:h.conf, registry: h.command.registry, callback: h.callback, db: h.db}
+	confighandler.Init()
+	h.dg.AddHandler(confighandler.Read)
+
 	fmt.Println("Adding Lander Handler")
-	landingzone := LanderHandler{}
+	landingzone := LanderHandler{configdb:confighandler.configdb}
 	h.dg.AddHandler(landingzone.Read)
 
 	fmt.Println("Adding Stats Handler")

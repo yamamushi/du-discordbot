@@ -202,7 +202,7 @@ func (h *UtilitiesHandler) GetMoon() (output string, err error) {
 	output = "\n```\n"
 	for i, line := range payload {
 		if i < 25 {
-			fmt.Println(line)
+			//fmt.Println(line)
 			output = output + line + "\n"
 		}
 	}
@@ -355,8 +355,10 @@ func (h * UtilitiesHandler) GenerateImageCache(s *discordgo.Session, m *discordg
 			picpath := profile_pics_dir+"/"+username+"."+filetype[len(filetype)-1]
 
 			if _, err := os.Stat(picpath); os.IsNotExist(err) {
-				if 50 % i == 0 {
-					time.Sleep(time.Duration(time.Second*10))
+				if i != 0 {
+					if 50 % i == 0 {
+						time.Sleep(time.Duration(time.Second*10))
+					}
 				}
 				//open a file for writing
 				file, err := os.Create(picpath)

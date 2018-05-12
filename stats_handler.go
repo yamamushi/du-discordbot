@@ -423,33 +423,42 @@ func (h *StatsHandler) BackerPieChart(s *discordgo.Session, m *discordgo.Message
 	SapphireBacker := 0
 	GoldBacker := 0
 	PatronBacker := 0
+	BackerCount := 0
 	//ATVMember := 0
 
 	for _, member := range members {
 		for _, roleID := range member.Roles {
+			backer := false
 			if roleID == h.conf.RolesConfig.PatronRoleID {
 				PatronBacker = PatronBacker+1
+				backer = true
 			}
-			/*if roleID == h.conf.RolesConfig.ATVRoleID {
-				ATVMember = ATVMember+1
-			}*/
 			if roleID == h.conf.RolesConfig.GoldRoleID {
 				GoldBacker = GoldBacker+1
+				backer = true
 			}
 			if roleID == h.conf.RolesConfig.SapphireRoleID {
 				SapphireBacker = SapphireBacker+1
+				backer = true
 			}
 			if roleID == h.conf.RolesConfig.RubyRoleID {
 				RubyBacker = RubyBacker+1
+				backer = true
 			}
 			if roleID == h.conf.RolesConfig.EmeraldRoleID {
 				EmeraldBacker = EmeraldBacker+1
+				backer = true
 			}
 			if roleID == h.conf.RolesConfig.DiamondRoleID {
 				DiamondBacker = DiamondBacker+1
+				backer = true
 			}
 			if roleID == h.conf.RolesConfig.KyriumRoleID {
 				KyriumBacker = KyriumBacker+1
+				backer = true
+			}
+			if backer {
+				BackerCount = BackerCount+1
 			}
 		}
 	}
@@ -477,7 +486,7 @@ func (h *StatsHandler) BackerPieChart(s *discordgo.Session, m *discordgo.Message
 	filename := "./stats/PieChart-"+time.Now().Format("Jan 2 15-04-05")+".png"
 	var b bytes.Buffer
 	pie.Render(chart.PNG, &b)
-	err = h.WriteAndSend(filename, b, ":bar_chart: Backer Distribution ", s, m)
+	err = h.WriteAndSend(filename, b, ":bar_chart: Backer Distribution ( " + strconv.Itoa(BackerCount) + " registered):", s, m)
 	if err != nil {
 		return err
 	}

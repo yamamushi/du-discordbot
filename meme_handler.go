@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/bwmarrin/discordgo"
 	"strings"
-	//"fmt"
+
 )
 
 // MemeHandler struct -> This operates without relying on a command string.
@@ -41,6 +41,9 @@ func (h *MemeHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 	if MessageHasMeme(message, "vape") {
 		s.MessageReactionAdd(m.ChannelID, m.Message.ID, ":vapenation:360989703215775754")
+	}
+	if MessageHasMeme(message, "diesel") {
+		s.MessageReactionAdd(m.ChannelID, m.Message.ID, ":diesel:442400293972475904")
 	}
 	/*
 	if MessageHasMeme(message, "thanks") || MessageHasMeme(message, "thank you") ||
