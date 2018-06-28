@@ -4,6 +4,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"strings"
 
+	"strconv"
 )
 
 // MemeHandler struct -> This operates without relying on a command string.
@@ -29,6 +30,18 @@ func (h *MemeHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if strings.Contains(message, "lord jc") {
 		s.ChannelMessageSend(m.ChannelID, "Yes, my child? \n http://i.imgur.com/DYq8TNe.jpg")
 		return
+	}
+	if strings.Contains(message, "scp-"){
+		payload := strings.Split(message, " ")
+		for _, word := range payload {
+			if strings.HasPrefix(word, "scp-") {
+				scpnum := strings.TrimPrefix(word, "scp-")
+				_, err := strconv.Atoi(scpnum)
+				if err == nil {
+					s.ChannelMessageSend(m.ChannelID, "http://www.scp-wiki.net/"+word)
+				}
+			}
+		}
 	}
 	if MessageHasMeme(message, "jc") {
 		s.MessageReactionAdd(m.ChannelID, m.Message.ID, ":jc:236526936573214720")
