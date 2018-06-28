@@ -68,6 +68,7 @@ type casinoConfig struct {
 
 // rolesConfig struct
 type rolesConfig struct {
+	RoleTimer               time.Duration `toml:"role_timer"`
 	PatronRoleID            string `toml:"patron_role"`
 	SponsorRoleID           string `toml:"sponsor_role"`
 	ContributorRoleID       string `toml:"contributor_role"`

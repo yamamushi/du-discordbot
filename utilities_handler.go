@@ -133,7 +133,33 @@ func (h *UtilitiesHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate
 		s.ChannelMessageSend(m.ChannelID, "Images stored")
 		return
 	}
+	if command == "say" {
+		if !user.Moderator {
+			return
+		}
+		if len(payload) < 2 {
+			s.ChannelMessageSend(m.ChannelID, "Command say requires two arguments: <channel> <message>")
+			return
+		}
+		channelID := payload[0]
 
+		message := ""
+		for i, word := range payload {
+			if i > 0 {
+				message = message + word + " "
+			}
+		}
+		h.Say(channelID, message, s, m)
+		return
+	}
+}
+
+// UnfoldURL function
+func (h *UtilitiesHandler) Say(channelID string, message string, s *discordgo.Session, m *discordgo.MessageCreate) {
+	channelID = CleanChannel(channelID)
+	s.ChannelMessageSend(channelID, message)
+	s.ChannelMessageSend(m.ChannelID, "Message sent to <#" + channelID + ">")
+	return
 }
 
 // UnfoldURL function

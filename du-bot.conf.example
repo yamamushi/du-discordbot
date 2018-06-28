@@ -67,3 +67,8 @@ casino_pin = ""
 reset_casino = false
 
 starting_casino_wallet_value = 10000000
+
+# For the auto roles system
+[roles]
+# Time between updating roles in minutes, recommended 15 or higher
+roles_timer = 15
