@@ -100,6 +100,7 @@ func (h *UserHandler) GetUser(userid string) (user User, err error) {
 }
 
 // CheckUser function
+// This will register a new user into the database
 func (h *UserHandler) CheckUser(ID string) {
 
 	db := h.db.rawdb.From("Users")

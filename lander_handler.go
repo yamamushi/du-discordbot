@@ -9,6 +9,7 @@ import (
 
 type LanderHandler struct {
 	configdb *ConfigDB
+	user *UserHandler
 }
 
 
@@ -28,6 +29,8 @@ func (h *LanderHandler) Read(s *discordgo.Session, m *discordgo.GuildMemberAdd) 
 	s.ChannelMessageSend(landingZoneID, "Welcome to the **Dual Universe** community discord server "+
 		m.User.Mention()+ "! Please take a moment to read <#"+ serverinfoID+ "> to find your way in to the rest of the server."+
 		" (This is just the lobby, there are other channels here)")
+
+	h.user.CheckUser(m.User.ID)
 
 	autoland, err := h.configdb.CheckEnabled("autoland")
 	if err != nil {

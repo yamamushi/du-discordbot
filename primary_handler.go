@@ -88,7 +88,7 @@ func (h *PrimaryHandler) Init() error {
 	h.dg.AddHandler(confighandler.Read)
 
 	fmt.Println("Adding Lander Handler")
-	landingzone := LanderHandler{configdb:confighandler.configdb}
+	landingzone := LanderHandler{configdb:confighandler.configdb, user: h.user}
 	h.dg.AddHandler(landingzone.Read)
 
 	fmt.Println("Adding Stats Handler")
@@ -97,6 +97,11 @@ func (h *PrimaryHandler) Init() error {
 	h.dg.AddHandler(stats.Read)
 	h.dg.AddHandler(stats.Tracker)
 	go stats.StatsWriter(h.dg)
+
+	fmt.Println("Adding Lotto Handler")
+	lotto := LottoHandler{db: h.db, callback: h.callback, conf: h.conf, registry: h.command.registry}
+	lotto.Init()
+	h.dg.AddHandler(lotto.Read)
 
 
 	//fmt.Println("Adding Music Handler")
