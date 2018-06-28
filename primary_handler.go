@@ -98,10 +98,11 @@ func (h *PrimaryHandler) Init() error {
 	h.dg.AddHandler(stats.Tracker)
 	go stats.StatsWriter(h.dg)
 
-	fmt.Println("Adding Lotto Handler")
-	lotto := LottoHandler{db: h.db, callback: h.callback, conf: h.conf, registry: h.command.registry}
-	lotto.Init()
-	h.dg.AddHandler(lotto.Read)
+	fmt.Println("Adding Giveaway Handler")
+	giveaway := GiveawayHandler{db: h.db, callback: h.callback, conf: h.conf, registry: h.command.registry}
+	giveaway.Init()
+	h.dg.AddHandler(giveaway.Read)
+	go giveaway.GiveawayWatcher(h.dg)
 
 
 	//fmt.Println("Adding Music Handler")

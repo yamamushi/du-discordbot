@@ -112,7 +112,7 @@ func (h *UtilitiesHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate
 			}
 			estimate, err := h.SUToMinutes(payload[0])
 			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, "argument must be a number value")
+				s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
 				return
 			}
 			s.ChannelMessageSend(m.ChannelID, "Estimated travel time: " + estimate)
@@ -321,6 +321,9 @@ func (h *UtilitiesHandler) SUToMinutes(distance string) (conversion string, err 
 			return "", err
 		}
 		distanceInt = int(distanceFloat + 0.5)
+	}
+	if distanceInt > 100000000 {
+		return "", errors.New("Value out of bounds")
 	}
 	secondsInt := distanceInt * 36
 	duration := time.Duration(time.Second * time.Duration(secondsInt))

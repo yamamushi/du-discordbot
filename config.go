@@ -37,6 +37,8 @@ type dubotConfig struct {
 	RSSTimeout       time.Duration `toml:"rss_fetch_timeout"`
 	StatsTimeout     time.Duration `toml:"stats_fetch_timeout"`
 	Notifications    time.Duration `toml:"notifications_update_timeout"`
+	GiveawayTimer    time.Duration `toml:"giveaway_timer"`
+	GiveawayChannel  string        `toml:"giveaway_channel"`
 	PerPageCount     int           `toml:"per_page_count"`
 	LuaTimeout       int           `toml:"lua_timeout"`
 	Profiler         bool          `toml:"enable_profiler"`

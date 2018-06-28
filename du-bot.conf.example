@@ -25,6 +25,12 @@ per_page_count = 5
 # Minutes between updating notifications
 notifications_update_timeout = 5
 
+# Minutes between running the Giveaway Timer
+giveaway_timer = 1
+
+# Giveaway Announcements Channel ID
+giveaway_channel = ""
+
 # Max number of seconds to run a lua script before terminating
 lua_timeout = 10
 
