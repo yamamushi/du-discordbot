@@ -230,3 +230,26 @@ func (h *UserHandler) FormatGroups(groups []string) (formatted string) {
 
 	return formatted
 }
+
+func (h *UserHandler) CheckDiscordRole(userID string, rolename string,  s *discordgo.Session,) (bool) {
+
+	discordroles, err := s.GuildRoles(h.conf.DiscordConfig.GuildID)
+	if err != nil {
+		return false
+	}
+
+	for _, role := range discordroles {
+		if rolename == role.Name {
+			user, err := s.GuildMember(h.conf.DiscordConfig.GuildID, userID)
+			if err != nil {
+				return false
+			}
+			for _, userRole := range user.Roles {
+				if userRole == role.ID {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
