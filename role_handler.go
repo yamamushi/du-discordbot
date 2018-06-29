@@ -175,51 +175,50 @@ func (h *RoleHandler) RoleSynchronizer(s *discordgo.Session) {
 									// Skip disabled autorole users
 									if !userobject.DisableAutoRole {
 
+										time.Sleep(1 * time.Second)
 
-											roleID, _ := getRoleIDByName(s, h.conf.DiscordConfig.GuildID, role.Name)
-											userHasRole := false
+										roleID, _ := getRoleIDByName(s, h.conf.DiscordConfig.GuildID, role.Name)
+										userHasRole := false
 
-											//time.Sleep(1 * time.Second)
-											for _, currentRole := range member.Roles {
-												//fmt.Println("Roles: " + currentRole + " - " + roleID )
-												if currentRole == roleID {
-													userHasRole = true
+										for _, currentRole := range member.Roles {
+											//fmt.Println("Roles: " + currentRole + " - " + roleID )
+											if currentRole == roleID {
+												userHasRole = true
+											}
+										}
+
+										userHasAutoRole := false
+										if role.ID == userobject.CurrentAutoRoleID {
+											userHasAutoRole = true
+										}
+
+										// If our last updated timeout is less than the role timeout
+										if userobject.LatestRoleTimeout <= role.TimeoutDuration {
+											if !userHasRole && !userHasAutoRole{
+												//fmt.Print("Adding: ")
+												//fmt.Println(role.Name+": " + userobject.ID + " - " + userobject.LatestRoleTimeout.String() + " - " + role.TimeoutDuration.String() + " - " + roleID + " - CurrentAutoRole: " + userobject.CurrentAutoRoleID)
+
+												// Add role to member
+												uuid, err := GetUUID()
+												if err == nil {
+													queued := RoleQueued{ID: uuid, Remove: false, UserID: member.User.ID, RoleID: role.ID}
+													h.rolesDB.AddRoleQueuedToDB(queued)
+
+													userobject.CurrentAutoRoleID = role.ID
+													userobject.LatestRoleTimeout = role.TimeoutDuration
+													h.user.UpdateUserRecord(userobject)
+													}
 												}
-											}
+										} else {
+											if userHasRole {
+												//fmt.Print("Removing: ")
+												//fmt.Println(role.Name+": " + userobject.ID + " - " + userobject.LatestRoleTimeout.String() + " - " + role.TimeoutDuration.String() + " - " + roleID)
 
-											userHasAutoRole := false
-											if role.ID == userobject.CurrentAutoRoleID {
-												userHasAutoRole = true
-											}
-
-											// If our last updated timeout is less than the role timeout
-											if userobject.LatestRoleTimeout <= role.TimeoutDuration {
-												if !userHasRole && !userHasAutoRole{
-													//fmt.Print("Adding: ")
-													//fmt.Println(role.Name+": " + userobject.ID + " - " + userobject.LatestRoleTimeout.String() + " - " + role.TimeoutDuration.String() + " - " + roleID + " - CurrentAutoRole: " + userobject.CurrentAutoRoleID)
-
-													// Add role to member
-													uuid, err := GetUUID()
-													if err == nil {
-														queued := RoleQueued{ID: uuid, Remove: false, UserID: member.User.ID, RoleID: role.ID}
-														h.rolesDB.AddRoleQueuedToDB(queued)
-
-														userobject.CurrentAutoRoleID = role.ID
-														userobject.LatestRoleTimeout = role.TimeoutDuration
-														h.user.UpdateUserRecord(userobject)
-														}
-													}
-											} else {
-												if userHasRole {
-													//fmt.Print("Removing: ")
-													//fmt.Println(role.Name+": " + userobject.ID + " - " + userobject.LatestRoleTimeout.String() + " - " + role.TimeoutDuration.String() + " - " + roleID)
-
-													// Add role to member
-													uuid, err := GetUUID()
-													if err == nil {
-														queued := RoleQueued{ID: uuid, Remove: true, UserID: member.User.ID, RoleID: role.ID}
-														h.rolesDB.AddRoleQueuedToDB(queued)
-													}
+												// Add role to member
+												uuid, err := GetUUID()
+												if err == nil {
+													queued := RoleQueued{ID: uuid, Remove: true, UserID: member.User.ID, RoleID: role.ID}
+													h.rolesDB.AddRoleQueuedToDB(queued)
 												}
 											}
 										}
@@ -231,6 +230,7 @@ func (h *RoleHandler) RoleSynchronizer(s *discordgo.Session) {
 				}
 			}
 		}
+	}
 }
 
 
