@@ -1,5 +1,7 @@
 package main
 
+import "time"
+
 // User struct
 type User struct {
 	ID string `storm:"id"` // primary key
@@ -13,6 +15,12 @@ type User struct {
 	Streamer   bool `storm:"index"`
 	Recruiter  bool `storm:"index"`
 	Citizen    bool `storm:"index"`
+
+	HistoricalAutoRoles []string
+	LatestRoleTimeout   time.Duration
+	CurrentAutoRoleID     string
+	CurrentAutoRoleName   string
+	DisableAutoRole     bool
 }
 
 // Init function

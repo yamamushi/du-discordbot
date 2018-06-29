@@ -36,8 +36,8 @@ func (h *MemeHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		for _, word := range payload {
 			if strings.HasPrefix(word, "scp-") {
 				scpnum := strings.TrimPrefix(word, "scp-")
-				_, err := strconv.Atoi(scpnum)
-				if err == nil {
+				val, err := strconv.Atoi(scpnum)
+				if err == nil && val > 0 {
 					s.ChannelMessageSend(m.ChannelID, "http://www.scp-wiki.net/"+word)
 				}
 			}

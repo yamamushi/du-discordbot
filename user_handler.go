@@ -4,10 +4,13 @@ import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"strings"
+	"sync"
 )
 
 // UserHandler struct
 type UserHandler struct {
+	querylocker sync.RWMutex
+
 	conf    *Config
 	db      *DBHandler
 	cp      string
@@ -97,6 +100,42 @@ func (h *UserHandler) GetUser(userid string) (user User, err error) {
 	}
 
 	return user, nil
+}
+
+
+// GetUser function
+func (h *UserHandler) UpdateUserRecord(user User) (err error) {
+
+	h.RemoveUserFromDB(user)
+	if err != nil {
+		return err
+	}
+	h.AddUser(user)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// AddToDB function
+func (h *UserHandler) AddUser(user User) (err error) {
+	h.querylocker.Lock()
+	defer h.querylocker.Unlock()
+
+	db := h.db.rawdb.From("Users")
+	err = db.Save(&user)
+	return err
+}
+
+// RemoveUserFromDB function
+func (h *UserHandler) RemoveUserFromDB(user User) (err error) {
+	h.querylocker.Lock()
+	defer h.querylocker.Unlock()
+
+	db := h.db.rawdb.From("Users")
+	err = db.DeleteStruct(&user)
+	return err
 }
 
 // CheckUser function

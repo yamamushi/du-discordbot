@@ -10,6 +10,7 @@ import (
 	"os"
 	"errors"
 	//"strconv"
+	"strconv"
 )
 
 // minDuration and maxDuration const for rounding
@@ -397,4 +398,57 @@ func SendFileToChannel(path string, message string, s *discordgo.Session, m *dis
 		return err
 	}
 	return nil
+}
+
+
+func ParseDuration(duration string) (convertedTime time.Duration, totalminutes int64, err error) {
+
+	daysstring := "0"
+	hoursstring := "0"
+	minutesstring := "0"
+	var days, hours, minutes int64
+
+	separated := strings.Split(duration, " ")
+
+	for _, field := range separated {
+
+		for _, value := range field {
+			switch {
+			case value >= '0' && value <= '9':
+				if strings.Contains(field, "d") {
+					daysstring = strings.TrimSuffix(field, "d")
+					days, err = strconv.ParseInt(daysstring, 10, 64)
+					if err != nil {
+						return 0, 0, errors.New("Could not parse days")
+					}
+				} else if strings.Contains(field, "h") {
+					hoursstring = strings.TrimSuffix(field, "h")
+					hours, err = strconv.ParseInt(hoursstring, 10, 64)
+					if err != nil {
+						return 0, 0, errors.New("Could not parse hours")
+					}
+				} else if strings.Contains(field, "m") {
+					minutesstring = strings.TrimSuffix(field, "m")
+					minutes, err = strconv.ParseInt(minutesstring, 10, 64)
+					if err != nil {
+						return 0, 0, errors.New("Could not parse minutes")
+					}
+				} else {
+					return 0, 0, errors.New("Invalid time interval format")
+				}
+				break
+			default:
+				return 0, 0, errors.New("Invalid time interval format")
+			}
+			break
+		}
+	}
+
+	if days == 0 && hours == 0 && minutes == 0 {
+		return 0, 0, errors.New("Invalid interval specified")
+	}
+
+	totalminutes = (days * 24 * 60) + (hours * 60) + minutes
+	convertedTime = time.Duration(totalminutes * 60 * 1000 * 1000 * 1000)
+	return convertedTime, totalminutes, nil
 }

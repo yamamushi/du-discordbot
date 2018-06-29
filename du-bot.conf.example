@@ -70,5 +70,26 @@ starting_casino_wallet_value = 10000000
 
 # For the auto roles system
 [roles]
-# Time between updating roles in minutes, recommended 15 or higher
+# Time between reading role timers on users in minutes, recommended 10 or higher
 roles_timer = 15
+# Time between sending requests to the discord api to update roles
+roles_updater_timer = 1
+
+# These are used with the forum authorization roles system
+contributor_role = ""
+sponsor_role = ""
+patron_role = ""
+atv_role = ""
+iron_role = ""
+bronze_role = ""
+silver_role = ""
+gold_role = ""
+sapphire_role = ""
+ruby_role = ""
+emerald_role = ""
+diamond_role = ""
+kyrium_role = ""
+forumlinked_role = ""
+atvforumlinked_role = ""
+prealpha_role = ""
+nda_channel_id = ""

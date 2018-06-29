@@ -105,10 +105,11 @@ func (h *PrimaryHandler) Init() error {
 	go giveaway.GiveawayWatcher(h.dg)
 
 	fmt.Println("Adding Role Handler")
-	roles := RoleHandler{conf: h.conf, registry: h.command.registry, callback: h.callback, db: h.db}
+	roles := RoleHandler{conf: h.conf, registry: h.command.registry, callback: h.callback, db: h.db, user: h.user}
 	roles.Init()
 	h.dg.AddHandler(roles.Read)
 	go roles.RoleSynchronizer(h.dg)
+	go roles.RoleUpdater(h.dg)
 
 	//fmt.Println("Adding Music Handler")
 	//musichandler := MusicHandler{db: h.db, user: h.user, registry: h.command.registry,
