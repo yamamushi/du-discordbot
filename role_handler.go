@@ -659,15 +659,19 @@ func (h *RoleHandler) RoleSync(payload []string, s *discordgo.Session, m *discor
 	var orderedlist []*discordgo.Role
 	var originalist []*discordgo.Role
 
-	for _, item := range sortedlist {
-		for _, discordrole := range discordroles {
+	var guestrole discordgo.Role
+	for _, discordrole := range discordroles {
+		for _, item := range sortedlist {
 			if discordrole.Name == item.Name {
 				orderedlist = append(orderedlist, discordrole)
 				item.Color = discordrole.Color
 				h.rolesDB.UpdateRoleRecord(item)
-			} else {
+			} else if discordrole.Name != "Guest"{
 				originalist = append(originalist, discordrole)
 			}
+		}
+		if discordrole.Name == "Guest" {
+			guestrole = *discordrole
 		}
 	}
 
@@ -679,6 +683,8 @@ func (h *RoleHandler) RoleSync(payload []string, s *discordgo.Session, m *discor
 	for _, item := range orderedlist {
 		finallist = append(finallist, item)
 	}
+
+	finallist = append(finallist, &guestrole)
 
 	_, err = s.GuildRoleReorder(h.conf.DiscordConfig.GuildID, finallist)
 	if err != nil {

@@ -44,7 +44,7 @@ func (h *LanderHandler) Read(s *discordgo.Session, m *discordgo.GuildMemberAdd) 
 			return
 		}
 
-		spectatorRoleID, err := getRoleIDByName(s, s.State.Guilds[0].ID, "Spectator")
+		spectatorRoleID, err := getRoleIDByName(s, s.State.Guilds[0].ID, "Guest")
 		if err != nil {
 			return
 		}
