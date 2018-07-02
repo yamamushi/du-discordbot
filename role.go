@@ -16,6 +16,7 @@ type RoleDB struct {
 // RoleRecord struct
 type RoleRecord struct {
 	ID          string `storm:"id" json:"id"`
+	DiscordID   string
 	Name        string `json:"name"`
 	NewName     string `json:"newname"`
 	Managed     bool   `json:"managed"`

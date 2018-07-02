@@ -124,6 +124,27 @@ func (h *RoleHandler) ParseCommand(commandlist []string, s *discordgo.Session, m
 		h.Status(commandpayload, s, m)
 		return
 	}
+	if payload[0] == "user" ||  payload[0] == "userinfo" {
+		if len(m.Mentions) < 1 {
+			s.ChannelMessageSend(m.ChannelID, "Command '"+payload[0]+"' expects a user mention")
+			return
+		}
+		h.User(m.Mentions[0].ID, s, m)
+		return
+	}
+	if payload[0] == "resetuser" ||  payload[0] == "userreset" {
+		if len(m.Mentions) < 1 {
+			s.ChannelMessageSend(m.ChannelID, "Command '"+payload[0]+"' expects a user mention")
+			return
+		}
+		h.UserReset(m.Mentions[0].ID, s, m)
+		return
+	}
+	if payload[0] == "reset" {
+		//_, commandpayload := SplitPayload(payload)
+		h.ResetAll(s, m)
+		return
+	}
 	if payload[0] == "whitelist" {
 		if len(m.Mentions) == 0 {
 			s.ChannelMessageSend(m.ChannelID, "usage: roles whitelist @user")
@@ -158,7 +179,9 @@ func (h *RoleHandler) RoleSynchronizer(s *discordgo.Session) {
 	for true {
 		// Only run every X minutes
 		time.Sleep(h.conf.RolesConfig.RoleTimer * time.Minute)
+
 		//fmt.Println("Running Synchronizer")
+		h.sync(s)
 		memberlist, err := h.GetAllUsers(s)
 		if err == nil {
 
@@ -173,16 +196,18 @@ func (h *RoleHandler) RoleSynchronizer(s *discordgo.Session) {
 						memberAge := time.Since(memberjoined)
 						for _, role := range roleslist {
 
+							//tempDuration := time.Duration(180 * 24 * 60 * 60 * 1000 * 1000 * 1000)
+							userobject, err := h.user.GetUser(member.User.ID)
 							if memberAge > role.TimeoutDuration {
-								userobject, err := h.user.GetUser(member.User.ID)
 
 								if err == nil {
 									// Skip disabled autorole users
 									if !userobject.DisableAutoRole {
+										//userobject.LatestRoleTimeout = time.Duration(0)
+										//userobject.CurrentAutoRoleID = ""
 
-										time.Sleep(3 * time.Second)
-
-										roleID, _ := getRoleIDByName(s, h.conf.DiscordConfig.GuildID, role.Name)
+										//time.Sleep(3 * time.Second)
+										roleID := role.DiscordID
 										userHasRole := false
 
 										for _, currentRole := range member.Roles {
@@ -249,7 +274,7 @@ func (h *RoleHandler) RoleUpdater(s *discordgo.Session) {
 			//fmt.Println("\nLength of Role Updater queue - " + strconv.Itoa(len(queuedRoles)))
 			for _, queuedRole := range queuedRoles {
 				//fmt.Println("Parsing role: " + queuedRole.RoleID + " - " + queuedRole.UserID )
-				time.Sleep(time.Second * 3)
+				time.Sleep(time.Second * 1  )
 				if queuedRole.Remove {
 					role, err := h.rolesDB.GetRoleFromDB(queuedRole.RoleID)
 					if err == nil {
@@ -640,6 +665,79 @@ func (h *RoleHandler) Status(payload []string, s *discordgo.Session, m *discordg
 	return
 }
 
+func (h *RoleHandler) User(userid string, s *discordgo.Session, m *discordgo.MessageCreate){
+
+	userobject, err := h.user.GetUser(userid)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		return
+	}
+
+	output := "User info: \n```"
+	output = output + "Timeout: " + userobject.LatestRoleTimeout.String() + "\n"
+	output = output + "Current Role:" + userobject.CurrentAutoRoleID + "\n"
+	output = output + "\n```\n"
+
+	s.ChannelMessageSend(m.ChannelID, output)
+	return
+}
+
+func (h *RoleHandler) UserReset(userid string, s *discordgo.Session, m *discordgo.MessageCreate){
+
+	userobject, err := h.user.GetUser(userid)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		return
+	}
+
+	userobject.CurrentAutoRoleID = ""
+	userobject.LatestRoleTimeout = time.Duration(0)
+	userobject.CurrentAutoRoleName = ""
+	h.user.UpdateUserRecord(userobject)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		return
+	}
+
+	s.ChannelMessageSend(m.ChannelID, "User Reset")
+	return
+}
+
+func (h *RoleHandler) ResetAll(s *discordgo.Session, m *discordgo.MessageCreate){
+
+	s.ChannelMessageSend(m.ChannelID, "Resetting user records...")
+
+	if m.Author.ID != h.conf.DiscordConfig.AdminID {
+		s.ChannelMessageSend(m.ChannelID, "Only the server owner may run this command!")
+		return
+	}
+
+	memberlist, err := h.GetAllUsers(s)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		return
+	}
+
+	for _, member := range memberlist {
+		userobject, _ := h.user.GetUser(member.User.ID)
+		userobject.CurrentAutoRoleID = ""
+		userobject.LatestRoleTimeout = time.Duration(0)
+		userobject.CurrentAutoRoleName = ""
+		h.user.UpdateUserRecord(userobject)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+			return
+		}
+	}
+
+
+
+	s.ChannelMessageSend(m.ChannelID, "User Records Reset")
+	return
+}
+
+
+
 func (h *RoleHandler) flush() (err error){
 
 	h.rolesDB.FlushDB()
@@ -659,6 +757,24 @@ func (h *RoleHandler) flush() (err error){
 	return nil
 }
 
+
+func (h *RoleHandler) sync(s *discordgo.Session) (err error){
+
+	sortedlist, _ := h.rolesDB.GetAllRolesDB()
+	discordroles, _ := s.GuildRoles(h.conf.DiscordConfig.GuildID)
+
+	for _, discordrole := range discordroles {
+		for _, item := range sortedlist {
+			if discordrole.Name == item.Name {
+				item.Color = discordrole.Color
+				item.DiscordID = discordrole.ID
+				h.rolesDB.UpdateRoleRecord(item)
+			}
+		}
+	}
+
+	return nil
+}
 
 func (h *RoleHandler) RoleSync(payload []string, s *discordgo.Session, m *discordgo.MessageCreate){
 	s.ChannelMessageSend(m.ChannelID, "Starting role order synchronization")
@@ -683,6 +799,7 @@ func (h *RoleHandler) RoleSync(payload []string, s *discordgo.Session, m *discor
 			if discordrole.Name == item.Name {
 				orderedlist = append(orderedlist, discordrole)
 				item.Color = discordrole.Color
+				item.DiscordID = discordrole.ID
 				h.rolesDB.UpdateRoleRecord(item)
 			} else if discordrole.Name != "Guest"{
 				originalist = append(originalist, discordrole)
