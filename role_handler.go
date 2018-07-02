@@ -299,14 +299,16 @@ func (h *RoleHandler) RoleUpdater(s *discordgo.Session) {
 
 						for _, guildrole := range guildroles {
 							if guildrole.Name == role.Name {
+								err = s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, queuedRole.UserID, guildrole.ID)
+/*
 								userobject, err := h.user.GetUser(queuedRole.UserID)
 								if err == nil {
 									//fmt.Println("Role added: " + queuedRole.UserID + " - " + guildrole.ID)
-									err = s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, queuedRole.UserID, guildrole.ID)
 									h.user.UpdateUserRecord(userobject)
 								} else {
 									//fmt.Println("Error getting RoleID: " +err.Error())
 								}
+*/
 							}
 						}
 
