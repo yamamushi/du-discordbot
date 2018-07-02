@@ -119,6 +119,11 @@ func (h *RoleHandler) ParseCommand(commandlist []string, s *discordgo.Session, m
 		h.RoleJson(commandpayload, s, m)
 		return
 	}
+	if payload[0] == "queue" ||  payload[0] == "status" {
+		_, commandpayload := SplitPayload(payload)
+		h.Status(commandpayload, s, m)
+		return
+	}
 	if payload[0] == "whitelist" {
 		if len(m.Mentions) == 0 {
 			s.ChannelMessageSend(m.ChannelID, "usage: roles whitelist @user")
@@ -175,7 +180,7 @@ func (h *RoleHandler) RoleSynchronizer(s *discordgo.Session) {
 									// Skip disabled autorole users
 									if !userobject.DisableAutoRole {
 
-										time.Sleep(1 * time.Second)
+										time.Sleep(3 * time.Second)
 
 										roleID, _ := getRoleIDByName(s, h.conf.DiscordConfig.GuildID, role.Name)
 										userHasRole := false
@@ -244,7 +249,7 @@ func (h *RoleHandler) RoleUpdater(s *discordgo.Session) {
 			//fmt.Println("\nLength of Role Updater queue - " + strconv.Itoa(len(queuedRoles)))
 			for _, queuedRole := range queuedRoles {
 				//fmt.Println("Parsing role: " + queuedRole.RoleID + " - " + queuedRole.UserID )
-				time.Sleep(time.Second * 2)
+				time.Sleep(time.Second * 3)
 				if queuedRole.Remove {
 					role, err := h.rolesDB.GetRoleFromDB(queuedRole.RoleID)
 					if err == nil {
@@ -619,6 +624,19 @@ func (h *RoleHandler) FlushQueue(payload []string, s *discordgo.Session, m *disc
 	s.ChannelMessageSend(m.ChannelID, "Disabled Command - Enabled in Dev Only")
 	//h.flush()
 	//s.ChannelMessageSend(m.ChannelID, "Database Flushed")
+	return
+}
+
+func (h *RoleHandler) Status(payload []string, s *discordgo.Session, m *discordgo.MessageCreate){
+
+	queuedRoles, err := h.rolesDB.GetAllRoleQueuedDB()
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		return
+	}
+	queuesize := len(queuedRoles)
+	s.ChannelMessageSend(m.ChannelID, "Current Queue: " + strconv.Itoa(queuesize))
+
 	return
 }
 
