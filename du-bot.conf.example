@@ -93,3 +93,8 @@ forumlinked_role = ""
 atvforumlinked_role = ""
 prealpha_role = ""
 nda_channel_id = ""
+
+
+[api]
+
+strawpoll_api = "https://www.strawpoll.me/api/v2/polls"

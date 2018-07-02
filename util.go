@@ -81,6 +81,19 @@ func SplitPayload(input []string) (command string, message []string) {
 
 }
 
+// SplitCommandFromArg function
+func SplitCommandFromArgs(input []string) (command string, message string) {
+
+	// Remove the prefix from our command
+	command = input[0]
+	payload := RemoveStringFromSlice(input, command)
+
+	for _, value := range payload {
+			message = message + value + " "
+	}
+	return command, message
+}
+
 // RemoveFromString function
 func RemoveFromString(s []string, i int) []string {
 	s[len(s)-1], s[i] = s[i], s[len(s)-1]

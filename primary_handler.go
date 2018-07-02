@@ -112,6 +112,12 @@ func (h *PrimaryHandler) Init() error {
 	go roles.RoleSynchronizer(h.dg)
 	go roles.RoleUpdater(h.dg)
 
+	fmt.Println("Adding Strawpoll Handler")
+	strawpoll := StrawpollHandler{db: h.db, conf: h.conf, registry: h.command.registry}
+	strawpoll.Init()
+	h.dg.AddHandler(strawpoll.Read)
+
+
 	//fmt.Println("Adding Music Handler")
 	//musichandler := MusicHandler{db: h.db, user: h.user, registry: h.command.registry,
 	//	wallet: h.bankhandler.wallet, channel: h.channel, conf: h.conf}

@@ -14,6 +14,7 @@ type Config struct {
 	BankConfig    bankConfig     `toml:"bank"`
 	CasinoConfig  casinoConfig   `toml:"casino"`
 	RolesConfig   rolesConfig    `toml:"roles"`
+	APIConfig     apiConfig     `toml:"api"`
 }
 
 // discordConfig struct
@@ -87,6 +88,10 @@ type rolesConfig struct {
 	ATVForumLinkedRoleID    string `toml:"atvforumlinked_role"`
 	PreAlphaForumLinkedRole string `toml:"prealpha_role"`
 	NDAChannelID            string `toml:"nda_channel_id"`
+}
+
+type apiConfig struct {
+	Strawpoll           string `toml:"strawpoll_api"`
 }
 
 // ReadConfig function
