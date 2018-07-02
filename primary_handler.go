@@ -90,6 +90,7 @@ func (h *PrimaryHandler) Init() error {
 	fmt.Println("Adding Lander Handler")
 	landingzone := LanderHandler{configdb:confighandler.configdb, user: h.user}
 	h.dg.AddHandler(landingzone.Read)
+	h.dg.AddHandler(landingzone.ReadRemove)
 
 	fmt.Println("Adding Stats Handler")
 	stats := StatsHandler{registry: h.command.registry, db: h.db, conf: h.conf}
@@ -120,6 +121,12 @@ func (h *PrimaryHandler) Init() error {
 	// Open a websocket connection to Discord and begin listening.
 	fmt.Println("Opening Connection to Discord")
 	err := h.dg.Open()
+	h.dg.State.TrackMembers = true
+	h.dg.State.TrackChannels = true
+	h.dg.State.TrackEmojis = true
+	h.dg.State.TrackPresences = true
+	h.dg.State.TrackRoles = true
+	h.dg.State.TrackVoice = true
 	if err != nil {
 		fmt.Println("Error Opening Connection: ", err)
 		return err

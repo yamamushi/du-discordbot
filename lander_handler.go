@@ -65,7 +65,20 @@ func (h *LanderHandler) Read(s *discordgo.Session, m *discordgo.GuildMemberAdd) 
 		newcomersChannelID, err := getChannelIDByName(s, s.State.Guilds[0].ID, "newcomers")
 		s.ChannelMessageSend(newcomersChannelID, m.User.Mention()+" has landed")
 	}
+	member, err := s.GuildMember(s.State.Guilds[0].ID, m.User.ID)
+	if err != nil {
+		return
+	}
+	s.State.MemberAdd(member)
 
 	return
+}
+
+func (h *LanderHandler) ReadRemove(s *discordgo.Session, m *discordgo.GuildMemberRemove) {
+	member, err := s.GuildMember(s.State.Guilds[0].ID, m.User.ID)
+	if err != nil {
+		return
+	}
+	s.State.MemberRemove(member)
 }
 

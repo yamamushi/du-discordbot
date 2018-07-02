@@ -181,6 +181,8 @@ func (h *RoleHandler) RoleSynchronizer(s *discordgo.Session) {
 		time.Sleep(h.conf.RolesConfig.RoleTimer * time.Minute)
 
 		//fmt.Println("Running Synchronizer")
+		s.RequestGuildMembers(h.conf.DiscordConfig.GuildID, "", 0)
+		time.Sleep(time.Second * 3)
 		h.sync(s)
 		memberlist, err := h.GetAllUsers(s)
 		if err == nil {
@@ -675,9 +677,20 @@ func (h *RoleHandler) User(userid string, s *discordgo.Session, m *discordgo.Mes
 		return
 	}
 
+
+	member, err := s.GuildMember(h.conf.DiscordConfig.GuildID, userid)
+	memberjoined, err := time.Parse(time.RFC3339, member.JoinedAt)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		return
+	}
+
+	memberAge := time.Since(memberjoined)
+
 	output := "User info: \n```"
 	output = output + "Timeout: " + userobject.LatestRoleTimeout.String() + "\n"
 	output = output + "Current Role:" + userobject.CurrentAutoRoleID + "\n"
+	output = output + "Member Age:" + memberAge.String()+ "\n"
 	output = output + "\n```\n"
 
 	s.ChannelMessageSend(m.ChannelID, output)
