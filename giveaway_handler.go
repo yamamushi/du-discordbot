@@ -67,7 +67,7 @@ func (h *GiveawayHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate)
 				fmt.Println("error retrieving user:" + m.Author.ID)
 			}
 
-			if user.Moderator {
+			if user.Citizen {
 				h.ParseCommand(command, s, m)
 			}
 		}
@@ -112,6 +112,11 @@ func (h *GiveawayHandler) ParseCommand(commandlist []string, s *discordgo.Sessio
 	if payload[0] == "list" {
 		_, commandpayload := SplitPayload(payload)
 		h.ListGiveaways(commandpayload, s, m)
+		return
+	}
+	if payload[0] == "info" {
+		_, commandpayload := SplitPayload(payload)
+		h.GiveawayInfo(commandpayload, s, m)
 		return
 	}
 	if payload[0] == "history" {
@@ -191,6 +196,19 @@ func (h *GiveawayHandler) PickWinner(giveawayid string) (winnerID string, err er
 
 
 func (h *GiveawayHandler) NewGiveaway(payload []string, s *discordgo.Session, m *discordgo.MessageCreate){
+
+	// Grab our sender ID to verify if this user has permission to use this command
+	db := h.db.rawdb.From("Users")
+	var user User
+	err := db.One("ID", m.Author.ID, &user)
+	if err != nil {
+		fmt.Println("error retrieving user:" + m.Author.ID)
+	}
+
+	if !user.Admin {
+		return
+	}
+
 	if len(payload) == 0 {
 		s.ChannelMessageSend(m.ChannelID, "Command 'new' expects a formatted giveaway, see help for usage.")
 		return
@@ -401,6 +419,17 @@ func (h *GiveawayHandler) EnterGiveaway(payload []string, s *discordgo.Session, 
 
 
 func (h *GiveawayHandler) UpdateGiveaway(payload []string, s *discordgo.Session, m *discordgo.MessageCreate){
+	// Grab our sender ID to verify if this user has permission to use this command
+	db := h.db.rawdb.From("Users")
+	var user User
+	err := db.One("ID", m.Author.ID, &user)
+	if err != nil {
+		fmt.Println("error retrieving user:" + m.Author.ID)
+	}
+
+	if !user.Admin {
+		return
+	}
 	if len(payload) == 0 {
 		s.ChannelMessageSend(m.ChannelID, "Command 'update' expects an argument.")
 		return
@@ -411,6 +440,18 @@ func (h *GiveawayHandler) UpdateGiveaway(payload []string, s *discordgo.Session,
 }
 
 func (h *GiveawayHandler) EndGiveaway(payload []string, s *discordgo.Session, m *discordgo.MessageCreate){
+	// Grab our sender ID to verify if this user has permission to use this command
+	db := h.db.rawdb.From("Users")
+	var user User
+	err := db.One("ID", m.Author.ID, &user)
+	if err != nil {
+		fmt.Println("error retrieving user:" + m.Author.ID)
+	}
+
+	if !user.Admin {
+		return
+	}
+
 	if len(payload) == 0 {
 		s.ChannelMessageSend(m.ChannelID, "Command 'end' expects an argument.")
 		return
@@ -502,5 +543,69 @@ func (h *GiveawayHandler) GiveawayHistory(payload []string, s *discordgo.Session
 	}
 
 	s.ChannelMessageSend(m.ChannelID, "under construction")
+	return
+}
+
+func (h *GiveawayHandler) GiveawayInfo(payload []string, s *discordgo.Session, m *discordgo.MessageCreate){
+	if len(payload) == 0 {
+		s.ChannelMessageSend(m.ChannelID, "Command 'info' expects an argument.")
+		return
+	}
+
+	giveawayrecords, err := h.giveawaydb.GetAllGiveawayDB()
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Could not read database: " + err.Error())
+		return
+	}
+	found := false
+	output := ":bulb: " + payload[0] + " Giveaway :\n```\n"
+	for _, giveawayrecord := range giveawayrecords {
+		if strings.ToLower(giveawayrecord.ShortName) == strings.ToLower(payload[0]){
+
+			entryrecords, err := h.giveawaydb.GetAllEntryDB()
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "Could not read database: " + err.Error())
+				return
+			}
+			entrycount := strconv.Itoa(len(entryrecords))
+			ownerObject, err := s.User(giveawayrecord.OwnerID)
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "Error parsing record: " + err.Error())
+				return
+			}
+
+
+			found = true
+
+			//output = output + "Database ID: " + giveawayrecord.ID + "\n"
+			output = output + "Name:        " + giveawayrecord.ShortName + "\n"
+			output = output + "Owner:       " + ownerObject.Username + "\n"
+			output = output + "Entries:     " + entrycount + "\n"
+			if !giveawayrecord.Active {
+				winnerObject, err := s.User(giveawayrecord.WinnerID)
+				if err != nil {
+					s.ChannelMessageSend(m.ChannelID, "Error parsing record: " + err.Error())
+					return
+				}
+				output = output + "Winner:      " + winnerObject.Username + " - ("+winnerObject.ID+")\n"
+			}
+			output = output + "Active:      " + strconv.FormatBool(giveawayrecord.Active) + "\n"
+			output = output + "Description: " + giveawayrecord.Description + "\n"
+
+			endTime := giveawayrecord.CreatedDate.Add(giveawayrecord.Duration)
+			loc, _ := time.LoadLocation("America/Chicago")
+			output = output + "Started:     " + giveawayrecord.CreatedDate.In(loc).Format("Mon Jan _2 03:04 MST 2006") + "\n"
+			output = output + "Ends on:     " + endTime.In(loc).Format("Mon Jan _2 03:04 MST 2006") + "\n"
+
+		}
+	}
+	if !found {
+		s.ChannelMessageSend(m.ChannelID, "Record for "+payload[0]+" not found!")
+		return
+	}
+
+	output = output + "```\n"
+
+	s.ChannelMessageSend(m.ChannelID, output)
 	return
 }
