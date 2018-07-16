@@ -98,3 +98,9 @@ nda_channel_id = ""
 [api]
 
 strawpoll_api = "https://www.strawpoll.me/api/v2/polls"
+
+
+[recruitment]
+
+recruitment_channel = ""
+recruitment_timeout = 120

@@ -14,7 +14,8 @@ type Config struct {
 	BankConfig    bankConfig     `toml:"bank"`
 	CasinoConfig  casinoConfig   `toml:"casino"`
 	RolesConfig   rolesConfig    `toml:"roles"`
-	APIConfig     apiConfig     `toml:"api"`
+	APIConfig     apiConfig      `toml:"api"`
+	Recruitment   recruitmentConfig      `toml:"recruitment"`
 }
 
 // discordConfig struct
@@ -94,6 +95,11 @@ type apiConfig struct {
 	Strawpoll           string `toml:"strawpoll_api"`
 	WordnikKey          string `toml:"wordnick_key"`
 
+}
+
+type recruitmentConfig struct {
+	RecruitmentChannel           string `toml:"recruitment_channel"`
+	RecruitmentTimeout           time.Duration `toml:"recruitment_timeout"`
 }
 
 // ReadConfig function
