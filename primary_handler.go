@@ -117,6 +117,11 @@ func (h *PrimaryHandler) Init() error {
 	strawpoll.Init()
 	h.dg.AddHandler(strawpoll.Read)
 
+	fmt.Println("Adding Recruitment Handler")
+	recruitment := RecruitmentHandler{conf: h.conf, registry: h.command.registry, callback: h.callback, db: h.db}
+	recruitment.Init()
+	h.dg.AddHandler(recruitment.Read)
+
 
 	//fmt.Println("Adding Music Handler")
 	//musichandler := MusicHandler{db: h.db, user: h.user, registry: h.command.registry,

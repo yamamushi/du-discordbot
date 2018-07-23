@@ -234,6 +234,14 @@ func (h *StatsHandler) ParseCommand(commandarray []string, s *discordgo.Session,
 		}
 		return
 	}
+	if command == "nda-count" {
+		err := h.NDAPieChart(s,m)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error generating chart: " + err.Error())
+			return
+		}
+		return
+	}
 	if command == "user-count" {
 		if len(payload) > 0 {
 			days, err := strconv.Atoi(payload[0])
@@ -409,7 +417,136 @@ func (h *StatsHandler) LoadFromDisk(path string) (count int, err error){
 
 func (h *StatsHandler) BackerPieChart(s *discordgo.Session, m *discordgo.MessageCreate) (err error){
 
-	members, err := GetMemberList(s)
+	members, err := GetMemberList(s, h.conf)
+	if err != nil {
+		return err
+	}
+
+	// We are only concerned with gathering metrics on who has NDA access here
+	// We can gather full forum authorized metrics in another function
+	KyriumBacker := 0
+	DiamondBacker := 0
+	EmeraldBacker := 0
+	RubyBacker := 0
+	SapphireBacker := 0
+	GoldBacker := 0
+	SilverBacker := 0
+	BronzeBacker := 0
+	IronBacker := 0
+	PatronBacker := 0
+	SponsorBacker := 0
+	ContributorBacker := 0
+	BackerCount := 0
+	//ATVMember := 0
+
+	for _, member := range members {
+		for _, roleID := range member.Roles {
+			backer := false
+			if roleID == h.conf.RolesConfig.ContributorRoleID {
+				ContributorBacker = ContributorBacker+1
+				backer = true
+			}
+			if roleID == h.conf.RolesConfig.SponsorRoleID {
+				SponsorBacker = SponsorBacker+1
+				backer = true
+			}
+			if roleID == h.conf.RolesConfig.PatronRoleID {
+				PatronBacker = PatronBacker+1
+				backer = true
+			}
+			if roleID == h.conf.RolesConfig.IronRoleID {
+				IronBacker = IronBacker+1
+				backer = true
+			}
+			if roleID == h.conf.RolesConfig.BronzeRoleID {
+				BronzeBacker = BronzeBacker+1
+				backer = true
+			}
+			if roleID == h.conf.RolesConfig.SilverRoleID {
+				SilverBacker = SilverBacker+1
+				backer = true
+			}
+			if roleID == h.conf.RolesConfig.GoldRoleID {
+				GoldBacker = GoldBacker+1
+				backer = true
+			}
+			if roleID == h.conf.RolesConfig.SapphireRoleID {
+				SapphireBacker = SapphireBacker+1
+				backer = true
+			}
+			if roleID == h.conf.RolesConfig.RubyRoleID {
+				RubyBacker = RubyBacker+1
+				backer = true
+			}
+			if roleID == h.conf.RolesConfig.EmeraldRoleID {
+				EmeraldBacker = EmeraldBacker+1
+				backer = true
+			}
+			if roleID == h.conf.RolesConfig.DiamondRoleID {
+				DiamondBacker = DiamondBacker+1
+				backer = true
+			}
+			if roleID == h.conf.RolesConfig.KyriumRoleID {
+				KyriumBacker = KyriumBacker+1
+				backer = true
+			}
+			if backer {
+				BackerCount = BackerCount+1
+			}
+		}
+	}
+	PatronStyle := chart.Style{FillColor:drawing.Color{R:214, G:187, B:32, A: 255}}
+	SponsorStyle := chart.Style{FillColor:drawing.Color{R:143, G:143, B:143, A: 255}}
+	ContributorStyle := chart.Style{FillColor:drawing.Color{R:252, G:62, B:99, A: 255}}
+	IronStyle := chart.Style{FillColor:drawing.Color{R:143, G: 143, B: 143, A: 255}}
+	BronzeStyle := chart.Style{FillColor:drawing.Color{R:148, G:101, B:6, A: 255}}
+	SilverStyle := chart.Style{FillColor:drawing.Color{R:222, G:222, B:222, A: 255}}
+	GoldStyle := chart.Style{FillColor:drawing.Color{R:217, G:176, B:80, A: 255}}
+	SapphireStyle := chart.Style{FillColor:drawing.Color{R:0, G:102, B:255, A: 255}}
+	RubyStyle := chart.Style{FillColor:drawing.Color{R:255, G:3, B:3, A: 255}}
+	EmeraldStyle := chart.Style{FillColor:drawing.Color{R:7, G:230, B:137, A: 255}}
+	DiamondStyle := chart.Style{FillColor:drawing.Color{R:255, G:255, B:255, A: 255}}
+	KyriumStyle := chart.Style{FillColor:drawing.Color{R:219, G:219, B:219, A: 255}}
+
+
+
+	pieValues := []chart.Value{
+		{Value: float64(ContributorBacker), Label: "Contributor - "+strconv.Itoa(ContributorBacker), Style: ContributorStyle},
+		{Value: float64(SponsorBacker), Label: "Sponsor - "+strconv.Itoa(SponsorBacker), Style: SponsorStyle},
+		{Value: float64(PatronBacker), Label: "Patron - "+strconv.Itoa(PatronBacker), Style: PatronStyle},
+		{Value: float64(IronBacker), Label: "Iron - "+strconv.Itoa(IronBacker), Style: IronStyle},
+		{Value: float64(BronzeBacker), Label: "Bronze - "+strconv.Itoa(BronzeBacker), Style: BronzeStyle},
+		{Value: float64(SilverBacker), Label: "Silver - "+strconv.Itoa(SilverBacker), Style: SilverStyle},
+		{Value: float64(GoldBacker), Label: "Gold - "+strconv.Itoa(GoldBacker), Style: GoldStyle},
+		{Value: float64(SapphireBacker), Label: "Sapphire - "+strconv.Itoa(SapphireBacker), Style: SapphireStyle},
+		{Value: float64(RubyBacker), Label: "Ruby - "+strconv.Itoa(RubyBacker), Style: RubyStyle},
+		{Value: float64(EmeraldBacker), Label: "Emerald - "+strconv.Itoa(EmeraldBacker), Style: EmeraldStyle},
+		{Value: float64(DiamondBacker), Label: "Diamond - "+strconv.Itoa(DiamondBacker), Style: DiamondStyle},
+		{Value: float64(KyriumBacker), Label: "Kyrium - "+strconv.Itoa(KyriumBacker), Style: KyriumStyle},
+	}
+
+	style := chart.Style{ }
+	style.FillColor = drawing.Color{131,135,142, 255 }
+	pie := chart.PieChart{
+		Width:  512,
+		Height: 512,
+		Values: pieValues,
+		Background: style,
+	}
+
+	filename := "./stats/Backer-PieChart-"+time.Now().Format("Jan 2 15-04-05")+".png"
+	var b bytes.Buffer
+	pie.Render(chart.PNG, &b)
+	err = h.WriteAndSend(filename, b, ":bar_chart: Backer Distribution ( " + strconv.Itoa(BackerCount) + " registered):", s, m)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (h *StatsHandler) NDAPieChart(s *discordgo.Session, m *discordgo.MessageCreate) (err error){
+
+	members, err := GetMemberList(s, h.conf)
 	if err != nil {
 		return err
 	}
@@ -462,20 +599,28 @@ func (h *StatsHandler) BackerPieChart(s *discordgo.Session, m *discordgo.Message
 			}
 		}
 	}
+	PatronStyle := chart.Style{FillColor:drawing.Color{R:214, G:187, B:32, A: 255}}
+	GoldStyle := chart.Style{FillColor:drawing.Color{R:217, G:176, B:80, A: 255}}
+	SapphireStyle := chart.Style{FillColor:drawing.Color{R:0, G:102, B:255, A: 255}}
+	RubyStyle := chart.Style{FillColor:drawing.Color{R:255, G:3, B:3, A: 255}}
+	EmeraldStyle := chart.Style{FillColor:drawing.Color{R:7, G:230, B:137, A: 255}}
+	DiamondStyle := chart.Style{FillColor:drawing.Color{R:255, G:255, B:255, A: 255}}
+	KyriumStyle := chart.Style{FillColor:drawing.Color{R:219, G:219, B:219, A: 255}}
+
 
 	pieValues := []chart.Value{
-		{Value: float64(PatronBacker), Label: "Patron - "+strconv.Itoa(PatronBacker)},
+		{Value: float64(PatronBacker), Label: "Patron - "+strconv.Itoa(PatronBacker), Style: PatronStyle},
 		//{Value: float64(ATVMember), Label: "ATV"+strconv.Itoa(PatronBacker)},
-		{Value: float64(GoldBacker), Label: "Gold - "+strconv.Itoa(GoldBacker)},
-		{Value: float64(SapphireBacker), Label: "Sapphire - "+strconv.Itoa(SapphireBacker)},
-		{Value: float64(RubyBacker), Label: "Ruby - "+strconv.Itoa(RubyBacker)},
-		{Value: float64(EmeraldBacker), Label: "Emerald - "+strconv.Itoa(EmeraldBacker)},
-		{Value: float64(DiamondBacker), Label: "Diamond - "+strconv.Itoa(DiamondBacker)},
-		{Value: float64(KyriumBacker), Label: "Kyrium - "+strconv.Itoa(KyriumBacker)},
+		{Value: float64(GoldBacker), Label: "Gold - "+strconv.Itoa(GoldBacker), Style: GoldStyle},
+		{Value: float64(SapphireBacker), Label: "Sapphire - "+strconv.Itoa(SapphireBacker), Style: SapphireStyle},
+		{Value: float64(RubyBacker), Label: "Ruby - "+strconv.Itoa(RubyBacker), Style: RubyStyle},
+		{Value: float64(EmeraldBacker), Label: "Emerald - "+strconv.Itoa(EmeraldBacker), Style: EmeraldStyle},
+		{Value: float64(DiamondBacker), Label: "Diamond - "+strconv.Itoa(DiamondBacker), Style: DiamondStyle},
+		{Value: float64(KyriumBacker), Label: "Kyrium - "+strconv.Itoa(KyriumBacker), Style: KyriumStyle},
 	}
 
 	style := chart.Style{ }
-	style.FillColor = drawing.Color{131,135,142, 0 }
+	style.FillColor = drawing.Color{131,135,142, 255 }
 	pie := chart.PieChart{
 		Width:  512,
 		Height: 512,
@@ -483,10 +628,10 @@ func (h *StatsHandler) BackerPieChart(s *discordgo.Session, m *discordgo.Message
 		Background: style,
 	}
 
-	filename := "./stats/PieChart-"+time.Now().Format("Jan 2 15-04-05")+".png"
+	filename := "./stats/NDA-PieChart-"+time.Now().Format("Jan 2 15-04-05")+".png"
 	var b bytes.Buffer
 	pie.Render(chart.PNG, &b)
-	err = h.WriteAndSend(filename, b, ":bar_chart: Backer Distribution ( " + strconv.Itoa(BackerCount) + " registered):", s, m)
+	err = h.WriteAndSend(filename, b, ":bar_chart: NDA Authorized Distribution ( " + strconv.Itoa(BackerCount) + " registered):", s, m)
 	if err != nil {
 		return err
 	}
@@ -919,7 +1064,7 @@ func (h *StatsHandler) CombineRecordsByDate(records []StatRecord) (combined []St
 }
 
 func (h *StatsHandler) GetUserCount(s *discordgo.Session) (count int, err error) {
-	list, err := GetMemberList(s)
+	list, err := GetMemberList(s, h.conf)
 	if err != nil {
 		return 0, err
 	}

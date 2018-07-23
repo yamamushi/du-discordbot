@@ -22,7 +22,7 @@ RUN go get github.com/bwmarrin/discordgo
 RUN go get github.com/BurntSushi/toml
 RUN go get github.com/asdine/storm
 RUN go get gopkg.in/oleiade/lane.v1
-RUN go get github.com/kevinburke/go.uuid
+RUN go get github.com/gofrs/uuid
 RUN go get github.com/lunixbochs/vtclean
 RUN go get github.com/yuin/gopher-lua
 RUN go get github.com/wcharczuk/go-chart

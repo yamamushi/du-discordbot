@@ -357,27 +357,14 @@ func getChannelIDByName(s *discordgo.Session, guildID string, name string) (role
 	return "", errors.New("Channel ID Not Found: " + name)
 }
 
-func GetMemberList(s *discordgo.Session) ([]*discordgo.Member, error){
+func GetMemberList(s *discordgo.Session, conf *Config) ([]*discordgo.Member, error){
 
-	guild := s.State.Guilds[0]
-	var users []*discordgo.Member
-	i := 0
-	for i < guild.MemberCount {
-		var id string
-		if i == 0 {
-			id = "0"
-		} else {
-			id = users[len(users)-1].User.ID
-		}
-		retrieved, err := s.GuildMembers(guild.ID, id, 500)
-		if err != nil {
-			return nil, err
-		}
-		users = append(users, retrieved...)
-		i = len(users)
-		time.Sleep(time.Duration(time.Second * 5))
+	guild, err := s.Guild(conf.DiscordConfig.GuildID)
+	if err != nil {
+		return nil, err
 	}
-	return users , nil
+	return guild.Members, nil
+
 }
 
 
