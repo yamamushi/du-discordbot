@@ -452,3 +452,22 @@ func ParseDuration(duration string) (convertedTime time.Duration, totalminutes i
 	convertedTime = time.Duration(totalminutes * 60 * 1000 * 1000 * 1000)
 	return convertedTime, totalminutes, nil
 }
+
+
+// getRoleNameByID function
+func getRoleNameByID(roleID string, guildID string, s *discordgo.Session) (rolename string, err error) {
+
+	roles, err := s.GuildRoles(guildID)
+	if err != nil {
+		return "", err
+	}
+
+	for _, role := range roles {
+
+		if role.ID == roleID {
+			return role.Name, nil
+		}
+	}
+
+	return "", errors.New("Role " + roleID + " not found in guild " + guildID)
+}

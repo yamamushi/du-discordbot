@@ -121,6 +121,7 @@ func (h *PrimaryHandler) Init() error {
 	recruitment := RecruitmentHandler{conf: h.conf, registry: h.command.registry, callback: h.callback, db: h.db}
 	recruitment.Init()
 	h.dg.AddHandler(recruitment.Read)
+	go recruitment.RunListings(h.dg)
 
 
 	//fmt.Println("Adding Music Handler")
