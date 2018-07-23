@@ -108,6 +108,19 @@ func (h *RecruitmentHandler) ParseCommand(commandlist []string, s *discordgo.Ses
 		h.RecruitmentInfo(commandpayload, s, m)
 		return
 	}
+	if payload[0] == "viewfor" {
+		if len(m.Mentions) < 1 {
+			s.ChannelMessageSend(m.ChannelID, "viewfor requires a user mention!")
+			return
+		}
+		h.RecruitmentForUser(m.Mentions[0].ID, s, m)
+		return
+	}
+	if payload[0] == "list" {
+		_, commandpayload := SplitPayload(payload)
+		h.ListRecruitment(commandpayload, s, m)
+		return
+	}
 	if payload[0] == "debug" {
 		_, commandpayload := SplitPayload(payload)
 		h.DebugRecruitment(commandpayload, s, m)
@@ -118,7 +131,6 @@ func (h *RecruitmentHandler) ParseCommand(commandlist []string, s *discordgo.Ses
 func (h *RecruitmentHandler) RunListings(s *discordgo.Session){
 
 	for true {
-		time.Sleep(time.Minute * 2)
 		displayRecordDB, err := h.recruitmentdb.GetAllRecruitmentDisplayDB()
 		if err == nil {
 			if len(displayRecordDB) == 0 {
@@ -130,14 +142,17 @@ func (h *RecruitmentHandler) RunListings(s *discordgo.Session){
 			displayRecordDB = h.ShuffleRecords(displayRecordDB) // Shuffle our database
 
 			for _, displayRecord := range displayRecordDB {
-				time.Sleep(h.conf.Recruitment.RecruitmentTimeout * time.Minute)
-
 				sendingRecord, err := h.recruitmentdb.GetRecruitmentRecordFromDB(displayRecord.RecruitmentID)
 				if err == nil {
 					output := "**"+sendingRecord.OrgName+"**"+ "\n\n" + sendingRecord.Description
 					s.ChannelMessageSend(h.conf.Recruitment.RecruitmentChannel, output)
-					h.recruitmentdb.RemoveRecruitmentDisplayRecordFromDB(displayRecord)
+
+					sendingRecord.LastRun = time.Now()
+					h.recruitmentdb.UpdateRecruitmentRecord(sendingRecord)
+
+					time.Sleep(h.conf.Recruitment.RecruitmentTimeout * time.Minute) // Only sleep if we actually found and sent valid record
 				}
+				h.recruitmentdb.RemoveRecruitmentDisplayRecordFromDB(displayRecord)
 			}
 		}
 	}
@@ -170,6 +185,9 @@ func (h *RecruitmentHandler) HelpOutput(s *discordgo.Session, m *discordgo.Messa
 	output = output + "edit: update an existing recruitment ad\n"
 	output = output + "delete: delete a recruitment advertisement\n"
 	output = output + "info: display information about a recruitment advertisement\n"
+	output = output + "viewfor: view a given users recruitment ad\n"
+	output = output + "admindelete: an admin command for deleting records\n"
+	output = output + "list: an admin command for listing existing recruitment ads\n"
 	output = output + "debug: an admin command for retrieving debug information\n"
 	output = output + "```\n"
 	s.ChannelMessageSend(m.ChannelID, output)
@@ -221,6 +239,19 @@ func (h *RecruitmentHandler) GetOrgName(payload string, s *discordgo.Session, m 
 	if strings.HasPrefix(m.Content, cp) {
 		s.ChannelMessageSend(m.ChannelID, "Recruiter Registration Cancelled.")
 		return
+	}
+
+	recordlist, err := h.recruitmentdb.GetAllRecruitmentDB()
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error retrieiving record list!")
+		return
+	}
+
+	for _, record := range recordlist {
+		if record.OrgName == m.Content {
+			s.ChannelMessageSend(m.ChannelID, "Error: A record for this organization name already exists! If you believe this is an error or need assistance, please contact an admin.")
+			return
+		}
 	}
 
 	s.ChannelMessageSend(m.ChannelID, "You have selected: **" + m.Content + "** , is this correct?")
@@ -399,6 +430,8 @@ func (h *RecruitmentHandler) RecordExistsForUser(userID string) (bool) {
 
 func (h *RecruitmentHandler) EditRecruitment(payload []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
+	s.ChannelMessageSend(m.ChannelID, "This command is under construction, please delete your ad and re-create it until this has been implemented!")
+	return 
 }
 
 func (h *RecruitmentHandler) DeleteRecruitment(payload []string, s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -487,11 +520,147 @@ func (h *RecruitmentHandler) AdminDeleteRecruitment(payload []string, s *discord
 }
 
 func (h *RecruitmentHandler) RecruitmentInfo(payload []string, s *discordgo.Session, m *discordgo.MessageCreate) {
+	// Grab our sender ID to verify if this user has permission to use this command
+	db := h.db.rawdb.From("Users")
+	var user User
+	err := db.One("ID", m.Author.ID, &user)
+	if err != nil {
+		fmt.Println("error retrieving user:" + m.Author.ID)
+		return
+	}
 
+	if !user.Admin {
+		return
+	}
+
+	if len(payload) < 1 {
+		s.ChannelMessageSend(m.ChannelID, "info requires an argument!")
+		return
+	}
+
+	record, err := h.recruitmentdb.GetRecruitmentRecordFromDB(payload[0])
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		return
+	}
+
+	output := "Record info:\n```\n"
+	output = output + "ID: " + record.ID + "\n"
+
+	userrecord, err := s.User(record.OwnerID)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error retrieving user: " + err.Error())
+		return
+	}
+	output = output + "Owner: " + userrecord.Username + "\n"
+	output = output + "Owner ID: " + record.OwnerID + "\n"
+	output = output + "Last Run: " + record.LastRun.Format("2006-01-02 15:04:05") + "\n"
+	output = output + "Org Name: " + record.OrgName + "\n"
+	output = output + "Description: " + record.Description + "\n"
+	output = output + "\n```\n"
+	s.ChannelMessageSend(m.ChannelID, output)
+	return
 }
 
-func (h *RecruitmentHandler) DebugRecruitment(payload []string, s *discordgo.Session, m *discordgo.MessageCreate) {
+func (h *RecruitmentHandler) RecruitmentForUser(userID string, s *discordgo.Session, m *discordgo.MessageCreate) {
+	// Grab our sender ID to verify if this user has permission to use this command
+	db := h.db.rawdb.From("Users")
+	var user User
+	err := db.One("ID", m.Author.ID, &user)
+	if err != nil {
+		fmt.Println("error retrieving user:" + m.Author.ID)
+		return
+	}
 
+	if !user.Admin {
+		return
+	}
+
+	records, err := h.recruitmentdb.GetAllRecruitmentDB()
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		return
+	}
+
+	for _, record := range records {
+		if record.OwnerID == userID {
+			output := "Record info:\n```\n"
+			output = output + "ID: " + record.ID + "\n"
+
+			userrecord, err := s.User(record.OwnerID)
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "Error retrieving discord user: " + err.Error())
+				return
+			}
+			output = output + "Owner: " + userrecord.Username + "\n"
+			output = output + "Owner ID: " + record.OwnerID + "\n"
+			output = output + "Last Run: " + record.LastRun.Format("2006-01-02 15:04:05") + "\n"
+			output = output + "Org Name: " + record.OrgName + "\n"
+			output = output + "Description: " + record.Description + "\n"
+			output = output + "\n```\n"
+			s.ChannelMessageSend(m.ChannelID, output)
+			return
+		}
+	}
+
+	s.ChannelMessageSend(m.ChannelID, "Error: No recruitment record found for user!")
+	return
+}
+
+func (h *RecruitmentHandler) ListRecruitment(payload []string, s *discordgo.Session, m *discordgo.MessageCreate) {
+	// Grab our sender ID to verify if this user has permission to use this command
+	db := h.db.rawdb.From("Users")
+	var user User
+	err := db.One("ID", m.Author.ID, &user)
+	if err != nil {
+		fmt.Println("error retrieving user:" + m.Author.ID)
+		return
+	}
+
+	if !user.Admin {
+		return
+	}
+
+	recordlist, err := h.recruitmentdb.GetAllRecruitmentDB()
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error retrieiving record list!")
+		return
+	}
+	output := ":satellite: Recruitment records: \n```\n"
+
+	for _, record := range recordlist {
+		userrecord, err := s.User(record.OwnerID)
+		if err == nil {
+			output = output + record.OrgName + " - " + userrecord.Username + " - "+ record.ID + "\n"
+		}
+	}
+	output = output + "\n```\n"
+	s.ChannelMessageSend(m.ChannelID, output)
+	return
+}
+
+
+func (h *RecruitmentHandler) DebugRecruitment(payload []string, s *discordgo.Session, m *discordgo.MessageCreate) {
+	// Grab our sender ID to verify if this user has permission to use this command
+	db := h.db.rawdb.From("Users")
+	var user User
+	err := db.One("ID", m.Author.ID, &user)
+	if err != nil {
+		fmt.Println("error retrieving user:" + m.Author.ID)
+		return
+	}
+
+	if !user.Admin {
+		return
+	}
+
+	if len(payload) < 1 {
+		s.ChannelMessageSend(m.ChannelID, "Debug requires an argument!")
+		return
+	}
+
+	s.ChannelMessageSend(m.ChannelID, "Command under construction.")
+	return
 }
 
 // ShuffleRecords function
