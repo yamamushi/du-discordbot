@@ -131,6 +131,7 @@ func (h *RecruitmentHandler) ParseCommand(commandlist []string, s *discordgo.Ses
 func (h *RecruitmentHandler) RunListings(s *discordgo.Session){
 
 	for true {
+		time.Sleep(5 * time.Minute) 
 		displayRecordDB, err := h.recruitmentdb.GetAllRecruitmentDisplayDB()
 		if err == nil {
 			if len(displayRecordDB) == 0 {
@@ -431,7 +432,7 @@ func (h *RecruitmentHandler) RecordExistsForUser(userID string) (bool) {
 func (h *RecruitmentHandler) EditRecruitment(payload []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	s.ChannelMessageSend(m.ChannelID, "This command is under construction, please delete your ad and re-create it until this has been implemented!")
-	return 
+	return
 }
 
 func (h *RecruitmentHandler) DeleteRecruitment(payload []string, s *discordgo.Session, m *discordgo.MessageCreate) {
