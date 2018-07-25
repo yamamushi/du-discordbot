@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/rand"
 	"time"
+	"strconv"
 )
 
 // RecruitmentHandler struct
@@ -16,6 +17,7 @@ type RecruitmentHandler struct {
 	db       *DBHandler
 	recruitmentdb  *RecruitmentDB
 	recruitmentChannel string
+	userdb   *UserHandler
 }
 
 
@@ -103,6 +105,11 @@ func (h *RecruitmentHandler) ParseCommand(commandlist []string, s *discordgo.Ses
 		h.AdminDeleteRecruitment(commandpayload, s, m)
 		return
 	}
+	if payload[0] == "setlimit" {
+		_, commandpayload := SplitPayload(payload)
+		h.SetUserRecordLimit(commandpayload, s, m)
+		return
+	}
 	if payload[0] == "info" {
 		_, commandpayload := SplitPayload(payload)
 		h.RecruitmentInfo(commandpayload, s, m)
@@ -126,12 +133,22 @@ func (h *RecruitmentHandler) ParseCommand(commandlist []string, s *discordgo.Ses
 		h.DebugRecruitment(commandpayload, s, m)
 		return
 	}
+	if payload[0] == "fixusers" {
+		//_, commandpayload := SplitPayload(payload)
+		err := h.FixUsers()
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+			return
+		}
+		s.ChannelMessageSend(m.ChannelID, "User recruitment records updated")
+		return
+	}
 }
 
 func (h *RecruitmentHandler) RunListings(s *discordgo.Session){
 
 	for true {
-		time.Sleep(5 * time.Minute) 
+		time.Sleep(5 * time.Minute)
 		displayRecordDB, err := h.recruitmentdb.GetAllRecruitmentDisplayDB()
 		if err == nil {
 			if len(displayRecordDB) == 0 {
@@ -188,6 +205,7 @@ func (h *RecruitmentHandler) HelpOutput(s *discordgo.Session, m *discordgo.Messa
 	output = output + "info: display information about a recruitment advertisement\n"
 	output = output + "viewfor: view a given users recruitment ad\n"
 	output = output + "admindelete: an admin command for deleting records\n"
+	output = output + "setlimit: sets a users record limit\n"
 	output = output + "list: an admin command for listing existing recruitment ads\n"
 	output = output + "debug: an admin command for retrieving debug information\n"
 	output = output + "```\n"
@@ -201,8 +219,21 @@ func (h *RecruitmentHandler) NewRecruitment(payload []string, s *discordgo.Sessi
 		return
 	}
 
-	if h.RecordExistsForUser(m.Author.ID){
-		s.ChannelMessageSend(m.ChannelID, "Sorry, you may only have one recruitment record active at a time!")
+	recordlimit, err := h.GetUserRecordLimit(m.Author.ID)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		return
+	}
+
+	recordcount, err := h.GetUserRecordCount(m.Author.ID)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		return
+	}
+
+
+	if recordlimit <= recordcount {
+		s.ChannelMessageSend(m.ChannelID, "Sorry, you have reached your current recruitment ad limit of "+strconv.Itoa(recordlimit)+". If you would like to create additional recruitment advertisements for multiple organizations, please contact a discord staff member for assistance.")
 		return
 	}
 
@@ -451,14 +482,63 @@ func (h *RecruitmentHandler) DeleteRecruitment(payload []string, s *discordgo.Se
 		return
 	}
 
-	s.ChannelMessageSend(m.ChannelID, "Are you sure you would like to delete your recruitment ad? (Y/N)")
+	records, err := h.GetRecordsForUser(m.Author.ID)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		return
+	}
+
+	list := "\n```\n"
+	for i, record := range records {
+		list = list + strconv.Itoa(i+1) + ") "+record.OrgName + " - " + record.ID + "\n"
+	}
+	list = list + "\n```\n"
+
+	s.ChannelMessageSend(m.ChannelID, "Please select a record to delete: " + list)
 
 	uuid, err := GetUUID()
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, "Fatal Error generating UUID: "+err.Error())
 		return
 	}
-	h.callback.Watch(h.ConfirmDeleteRecruitmentAd, uuid, "", s, m)
+	h.callback.Watch(h.SelectDeleteRecruitmentAd, uuid, "", s, m)
+	return
+
+
+}
+
+func (h *RecruitmentHandler) SelectDeleteRecruitmentAd(payload string, s *discordgo.Session, m *discordgo.MessageCreate) {
+	cp := h.conf.DUBotConfig.CP
+	if strings.HasPrefix(m.Content, cp) {
+		s.ChannelMessageSend(m.ChannelID, "Recruiter ad deltion cancelled.")
+		return
+	}
+
+	option, err := strconv.Atoi(m.Content)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Invalid selection, ad deletion canceled.")
+		return
+	}
+	option = option - 1
+
+	count, err := h.GetUserRecordCount(m.Author.ID)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		return
+	}
+	if option < 0 || option > count-1{
+		s.ChannelMessageSend(m.ChannelID, "Invalid selection, ad deletion canceled.")
+		return
+	}
+
+
+	s.ChannelMessageSend(m.ChannelID, "Are you sure you would like to delete your recruitment ad? (Y/N)")
+	uuid, err := GetUUID()
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Fatal Error generating UUID: "+err.Error())
+		return
+	}
+	h.callback.Watch(h.ConfirmDeleteRecruitmentAd, uuid, strconv.Itoa(option), s, m)
 	return
 }
 
@@ -466,24 +546,31 @@ func (h *RecruitmentHandler) ConfirmDeleteRecruitmentAd(payload string, s *disco
 
 	cp := h.conf.DUBotConfig.CP
 	if strings.HasPrefix(m.Content, cp) {
-		s.ChannelMessageSend(m.ChannelID, "Recruiter Registration Cancelled.")
+		s.ChannelMessageSend(m.ChannelID, "Recruitment ad deletion cancelled.")
 		return
 	}
 
 	m.Content = strings.ToLower(m.Content)
 	if m.Content == "y" || m.Content == "yes" {
-		recordlist, err := h.recruitmentdb.GetAllRecruitmentDB()
+		records, err := h.GetRecordsForUser(m.Author.ID)
 		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, "Error retrieiving record list!")
+			s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
 			return
 		}
-		for _, record := range recordlist {
-			if record.OwnerID == m.Author.ID {
-				h.recruitmentdb.RemoveRecruitmentRecordFromDB(record)
-				s.ChannelMessageSend(m.ChannelID, "Your recruitment advertisement has been removed successfully.")
-				return
-			}
+
+		option, err := strconv.Atoi(payload)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+			return
 		}
+
+		err = h.recruitmentdb.RemoveRecruitmentRecordFromDB(records[option])
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+			return
+		}
+		s.ChannelMessageSend(m.ChannelID,  "Recruitment ad deleted successfully.")
+		return
 	}
 
 	s.ChannelMessageSend(m.ChannelID, "Recruitment ad deletion cancelled.")
@@ -498,11 +585,11 @@ func (h *RecruitmentHandler) AdminDeleteRecruitment(payload []string, s *discord
 	var user User
 	err := db.One("ID", m.Author.ID, &user)
 	if err != nil {
-		fmt.Println("error retrieving user:" + m.Author.ID)
+		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
 		return
 	}
 
-	if !user.Admin {
+	if !user.Moderator {
 		return
 	}
 
@@ -526,11 +613,11 @@ func (h *RecruitmentHandler) RecruitmentInfo(payload []string, s *discordgo.Sess
 	var user User
 	err := db.One("ID", m.Author.ID, &user)
 	if err != nil {
-		fmt.Println("error retrieving user:" + m.Author.ID)
+		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
 		return
 	}
 
-	if !user.Admin {
+	if !user.Moderator {
 		return
 	}
 
@@ -569,11 +656,11 @@ func (h *RecruitmentHandler) RecruitmentForUser(userID string, s *discordgo.Sess
 	var user User
 	err := db.One("ID", m.Author.ID, &user)
 	if err != nil {
-		fmt.Println("error retrieving user:" + m.Author.ID)
+		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
 		return
 	}
 
-	if !user.Admin {
+	if !user.Moderator {
 		return
 	}
 
@@ -583,28 +670,35 @@ func (h *RecruitmentHandler) RecruitmentForUser(userID string, s *discordgo.Sess
 		return
 	}
 
+	var orgs string
 	for _, record := range records {
 		if record.OwnerID == userID {
-			output := "Record info:\n```\n"
-			output = output + "ID: " + record.ID + "\n"
-
-			userrecord, err := s.User(record.OwnerID)
-			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, "Error retrieving discord user: " + err.Error())
-				return
-			}
-			output = output + "Owner: " + userrecord.Username + "\n"
-			output = output + "Owner ID: " + record.OwnerID + "\n"
-			output = output + "Last Run: " + record.LastRun.Format("2006-01-02 15:04:05") + "\n"
-			output = output + "Org Name: " + record.OrgName + "\n"
-			output = output + "Description: " + record.Description + "\n"
-			output = output + "\n```\n"
-			s.ChannelMessageSend(m.ChannelID, output)
-			return
+			orgs = orgs + record.OrgName + ", "
 		}
 	}
 
-	s.ChannelMessageSend(m.ChannelID, "Error: No recruitment record found for user!")
+	output := "Record info:\n```\n"
+
+	userrecord, err := s.User(userID)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error retrieving discord user: " + err.Error())
+		return
+	}
+	output = output + "User: " + userrecord.Username + "\n"
+	output = output + "User ID: " + userID + "\n"
+
+	err = db.One("ID", userID, &user)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		return
+	}
+
+	output = output + "Record Limit: " + strconv.Itoa(user.RecruitmentLimit) + "\n"
+	output = output + "Record Count: " + strconv.Itoa(user.RecruitmentCount) + "\n"
+	output = output + "Org Names: " + orgs + "\n"
+	output = output + "\n```\n"
+	s.ChannelMessageSend(m.ChannelID, output)
+
 	return
 }
 
@@ -618,7 +712,7 @@ func (h *RecruitmentHandler) ListRecruitment(payload []string, s *discordgo.Sess
 		return
 	}
 
-	if !user.Admin {
+	if !user.Moderator {
 		return
 	}
 
@@ -651,7 +745,7 @@ func (h *RecruitmentHandler) DebugRecruitment(payload []string, s *discordgo.Ses
 		return
 	}
 
-	if !user.Admin {
+	if !user.Moderator {
 		return
 	}
 
@@ -662,6 +756,127 @@ func (h *RecruitmentHandler) DebugRecruitment(payload []string, s *discordgo.Ses
 
 	s.ChannelMessageSend(m.ChannelID, "Command under construction.")
 	return
+}
+
+func (h *RecruitmentHandler) GetUserRecordLimit(userid string) (limit int, err error) {
+	// Grab our sender ID to verify if this user has permission to use this command
+	db := h.db.rawdb.From("Users")
+	var user User
+	err = db.One("ID", userid, &user)
+	if err != nil {
+		return 0, err
+	}
+	return user.RecruitmentLimit, nil
+}
+
+func (h *RecruitmentHandler) SetUserRecordLimit(payload []string, s *discordgo.Session, m *discordgo.MessageCreate) (err error) {
+
+	// Grab our sender ID to verify if this user has permission to use this command
+	db := h.db.rawdb.From("Users")
+	var user User
+	err = db.One("ID", m.Author.ID, &user)
+	if err != nil {
+		fmt.Println("error retrieving user:" + m.Author.ID)
+		return
+	}
+
+	if !user.Moderator {
+		return
+	}
+
+	if len(payload) < 2 {
+		s.ChannelMessageSend(m.ChannelID, "Error: setlimit requires a user mention and limit argument")
+		return
+	}
+	if len(m.Mentions) < 1 {
+		s.ChannelMessageSend(m.ChannelID, "Error: setlimit requires a user mention and limit argument")
+		return
+	}
+
+	limit, err := strconv.Atoi(payload[1])
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		return
+	}
+
+	err = db.One("ID", m.Mentions[0].ID, &user)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		return
+	}
+
+	user.RecruitmentLimit = limit
+	err = h.userdb.UpdateUserRecord(user)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		return
+	}
+
+	s.ChannelMessageSend(m.ChannelID, "User record limit updated to " + payload[1])
+	return
+}
+
+func (h *RecruitmentHandler) GetUserRecordCount(userid string) (count int, err error) {
+
+	recruitmentrecords, err := h.recruitmentdb.GetAllRecruitmentDB()
+	if err != nil {
+		return 0, err
+	}
+
+	for _, record := range recruitmentrecords {
+		if record.OwnerID == userid {
+			count = count + 1
+		}
+	}
+	return count, nil
+}
+
+func (h *RecruitmentHandler) GetRecordsForUser(userid string) (records []RecruitmentRecord, err error) {
+
+	recruitmentrecords, err := h.recruitmentdb.GetAllRecruitmentDB()
+	if err != nil {
+		return records, err
+	}
+
+	for _, record := range recruitmentrecords {
+		if record.OwnerID == userid {
+			records = append(records, record)
+		}
+	}
+	return records, nil
+}
+
+func (h *RecruitmentHandler) FixUsers() (err error){
+	db := h.db.rawdb.From("Users")
+	var users []User
+	err = db.All(&users)
+	if err != nil {
+		return err
+	}
+
+	for _, user := range users {
+		user.RecruitmentLimit = 1
+		user.RecruitmentCount = 0
+		h.userdb.UpdateUserRecord(user)
+	}
+
+	recruitmentrecords, err := h.recruitmentdb.GetAllRecruitmentDB()
+	if err != nil {
+		return err
+	}
+
+	for _, record := range recruitmentrecords {
+		var user User
+		err = db.One("ID", record.OwnerID, &user)
+		if err != nil {
+			return err
+		}
+
+		user.RecruitmentCount = user.RecruitmentCount + 1
+		h.userdb.UpdateUserRecord(user)
+	}
+
+	return nil
 }
 
 // ShuffleRecords function

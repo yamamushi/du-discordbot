@@ -21,6 +21,9 @@ type User struct {
 	CurrentAutoRoleID     string
 	CurrentAutoRoleName   string
 	DisableAutoRole     bool
+
+	RecruitmentLimit int
+	RecruitmentCount int
 }
 
 // Init function
