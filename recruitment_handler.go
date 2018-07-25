@@ -18,6 +18,7 @@ type RecruitmentHandler struct {
 	recruitmentdb  *RecruitmentDB
 	recruitmentChannel string
 	userdb   *UserHandler
+	globalstate *StateDB
 }
 
 
@@ -143,7 +144,7 @@ func (h *RecruitmentHandler) ParseCommand(commandlist []string, s *discordgo.Ses
 		//s.ChannelMessageSend(m.ChannelID, "User recruitment records updated")
 		//return
 	}
-}   
+}
 
 func (h *RecruitmentHandler) RunListings(s *discordgo.Session){
 
@@ -160,17 +161,26 @@ func (h *RecruitmentHandler) RunListings(s *discordgo.Session){
 			displayRecordDB = h.ShuffleRecords(displayRecordDB) // Shuffle our database
 
 			for _, displayRecord := range displayRecordDB {
+				h.recruitmentdb.RemoveRecruitmentDisplayRecordFromDB(displayRecord) // We remove the record here to avoid conflicts on bot restarts.
+
 				sendingRecord, err := h.recruitmentdb.GetRecruitmentRecordFromDB(displayRecord.RecruitmentID)
 				if err == nil {
-					output := "**"+sendingRecord.OrgName+"**"+ "\n\n" + sendingRecord.Description
-					s.ChannelMessageSend(h.conf.Recruitment.RecruitmentChannel, output)
+					globalstate, err := h.globalstate.GetState()
+					if err == nil {
+						if sendingRecord.ID != globalstate.LastRecruitmentIDPosted {
+							output := "**"+sendingRecord.OrgName+"**"+ "\n\n" + sendingRecord.Description
+							s.ChannelMessageSend(h.conf.Recruitment.RecruitmentChannel, output)
 
-					sendingRecord.LastRun = time.Now()
-					h.recruitmentdb.UpdateRecruitmentRecord(sendingRecord)
+							sendingRecord.LastRun = time.Now()
+							h.recruitmentdb.UpdateRecruitmentRecord(sendingRecord)
 
-					time.Sleep(h.conf.Recruitment.RecruitmentTimeout * time.Minute) // Only sleep if we actually found and sent valid record
+							globalstate.LastRecruitmentIDPosted = sendingRecord.ID
+							h.globalstate.SetState(globalstate)
+
+							time.Sleep(h.conf.Recruitment.RecruitmentTimeout * time.Minute) // Only sleep if we actually found and sent valid record
+						}
+					}
 				}
-				h.recruitmentdb.RemoveRecruitmentDisplayRecordFromDB(displayRecord)
 			}
 		}
 	}
@@ -883,9 +893,19 @@ func (h *RecruitmentHandler) FixUsers() (err error){
 // We use this for shuffling our record list every iteration so we don't lose records on a bot restart
 func (h *RecruitmentHandler) ShuffleRecords(DisplayRecords []RecruitmentDisplayRecord) (ShuffledRecords []RecruitmentDisplayRecord){
 
+	for i := len(DisplayRecords)/2-1; i >= 0; i-- {
+		opp := len(DisplayRecords)-1-i
+		DisplayRecords[i], DisplayRecords[opp] = DisplayRecords[opp], DisplayRecords[i]
+	}
+
 	for i := len(DisplayRecords) - 1; i > 0; i-- {
 		j := rand.Intn(i + 1)
 		DisplayRecords[i], DisplayRecords[j] = DisplayRecords[j], DisplayRecords[i]
+	}
+
+	for i := len(DisplayRecords)/2-1; i >= 0; i-- {
+		opp := len(DisplayRecords)-1-i
+		DisplayRecords[i], DisplayRecords[opp] = DisplayRecords[opp], DisplayRecords[i]
 	}
 
 	return DisplayRecords

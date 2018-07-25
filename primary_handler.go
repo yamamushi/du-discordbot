@@ -20,6 +20,7 @@ type PrimaryHandler struct {
 	logchan     chan string
 	bankhandler *BankHandler
 	channel     *ChannelHandler
+	globalstate *StateDB
 }
 
 // Init function
@@ -28,6 +29,9 @@ func (h *PrimaryHandler) Init() error {
 	// Add our main handler -
 	h.dg.AddHandler(h.Read)
 	h.registry = h.command.registry
+
+	// Create our global state interface
+	h.globalstate = &StateDB{db: h.db}
 
 	// Add new handlers below this line //
 	// Create our RSS handler
@@ -118,7 +122,7 @@ func (h *PrimaryHandler) Init() error {
 	h.dg.AddHandler(strawpoll.Read)
 
 	fmt.Println("Adding Recruitment Handler")
-	recruitment := RecruitmentHandler{conf: h.conf, registry: h.command.registry, callback: h.callback, db: h.db, userdb: h.user}
+	recruitment := RecruitmentHandler{conf: h.conf, registry: h.command.registry, callback: h.callback, db: h.db, userdb: h.user, globalstate: h.globalstate}
 	recruitment.Init()
 	h.dg.AddHandler(recruitment.Read)
 	go recruitment.RunListings(h.dg)
