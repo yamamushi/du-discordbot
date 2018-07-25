@@ -135,15 +135,15 @@ func (h *RecruitmentHandler) ParseCommand(commandlist []string, s *discordgo.Ses
 	}
 	if payload[0] == "fixusers" {
 		//_, commandpayload := SplitPayload(payload)
-		err := h.FixUsers()
-		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
-			return
-		}
-		s.ChannelMessageSend(m.ChannelID, "User recruitment records updated")
+		//err := h.FixUsers()
+		//if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error: This command is disabled." )
 		return
+		//}
+		//s.ChannelMessageSend(m.ChannelID, "User recruitment records updated")
+		//return
 	}
-}
+}   
 
 func (h *RecruitmentHandler) RunListings(s *discordgo.Session){
 
