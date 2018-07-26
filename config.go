@@ -101,6 +101,8 @@ type apiConfig struct {
 type recruitmentConfig struct {
 	RecruitmentChannel           string `toml:"recruitment_channel"`
 	RecruitmentTimeout           time.Duration `toml:"recruitment_timeout"`
+	RecruitmentShuffleCount      int `toml:"recruitment_shuffle_count"`
+	RecruitmentWaitOnStartup     bool `toml:"recruitment_wait_on_startup"`
 }
 
 // ReadConfig function

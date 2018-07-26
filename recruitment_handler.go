@@ -150,7 +150,9 @@ func (h *RecruitmentHandler) ParseCommand(commandlist []string, s *discordgo.Ses
 func (h *RecruitmentHandler) RunListings(s *discordgo.Session){
 
 	for true {
-		//time.Sleep(5 * time.Minute)
+		if h.conf.Recruitment.RecruitmentWaitOnStartup {
+			time.Sleep(5 * time.Minute)
+		}
 		displayRecordDB, err := h.recruitmentdb.GetAllRecruitmentDisplayDB()
 		if err == nil {
 			if len(displayRecordDB) == 0 {
@@ -962,7 +964,7 @@ func (h *RecruitmentHandler) FixUsers() (err error){
 // We use this for shuffling our record list every iteration so we don't lose records on a bot restart
 func (h *RecruitmentHandler) ShuffleRecords(DisplayRecords []RecruitmentDisplayRecord) (ShuffledRecords []RecruitmentDisplayRecord){
 
-	count := rand.Intn(25)
+	count := rand.Intn(h.conf.Recruitment.RecruitmentShuffleCount)
 
 	for pass := 0; pass < count; pass++ {
 		for i := len(DisplayRecords)/2-1; i >= 0; i-- {
