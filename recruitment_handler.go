@@ -168,6 +168,10 @@ func (h *RecruitmentHandler) ParseCommand(commandlist []string, s *discordgo.Ses
 
 func (h *RecruitmentHandler) RunListings(s *discordgo.Session){
 
+	if h.conf.Recruitment.RecruitmentWaitOnStartup {
+		time.Sleep(5 * time.Minute)
+	}
+
 	for true {
 		displayRecordDB, err := h.recruitmentdb.GetAllRecruitmentDisplayDB()
 		if err == nil {
@@ -178,10 +182,6 @@ func (h *RecruitmentHandler) RunListings(s *discordgo.Session){
 			}
 
 			displayRecordDB = h.ShuffleRecords(displayRecordDB) // Shuffle our database
-
-			if h.conf.Recruitment.RecruitmentWaitOnStartup {
-				time.Sleep(5 * time.Minute)
-			}
 
 			for _, displayRecord := range displayRecordDB {
 				h.recruitmentdb.RemoveRecruitmentDisplayRecordFromDB(displayRecord) // We remove the record here to avoid conflicts on bot restarts.
@@ -337,6 +337,16 @@ func (h *RecruitmentHandler) GetOrgName(payload string, s *discordgo.Session, m 
 		}
 	}
 
+	if strings.Contains(m.Content, "@everyone") || strings.Contains(m.Content, "@here") {
+		s.ChannelMessageSend(m.ChannelID, "You are not allowed to use this org name, please remove @everyone or @here mentions and try again.")
+		return
+	}
+
+	if len(m.Mentions) > 0 {
+		s.ChannelMessageSend(m.ChannelID, "You are not allowed to use this org name, please remove any username mentions and try again.")
+		return
+	}
+
 	s.ChannelMessageSend(m.ChannelID, "You have selected: **" + m.Content + "** , is this correct?")
 
 	uuid, err := GetUUID()
@@ -381,6 +391,11 @@ func (h *RecruitmentHandler) GetOrgDescription(payload string, s *discordgo.Sess
 	cp := h.conf.DUBotConfig.CP
 	if strings.HasPrefix(m.Content, cp) {
 		s.ChannelMessageSend(m.ChannelID, "Recruiter Registration Cancelled.")
+		return
+	}
+
+	if strings.Contains(m.Content, "@everyone") || strings.Contains(m.Content, "@here") {
+		s.ChannelMessageSend(m.ChannelID, "You are not allowed to use this description, please remove @everyone or @here mentions and try again.")
 		return
 	}
 
@@ -937,7 +952,9 @@ func (h *RecruitmentHandler) QueueInfo(payload []string, s *discordgo.Session, m
 	}
 
 	output = output + "Queue Timer: " + strconv.Itoa(timercount) + " minutes\n"
-	output = output + "Estimated Time to Completion: " + strconv.Itoa(timercount*queuelen) + " minutes\n"
+
+	end := h.lastpost.Add(time.Duration(int64(timercount*queuelen))*time.Minute)
+	output = output + "Estimated Time to Completion: " + end.Sub(time.Now()).Round(1*time.Second).String() + "\n"
 	output = output + "Queue Shuffle Chance: " + strconv.Itoa(h.conf.Recruitment.RecruitmentShuffleCount) + "\n"
 
 	output = output + "\nPending List: "
