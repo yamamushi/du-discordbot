@@ -8,6 +8,7 @@ import (
 	"time"
 	"strconv"
 	"math"
+	"sync"
 )
 
 // RecruitmentHandler struct
@@ -20,6 +21,10 @@ type RecruitmentHandler struct {
 	recruitmentChannel string
 	userdb   *UserHandler
 	globalstate *StateDB
+	configdb *ConfigDB
+	timeoutchan chan bool
+	querylocker sync.RWMutex
+	lastpost time.Time
 }
 
 
@@ -28,6 +33,7 @@ func (h *RecruitmentHandler) Init() {
 	h.RegisterCommands()
 	h.recruitmentdb = &RecruitmentDB{db: h.db}
 	h.recruitmentChannel = h.conf.Recruitment.RecruitmentChannel
+	h.timeoutchan = make(chan bool)
 }
 
 
@@ -112,9 +118,19 @@ func (h *RecruitmentHandler) ParseCommand(commandlist []string, s *discordgo.Ses
 		h.SetUserRecordLimit(commandpayload, s, m)
 		return
 	}
+	if payload[0] == "forcepost" {
+		_, commandpayload := SplitPayload(payload)
+		h.ForcePost(commandpayload, s, m)
+		return
+	}
 	if payload[0] == "info" {
 		_, commandpayload := SplitPayload(payload)
 		h.RecruitmentInfo(commandpayload, s, m)
+		return
+	}
+	if payload[0] == "queue" {
+		_, commandpayload := SplitPayload(payload)
+		h.QueueInfo(commandpayload, s, m)
 		return
 	}
 	if payload[0] == "viewfor" {
@@ -145,14 +161,14 @@ func (h *RecruitmentHandler) ParseCommand(commandlist []string, s *discordgo.Ses
 		//s.ChannelMessageSend(m.ChannelID, "User recruitment records updated")
 		//return
 	}
+
+	s.ChannelMessageSend(m.ChannelID, "Unrecognized option: " + payload[0])
+	return
 }
 
 func (h *RecruitmentHandler) RunListings(s *discordgo.Session){
 
 	for true {
-		if h.conf.Recruitment.RecruitmentWaitOnStartup {
-			time.Sleep(5 * time.Minute)
-		}
 		displayRecordDB, err := h.recruitmentdb.GetAllRecruitmentDisplayDB()
 		if err == nil {
 			if len(displayRecordDB) == 0 {
@@ -162,6 +178,10 @@ func (h *RecruitmentHandler) RunListings(s *discordgo.Session){
 			}
 
 			displayRecordDB = h.ShuffleRecords(displayRecordDB) // Shuffle our database
+
+			if h.conf.Recruitment.RecruitmentWaitOnStartup {
+				time.Sleep(5 * time.Minute)
+			}
 
 			for _, displayRecord := range displayRecordDB {
 				h.recruitmentdb.RemoveRecruitmentDisplayRecordFromDB(displayRecord) // We remove the record here to avoid conflicts on bot restarts.
@@ -175,12 +195,30 @@ func (h *RecruitmentHandler) RunListings(s *discordgo.Session){
 							s.ChannelMessageSend(h.conf.Recruitment.RecruitmentChannel, output)
 
 							sendingRecord.LastRun = time.Now()
+							h.lastpost = time.Now()
 							h.recruitmentdb.UpdateRecruitmentRecord(sendingRecord)
 
 							globalstate.LastRecruitmentIDPosted = sendingRecord.ID
 							h.globalstate.SetState(globalstate)
 
-							time.Sleep(h.conf.Recruitment.RecruitmentTimeout * time.Minute) // Only sleep if we actually found and sent valid record
+							timercount, err := h.configdb.GetValue("recruitment-timer")
+							if err != nil {
+								timercount = int(h.conf.Recruitment.RecruitmentTimeout)
+							}
+							if timercount == 0 {
+								timercount = 1
+							}
+
+							//for {
+								select {
+								case <-h.timeoutchan:
+									continue
+								case <-time.After(time.Duration(timercount) * time.Minute):
+									break
+								}
+							//}
+
+							//time.Sleep(time.Duration(timercount) * time.Minute) // Only sleep if we actually found and sent valid record
 						}
 					}
 				}
@@ -346,7 +384,7 @@ func (h *RecruitmentHandler) GetOrgDescription(payload string, s *discordgo.Sess
 		return
 	}
 
-	output := "The following description was provided (please confirm with Y/N): \n" + m.Content
+	output := "The following description was provided **(please confirm with Y/N)**: \n" + m.Content
 	s.ChannelMessageSend(m.ChannelID, output)
 
 	uuid, err := GetUUID()
@@ -382,8 +420,8 @@ func (h *RecruitmentHandler) ConfirmOrgDescription(payload string, s *discordgo.
 		output := "**"+splitPayload[0]+"**" + "\n\n"
 		output = output + splitPayload[1]
 
-		s.ChannelMessageSend(m.ChannelID, "Your recruitment ad will be displayed as follows (please confirm with Y/N)\n ---- ")
-		time.Sleep(time.Second*1)
+		s.ChannelMessageSend(m.ChannelID, "Your recruitment ad will be displayed as follows **(please confirm with Y/N)**\n")
+		//time.Sleep(time.Second*1)
 		s.ChannelMessageSend(m.ChannelID, output)
 
 		h.callback.Watch(h.ConfirmRecruitmentAd, uuid, payload, s, m)
@@ -545,7 +583,7 @@ func (h *RecruitmentHandler) SelectDeleteRecruitmentAd(payload string, s *discor
 	}
 
 
-	s.ChannelMessageSend(m.ChannelID, "Are you sure you would like to delete your recruitment ad? (Y/N)")
+	s.ChannelMessageSend(m.ChannelID, "Are you sure you would like to delete your recruitment ad? **(Y/N)**")
 	uuid, err := GetUUID()
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, "Fatal Error generating UUID: "+err.Error())
@@ -838,6 +876,95 @@ func (h *RecruitmentHandler) DebugRecruitment(payload []string, s *discordgo.Ses
 	s.ChannelMessageSend(m.ChannelID, "Command under construction.")
 	return
 }
+
+func (h *RecruitmentHandler) ForcePost(payload []string, s *discordgo.Session, m *discordgo.MessageCreate) {
+	// Grab our sender ID to verify if this user has permission to use this command
+	db := h.db.rawdb.From("Users")
+	var user User
+	err := db.One("ID", m.Author.ID, &user)
+	if err != nil {
+		fmt.Println("error retrieving user:" + m.Author.ID)
+		return
+	}
+
+	if !user.Moderator {
+		s.ChannelMessageSend(m.ChannelID, "You do not have permission to use this command!")
+		return
+	}
+
+	h.timeoutchan<-true
+	s.ChannelMessageSend(m.ChannelID, "Successfully forced the latest post from the recruitment queue")
+	return
+}
+
+
+func (h *RecruitmentHandler) QueueInfo(payload []string, s *discordgo.Session, m *discordgo.MessageCreate) {
+	h.querylocker.Lock()
+	defer h.querylocker.Unlock()
+
+	// Grab our sender ID to verify if this user has permission to use this command
+	db := h.db.rawdb.From("Users")
+	var user User
+	err := db.One("ID", m.Author.ID, &user)
+	if err != nil {
+		fmt.Println("error retrieving user:" + m.Author.ID)
+		return
+	}
+
+	if !user.Moderator {
+		s.ChannelMessageSend(m.ChannelID, "You do not have permission to use this command!")
+		return
+	}
+
+	displayRecordDB, err := h.recruitmentdb.GetAllRecruitmentDisplayDB()
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		return
+	}
+
+	queuelen := len(displayRecordDB)
+
+	output := ":satellite: Current Recruitment Advertisement Queue: ```\n"
+	output = output + "Records in Queue: " + strconv.Itoa(queuelen) + "\n"
+	output = output + "Last Post: " + h.lastpost.Format("2006-01-02 15:04:05") + "\n"
+
+	timercount, err := h.configdb.GetValue("recruitment-timer")
+	if err != nil {
+		timercount = int(h.conf.Recruitment.RecruitmentTimeout)
+	}
+	if timercount == 0 {
+		timercount = 1
+	}
+
+	output = output + "Queue Timer: " + strconv.Itoa(timercount) + " minutes\n"
+	output = output + "Estimated Time to Completion: " + strconv.Itoa(timercount*queuelen) + " minutes\n"
+	output = output + "Queue Shuffle Chance: " + strconv.Itoa(h.conf.Recruitment.RecruitmentShuffleCount) + "\n"
+
+	output = output + "\nPending List: "
+
+	pending := ""
+	for i, record := range displayRecordDB {
+		recruitmentRecord, err := h.recruitmentdb.GetRecruitmentRecordFromDB(record.RecruitmentID)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+			return
+		}
+		if i == len(displayRecordDB)-1{
+			pending = pending + recruitmentRecord.OrgName
+		} else {
+			pending = pending + recruitmentRecord.OrgName + ", "
+		}
+	}
+	output = output + pending + "\n\n"
+
+	output = output + "\n```\n"
+
+	//fmt.Println(output)
+
+	s.ChannelMessageSend(m.ChannelID, output)
+	return
+}
+
 
 func (h *RecruitmentHandler) GetUserRecordLimit(userid string) (limit int, err error) {
 	// Grab our sender ID to verify if this user has permission to use this command

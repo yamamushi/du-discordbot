@@ -107,10 +107,23 @@ func (h *ConfigHandler) ParseCommand(command []string, s *discordgo.Session, m *
 	}
 
 	if command[1] == "set" {
-		if len(command) <= 2 {
-			s.ChannelMessageSend(m.ChannelID, "Command expects an argument")
+		if len(command) <= 3 {
+			s.ChannelMessageSend(m.ChannelID, "Command expects two arguments")
 		} else {
+			option := command[2]
+			value, err := strconv.Atoi(command[3])
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "Invalid value: " + err.Error())
+				return
+			}
+			err = h.Set(option, value)
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
+				return
+			}
 
+			s.ChannelMessageSend(m.ChannelID, "Option " + command[2] + " set to " + command[3])
+			return
 		}
 	}
 
@@ -127,6 +140,9 @@ func (h *ConfigHandler) ParseCommand(command []string, s *discordgo.Session, m *
 func (h *ConfigHandler) ValidateConfigName(configname string) bool {
 
 	if configname == "autoland"{
+		return true
+	}
+	if configname == "recruitment-timer"{
 		return true
 	}
 
@@ -162,8 +178,17 @@ func (h *ConfigHandler) Disable(configname string) (err error) {
 	return h.configdb.AddConfigToDB(entry)
 }
 
-func (h *ConfigHandler) Set(configname string) (err error) {
-	return errors.New("command not yet implemented")
+func (h *ConfigHandler) Set(configname string, value int) (err error) {
+	if !h.ValidateConfigName(configname) {
+		return errors.New("invalid config " + configname)
+	}
+	entry, err := h.configdb.GetConfigFromDB(configname)
+	if err != nil {
+		entry := ConfigEntry{Name:configname, Value:value}
+		return h.configdb.AddConfigToDB(entry)
+	}
+	entry.Value = value
+	return h.configdb.AddConfigToDB(entry)
 }
 
 func (h *ConfigHandler) Get(configname string, s *discordgo.Session, m *discordgo.MessageCreate)  {
@@ -181,6 +206,7 @@ func (h *ConfigHandler) Get(configname string, s *discordgo.Session, m *discordg
 	output := "Config: \n```"
 	output = output + "Name: " + entry.Name + "\n"
 	output = output + "Enabled: " + strconv.FormatBool(entry.Enabled) + "\n"
+	output = output + "Value: " + strconv.Itoa(entry.Value) + "\n"
 	output = output + "```"
 
 	s.ChannelMessageSend(m.ChannelID, output)

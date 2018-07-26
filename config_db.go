@@ -14,7 +14,8 @@ type ConfigDB struct {
 
 type ConfigEntry struct {
 	Name        string `storm:"id"`// The name of our config option
-	Setting    string
+	Setting     string
+	Value      int
 	Enabled      bool
 }
 
@@ -110,4 +111,13 @@ func (h *ConfigDB) CheckEnabled(configname string) (enabled bool, err error) {
 	}
 
 	return entry.Enabled, nil
+}
+
+func (h *ConfigDB) GetValue(configname string) (value int, err error) {
+	entry, err := h.GetConfigFromDB(configname)
+	if err != nil {
+		return 0, err
+	}
+
+	return entry.Value, nil
 }

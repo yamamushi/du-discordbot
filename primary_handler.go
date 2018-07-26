@@ -122,7 +122,8 @@ func (h *PrimaryHandler) Init() error {
 	h.dg.AddHandler(strawpoll.Read)
 
 	fmt.Println("Adding Recruitment Handler")
-	recruitment := RecruitmentHandler{conf: h.conf, registry: h.command.registry, callback: h.callback, db: h.db, userdb: h.user, globalstate: h.globalstate}
+	recruitment := RecruitmentHandler{conf: h.conf, registry: h.command.registry, callback: h.callback,
+		db: h.db, userdb: h.user, globalstate: h.globalstate, configdb: confighandler.configdb}
 	recruitment.Init()
 	h.dg.AddHandler(recruitment.Read)
 	go recruitment.RunListings(h.dg)
