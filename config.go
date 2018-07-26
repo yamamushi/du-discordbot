@@ -94,6 +94,7 @@ type rolesConfig struct {
 type apiConfig struct {
 	Strawpoll           string `toml:"strawpoll_api"`
 	WordnikKey          string `toml:"wordnick_key"`
+	OpenWeatherKey      string `toml:"openweather_key"`
 
 }
 

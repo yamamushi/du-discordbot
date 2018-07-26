@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"time"
 	"strconv"
+	"math"
 )
 
 // RecruitmentHandler struct
@@ -726,20 +727,88 @@ func (h *RecruitmentHandler) ListRecruitment(payload []string, s *discordgo.Sess
 		return
 	}
 
+	userIDSearch := ""
+	if len(m.Mentions) > 0 {
+		userIDSearch = m.Mentions[0].ID
+	}
+
+	page := 1
+	if userIDSearch == "" {
+		if len(payload) > 0 {
+			page, err = strconv.Atoi(payload[0])
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "Invalid page value selected - " + payload[0])
+				return
+			}
+		}
+	} else {
+		if len(payload) > 1 {
+			page, err = strconv.Atoi(payload[1])
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "Invalid page value selected - " + payload[1])
+				return
+			}
+		}
+	}
+
+
 	recordlist, err := h.recruitmentdb.GetAllRecruitmentDB()
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, "Error retrieiving record list!")
 		return
 	}
-	output := ":satellite: Recruitment records: \n```\n"
 
+	count := 0
 	for _, record := range recordlist {
-		userrecord, err := s.User(record.OwnerID)
-		if err == nil {
-			output = output + record.OrgName + " - " + userrecord.Username + " - "+ record.ID + "\n"
+		if userIDSearch != "" {
+			if userIDSearch == record.OwnerID {
+				count = count + 1
+			}
+		} else {
+			count = count + 1
 		}
 	}
+	if count == 0 {
+		s.ChannelMessageSend(m.ChannelID, "No records found in search!")
+		return
+	}
+
+	pagesF := float64(count) / float64(5.0)
+	pages := int(math.Ceil(pagesF))
+
+	if page > pages {
+		page = pages
+	}
+
+	output := ":satellite: Recruitment records "
+	output = output + "(Page "+strconv.Itoa(page)+" of "+strconv.Itoa(pages)+")"
+	output = output + ": \n```\n"
+
+	recordCount := 0
+	for _, record := range recordlist {
+			if userIDSearch != "" {
+				if userIDSearch == record.OwnerID {
+					if recordCount < (page*5) && recordCount >= ((page-1)*5) {
+						userrecord, err := s.User(record.OwnerID)
+						if err == nil {
+							output = output + "Org Name: " + record.OrgName + "\nOwner: " + userrecord.Username + "\nID: " + record.ID + "\n\n"
+						}
+					}
+					recordCount = recordCount + 1
+				}
+			} else {
+				if recordCount < (page*5) && recordCount >= ((page-1)*5) {
+					userrecord, err := s.User(record.OwnerID)
+					if err == nil {
+						output = output + "Org Name: " + record.OrgName + "\nOwner: " + userrecord.Username + "\nID: " + record.ID + "\n\n"
+					}
+				}
+				recordCount = recordCount + 1
+			}
+	}
 	output = output + "\n```\n"
+	//output = output + "Total Records: " + strconv.Itoa(len(recordlist))
+
 	s.ChannelMessageSend(m.ChannelID, output)
 	return
 }
