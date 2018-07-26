@@ -150,7 +150,7 @@ func (h *RecruitmentHandler) ParseCommand(commandlist []string, s *discordgo.Ses
 func (h *RecruitmentHandler) RunListings(s *discordgo.Session){
 
 	for true {
-		time.Sleep(5 * time.Minute)
+		//time.Sleep(5 * time.Minute)
 		displayRecordDB, err := h.recruitmentdb.GetAllRecruitmentDisplayDB()
 		if err == nil {
 			if len(displayRecordDB) == 0 {
@@ -501,11 +501,11 @@ func (h *RecruitmentHandler) DeleteRecruitment(payload []string, s *discordgo.Se
 
 	list := "\n```\n"
 	for i, record := range records {
-		list = list + strconv.Itoa(i+1) + ") "+record.OrgName + " - " + record.ID + "\n"
+		list = list + strconv.Itoa(i+1) + ") "+record.OrgName +"\n"//+ " - " + record.ID + "\n"
 	}
 	list = list + "\n```\n"
 
-	s.ChannelMessageSend(m.ChannelID, "Please select a record to delete: " + list)
+	s.ChannelMessageSend(m.ChannelID, "Please select an advertisement to delete: " + list)
 
 	uuid, err := GetUUID()
 	if err != nil {
@@ -962,19 +962,23 @@ func (h *RecruitmentHandler) FixUsers() (err error){
 // We use this for shuffling our record list every iteration so we don't lose records on a bot restart
 func (h *RecruitmentHandler) ShuffleRecords(DisplayRecords []RecruitmentDisplayRecord) (ShuffledRecords []RecruitmentDisplayRecord){
 
-	for i := len(DisplayRecords)/2-1; i >= 0; i-- {
-		opp := len(DisplayRecords)-1-i
-		DisplayRecords[i], DisplayRecords[opp] = DisplayRecords[opp], DisplayRecords[i]
-	}
+	count := rand.Intn(25)
 
-	for i := len(DisplayRecords) - 1; i > 0; i-- {
-		j := rand.Intn(i + 1)
-		DisplayRecords[i], DisplayRecords[j] = DisplayRecords[j], DisplayRecords[i]
-	}
+	for pass := 0; pass < count; pass++ {
+		for i := len(DisplayRecords)/2-1; i >= 0; i-- {
+			opp := len(DisplayRecords)-1-i
+			DisplayRecords[i], DisplayRecords[opp] = DisplayRecords[opp], DisplayRecords[i]
+		}
 
-	for i := len(DisplayRecords)/2-1; i >= 0; i-- {
-		opp := len(DisplayRecords)-1-i
-		DisplayRecords[i], DisplayRecords[opp] = DisplayRecords[opp], DisplayRecords[i]
+		for i := len(DisplayRecords) - 1; i > 0; i-- {
+			j := rand.Intn(i + 1)
+			DisplayRecords[i], DisplayRecords[j] = DisplayRecords[j], DisplayRecords[i]
+		}
+
+		for i := len(DisplayRecords)/2-1; i >= 0; i-- {
+			opp := len(DisplayRecords)-1-i
+			DisplayRecords[i], DisplayRecords[opp] = DisplayRecords[opp], DisplayRecords[i]
+		}
 	}
 
 	return DisplayRecords
