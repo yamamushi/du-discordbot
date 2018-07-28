@@ -19,6 +19,8 @@ type RecruitmentRecord struct {
 	OrgName  string
 	Description string
 	LastRun  time.Time
+	Created  time.Time
+	ApprovedDate time.Time
 	Approved bool
 	Approver string
 }

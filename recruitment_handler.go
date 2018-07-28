@@ -9,7 +9,8 @@ import (
 	"strconv"
 	"math"
 	"sync"
-)
+	"reflect"
+	)
 
 // RecruitmentHandler struct
 type RecruitmentHandler struct {
@@ -17,6 +18,7 @@ type RecruitmentHandler struct {
 	registry *CommandRegistry
 	callback *CallbackHandler
 	db       *DBHandler
+	reactions *ReactionsHandler
 	recruitmentdb  *RecruitmentDB
 	recruitmentChannel string
 	userdb   *UserHandler
@@ -167,13 +169,12 @@ func (h *RecruitmentHandler) ParseCommand(commandlist []string, s *discordgo.Ses
 		//return
 	}
 	if payload[0] == "fixads" {
-		//_, commandpayload := SplitPayload(payload)
-		//err := h.FixAds()
-		//if err != nil {
-		//s.ChannelMessageSend(m.ChannelID, "Error: This command is disabled." )
-		//return
-		//}
-		//.ChannelMessageSend(m.ChannelID, "Recruitment records repaired")
+		err := h.FixAds()
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error() )
+			return
+		}
+		s.ChannelMessageSend(m.ChannelID, "Recruitment records repaired")
 		return
 	}
 
@@ -357,8 +358,8 @@ func (h *RecruitmentHandler) GetOrgName(payload string, s *discordgo.Session, m 
 		}
 	}
 
-	if strings.Contains(m.Content, "@everyone") || strings.Contains(m.Content, "@here") {
-		s.ChannelMessageSend(m.ChannelID, "You are not allowed to use this org name, please remove @everyone or @here mentions and try again.")
+	if strings.Contains(m.Content, "@everyone") || strings.Contains(m.Content, "@here") || len(m.Mentions) > 0{
+		s.ChannelMessageSend(m.ChannelID, "You are not allowed to use this org name, please remove @mentions and try again.")
 		return
 	}
 
@@ -487,7 +488,7 @@ func (h *RecruitmentHandler) ConfirmRecruitmentAd(payload string, s *discordgo.S
 		output := "**"+splitPayload[0]+"**" + "\n"
 		output = output + splitPayload[1]
 
-		recruitmentAd := RecruitmentRecord{ID: uuid, OwnerID: m.Author.ID, OrgName: splitPayload[0], Description: splitPayload[1]}
+		recruitmentAd := RecruitmentRecord{ID: uuid, OwnerID: m.Author.ID, OrgName: splitPayload[0], Description: splitPayload[1], Created: time.Now()}
 
 		err = h.recruitmentdb.AddRecruitmentRecordToDB(recruitmentAd)
 		if err != nil {
@@ -969,9 +970,107 @@ func (h *RecruitmentHandler) NotifyForApprovals(recordID string, s *discordgo.Se
 	output = output + "Org Name: " +record.OrgName + "\n"
 	output = output + "Description: " + record.Description + "\n"
 
-	s.ChannelMessageSend(formattedChannelID, ":rotating_light: An advertisement has been created for \"**"+record.OrgName+"\"** by " +
-		""+owner.Username+" and requires moderation:\n```\n"+output+"\n```\n")
+	var reactions []string
+	reactions = append(reactions, "✅") // :white_check_mark:
+	reactions = append(reactions, "❎") // :negative_squared_cross_mark:
+
+	packedarg := ":rotating_light: An advertisement has been created for \"**"+record.OrgName+"\"** by " +
+		""+owner.Username+" and requires moderation:\n```\n"+output+"\n```\n"
+
+
+	err = h.reactions.Create(h.HandlePendingCreatedReaction, reactions, formattedChannelID, packedarg, record.ID, s)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	//s.ChannelMessageSend(formattedChannelID, )
 	return
+}
+
+func (h *RecruitmentHandler) HandlePendingCreatedReaction(reaction string, recordID string, s *discordgo.Session, m interface{}){
+
+	//fmt.Println(reaction + " - " + recordID)
+/*
+	if reflect.TypeOf(m) == reflect.TypeOf(discordgo.MessageReactionAdd{}) {
+		fmt.Println("Add found")
+		//h.reactions.UnWatch(reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String(),
+		//	reflect.Indirect(reflect.ValueOf(m)).FieldByName("MessageID").String())
+	}
+
+	if reflect.TypeOf(m) == reflect.TypeOf(discordgo.MessageReactionRemove{}) {
+		fmt.Println("Remove found")
+		//h.reactions.UnWatch(reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String(),
+		//	reflect.Indirect(reflect.ValueOf(m)).FieldByName("MessageID").String())
+	}
+*/
+
+	unformattedChannel, err := h.configdb.GetSetting("recruitment-admin-channel")
+	if err != nil {
+		return
+	}
+	formattedChannel := CleanChannel(unformattedChannel)
+
+	record, err := h.recruitmentdb.GetRecruitmentRecordFromDB(recordID)
+	if err != nil {
+		s.ChannelMessageSend(formattedChannel, "Error: " + err.Error())
+		return
+	}
+
+	userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
+	user, err := s.User(userID)
+	if err != nil {
+		s.ChannelMessageSend(formattedChannel, "Error: " + err.Error())
+		return
+	}
+
+	username := user.Username
+	botuser, err := h.userdb.GetUser(userID)
+	if err != nil {
+		s.ChannelMessageSend(formattedChannel, "Error: " + err.Error())
+		return
+	}
+	if !botuser.Moderator {
+		s.ChannelMessageSend(formattedChannel, "Error: " + user.Mention() + " is not a bot moderator!")
+		return
+	}
+
+
+	if reaction == "✅" {
+		record.Approved = true
+		err = h.recruitmentdb.UpdateRecruitmentRecord(record)
+		if err != nil {
+			s.ChannelMessageSend(formattedChannel, "Error: " + err.Error())
+			return
+		}
+
+		h.NotifyOwner(record.ID, true, "", s)
+
+		s.ChannelMessageSend(formattedChannel, "Advertisement for \"**" + record.OrgName + "**\" has been approved by "+username)
+
+		h.reactions.UnWatch(reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String(),
+			reflect.Indirect(reflect.ValueOf(m)).FieldByName("MessageID").String())
+		return
+	}
+	if reaction == "❎" {
+		record.Approved = false
+
+		err = h.recruitmentdb.UpdateRecruitmentRecord(record)
+		if err != nil {
+			s.ChannelMessageSend(formattedChannel, "Error: " + err.Error())
+			return
+		}
+
+		h.NotifyOwner(record.ID, false, "Please contact " + username + " for more information.", s)
+
+		h.recruitmentdb.RemoveRecruitmentRecordFromDBByID(record.ID)
+
+		s.ChannelMessageSend(formattedChannel, "Advertisement for \"**" + record.OrgName + "**\" has been rejected by " +
+			""+username+" and removed from the database.")
+
+		h.reactions.UnWatch(reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String(),
+			reflect.Indirect(reflect.ValueOf(m)).FieldByName("MessageID").String())
+		return
+	}
+
 }
 
 func (h *RecruitmentHandler) NotifyDeleted(record RecruitmentRecord, userID string, s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -1058,7 +1157,7 @@ func (h *RecruitmentHandler) ModifyApproval(command string, payload []string, s 
 			username = user.Username
 		}
 		s.ChannelMessageSend(m.ChannelID, "Advertisement for \"**" + record.OrgName + "**\" has been approved by "+username)
-		h.NotifyOwner(record.ID, approved, "", s, m )
+		h.NotifyOwner(record.ID, approved, "", s )
 		return
 	} else {
 		if payload[1] == "shadow" {
@@ -1075,7 +1174,7 @@ func (h *RecruitmentHandler) ModifyApproval(command string, payload []string, s 
 			}
 		}
 
-		h.NotifyOwner(record.ID, approved, reason, s, m)
+		h.NotifyOwner(record.ID, approved, reason, s)
 		h.recruitmentdb.RemoveRecruitmentRecordFromDBByID(record.ID)
 
 		user, err := s.User(m.Author.ID)
@@ -1090,17 +1189,27 @@ func (h *RecruitmentHandler) ModifyApproval(command string, payload []string, s 
 
 }
 
-func (h *RecruitmentHandler) NotifyOwner(recordID string, approved bool, reason string, s *discordgo.Session, m *discordgo.MessageCreate) {
+func (h *RecruitmentHandler) NotifyOwner(recordID string, approved bool, reason string, s *discordgo.Session) {
 
 	record, err := h.recruitmentdb.GetRecruitmentRecordFromDB(recordID)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		unformattedChannel, err := h.configdb.GetSetting("recruitment-admin-channel")
+		if err != nil {
+			return
+		}
+		formattedChannel := CleanChannel(unformattedChannel)
+		s.ChannelMessageSend(formattedChannel, "Error: " + err.Error())
 		return
 	}
 
 	userprivatechannel, err := s.UserChannelCreate(record.OwnerID)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error initializing private channel to user " + record.OwnerID)
+		unformattedChannel, err := h.configdb.GetSetting("recruitment-admin-channel")
+		if err != nil {
+			return
+		}
+		formattedChannel := CleanChannel(unformattedChannel)
+		s.ChannelMessageSend(formattedChannel, "Error: " + err.Error())
 		return
 	}
 
@@ -1314,6 +1423,8 @@ func (h *RecruitmentHandler) FixAds() (err error){
 
 	for _, record := range recruitmentrecords {
 		record.Approved = true
+		record.Created = time.Now()
+		record.ApprovedDate = time.Now()
 		h.recruitmentdb.UpdateRecruitmentRecord(record)
 	}
 

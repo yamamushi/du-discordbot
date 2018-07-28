@@ -21,6 +21,7 @@ type PrimaryHandler struct {
 	bankhandler *BankHandler
 	channel     *ChannelHandler
 	globalstate *StateDB
+	reactions   *ReactionsHandler
 }
 
 // Init function
@@ -123,7 +124,7 @@ func (h *PrimaryHandler) Init() error {
 
 	fmt.Println("Adding Recruitment Handler")
 	recruitment := RecruitmentHandler{conf: h.conf, registry: h.command.registry, callback: h.callback,
-		db: h.db, userdb: h.user, globalstate: h.globalstate, configdb: confighandler.configdb}
+		db: h.db, userdb: h.user, globalstate: h.globalstate, configdb: confighandler.configdb, reactions: h.reactions}
 	recruitment.Init()
 	h.dg.AddHandler(recruitment.Read)
 	go recruitment.RunListings(h.dg)

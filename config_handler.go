@@ -163,6 +163,9 @@ func (h *ConfigHandler) ValidateConfigName(configname string) bool {
 	if configname == "recruitment-admin-channel"{
 		return true
 	}
+	if configname == "recruitment-expiration"{
+		return true
+	}
 
 	return false
 }
