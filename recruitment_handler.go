@@ -168,12 +168,12 @@ func (h *RecruitmentHandler) ParseCommand(commandlist []string, s *discordgo.Ses
 	}
 	if payload[0] == "fixads" {
 		//_, commandpayload := SplitPayload(payload)
-		err := h.FixAds()
-		if err != nil {
+		//err := h.FixAds()
+		//if err != nil {
 		//s.ChannelMessageSend(m.ChannelID, "Error: This command is disabled." )
-		return
-		}
-		s.ChannelMessageSend(m.ChannelID, "Recruitment records repaired")
+		//return
+		//}
+		//.ChannelMessageSend(m.ChannelID, "Recruitment records repaired")
 		return
 	}
 
