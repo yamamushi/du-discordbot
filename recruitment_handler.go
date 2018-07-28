@@ -151,15 +151,30 @@ func (h *RecruitmentHandler) ParseCommand(commandlist []string, s *discordgo.Ses
 		h.DebugRecruitment(commandpayload, s, m)
 		return
 	}
+	if payload[0] == "approve" || payload[0] == "deny" || payload[0] == "reject"{
+		command, commandpayload := SplitPayload(payload)
+		h.ModifyApproval(command, commandpayload, s, m)
+		return
+	}
 	if payload[0] == "fixusers" {
 		//_, commandpayload := SplitPayload(payload)
 		//err := h.FixUsers()
 		//if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error: This command is disabled." )
+		//s.ChannelMessageSend(m.ChannelID, "Error: This command is disabled." )
 		return
 		//}
 		//s.ChannelMessageSend(m.ChannelID, "User recruitment records updated")
 		//return
+	}
+	if payload[0] == "fixads" {
+		//_, commandpayload := SplitPayload(payload)
+		err := h.FixAds()
+		if err != nil {
+		//s.ChannelMessageSend(m.ChannelID, "Error: This command is disabled." )
+		return
+		}
+		s.ChannelMessageSend(m.ChannelID, "Recruitment records repaired")
+		return
 	}
 
 	s.ChannelMessageSend(m.ChannelID, "Unrecognized option: " + payload[0])
@@ -169,7 +184,13 @@ func (h *RecruitmentHandler) ParseCommand(commandlist []string, s *discordgo.Ses
 func (h *RecruitmentHandler) RunListings(s *discordgo.Session){
 
 	if h.conf.Recruitment.RecruitmentWaitOnStartup {
-		time.Sleep(5 * time.Minute)
+
+		select {
+		case <-h.timeoutchan:
+			break
+		case <-time.After(5 * time.Minute):
+			break
+		}
 	}
 
 	for true {
@@ -192,33 +213,32 @@ func (h *RecruitmentHandler) RunListings(s *discordgo.Session){
 					if err == nil {
 						if sendingRecord.ID != globalstate.LastRecruitmentIDPosted {
 							output := "**"+sendingRecord.OrgName+"**"+ "\n\n" + sendingRecord.Description
-							s.ChannelMessageSend(h.conf.Recruitment.RecruitmentChannel, output)
 
-							sendingRecord.LastRun = time.Now()
-							h.lastpost = time.Now()
-							h.recruitmentdb.UpdateRecruitmentRecord(sendingRecord)
+							if sendingRecord.Approved {
+								s.ChannelMessageSend(h.conf.Recruitment.RecruitmentChannel, output)
+								sendingRecord.LastRun = time.Now()
+								h.lastpost = time.Now()
+								h.recruitmentdb.UpdateRecruitmentRecord(sendingRecord)
 
-							globalstate.LastRecruitmentIDPosted = sendingRecord.ID
-							h.globalstate.SetState(globalstate)
+								globalstate.LastRecruitmentIDPosted = sendingRecord.ID
+								h.globalstate.SetState(globalstate)
 
-							timercount, err := h.configdb.GetValue("recruitment-timer")
-							if err != nil {
-								timercount = int(h.conf.Recruitment.RecruitmentTimeout)
-							}
-							if timercount == 0 {
-								timercount = 1
-							}
+								timercount, err := h.configdb.GetValue("recruitment-timer")
+								if err != nil {
+									timercount = int(h.conf.Recruitment.RecruitmentTimeout)
+								}
+								if timercount == 0 {
+									timercount = 1
+								}
 
-							//for {
+								// Sleep or wait
 								select {
 								case <-h.timeoutchan:
 									continue
 								case <-time.After(time.Duration(timercount) * time.Minute):
 									break
 								}
-							//}
-
-							//time.Sleep(time.Duration(timercount) * time.Minute) // Only sleep if we actually found and sent valid record
+							}
 						}
 					}
 				}
@@ -474,7 +494,10 @@ func (h *RecruitmentHandler) ConfirmRecruitmentAd(payload string, s *discordgo.S
 			s.ChannelMessageSend(m.ChannelID, "There was an error processing your request, please contact an admin!")
 			return
 		}
-		s.ChannelMessageSend(m.ChannelID, "Your advertisement has been saved successfully!")
+
+		h.NotifyForApprovals(uuid, s, m)
+		s.ChannelMessageSend(m.ChannelID, "Your advertisement has been created and submitted for moderator approval. You will received " +
+			"a notification upon approval.")
 		return
 	}
 
@@ -636,6 +659,7 @@ func (h *RecruitmentHandler) ConfirmDeleteRecruitmentAd(payload string, s *disco
 			return
 		}
 		s.ChannelMessageSend(m.ChannelID,  "Recruitment ad deleted successfully.")
+		h.NotifyDeleted(records[option], m.Author.ID, s, m)
 		return
 	}
 
@@ -706,8 +730,18 @@ func (h *RecruitmentHandler) RecruitmentInfo(payload []string, s *discordgo.Sess
 		s.ChannelMessageSend(m.ChannelID, "Error retrieving user: " + err.Error())
 		return
 	}
-	output = output + "Owner: " + userrecord.Username + "\n"
-	output = output + "Owner ID: " + record.OwnerID + "\n"
+	output = output + "Owner: " + userrecord.Username + "("+record.OwnerID+")\n"
+	output = output + "Approved: " + strconv.FormatBool(record.Approved) + "\n"
+
+	approver, err := s.User(record.Approver)
+	approverName := ""
+	approverID := ""
+	if err == nil {
+		approverName = approver.Username
+		approverID = approver.ID
+	}
+	output = output + "Approver: " + approverName + "("+approverID+")\n"
+
 	output = output + "Last Run: " + record.LastRun.Format("2006-01-02 15:04:05") + "\n"
 	output = output + "Org Name: " + record.OrgName + "\n"
 	output = output + "Description: " + record.Description + "\n"
@@ -912,10 +946,52 @@ func (h *RecruitmentHandler) ForcePost(payload []string, s *discordgo.Session, m
 	return
 }
 
+func (h *RecruitmentHandler) NotifyForApprovals(recordID string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
-func (h *RecruitmentHandler) QueueInfo(payload []string, s *discordgo.Session, m *discordgo.MessageCreate) {
-	h.querylocker.Lock()
-	defer h.querylocker.Unlock()
+	unformattedChannel, err := h.configdb.GetSetting("recruitment-admin-channel")
+	if err != nil {
+		return
+	}
+
+	formattedChannelID := CleanChannel(unformattedChannel)
+
+	record, err := h.recruitmentdb.GetRecruitmentRecordFromDB(recordID)
+	if err != nil {
+		return
+	}
+
+	owner, err := s.User(record.OwnerID)
+	if err != nil {
+		return
+	}
+
+	output := "ID: " + record.ID + "\n"
+	output = output + "Org Name: " +record.OrgName + "\n"
+	output = output + "Description: " + record.Description + "\n"
+
+	s.ChannelMessageSend(formattedChannelID, ":rotating_light: An advertisement has been created for \"**"+record.OrgName+"\"** by " +
+		""+owner.Username+" and requires moderation:\n```\n"+output+"\n```\n")
+	return
+}
+
+func (h *RecruitmentHandler) NotifyDeleted(record RecruitmentRecord, userID string, s *discordgo.Session, m *discordgo.MessageCreate) {
+
+	unformattedChannel, err := h.configdb.GetSetting("recruitment-admin-channel")
+	if err != nil {
+		return
+	}
+
+	user, err := s.User(userID)
+	if err != nil {
+		return
+	}
+
+	formattedChannelID := CleanChannel(unformattedChannel)
+	s.ChannelMessageSend(formattedChannelID, "**Record for " + record.OrgName + " has been deleted by "+user.Username+"**")
+	return
+}
+
+func (h *RecruitmentHandler) ModifyApproval(command string, payload []string, s *discordgo.Session, m *discordgo.MessageCreate){
 
 	// Grab our sender ID to verify if this user has permission to use this command
 	db := h.db.rawdb.From("Users")
@@ -930,6 +1006,134 @@ func (h *RecruitmentHandler) QueueInfo(payload []string, s *discordgo.Session, m
 		s.ChannelMessageSend(m.ChannelID, "You do not have permission to use this command!")
 		return
 	}
+
+	if len(payload) < 1 {
+		s.ChannelMessageSend(m.ChannelID, command + " requires an argument!")
+		return
+	}
+
+	recordID := payload[0]
+
+	record, err := h.recruitmentdb.GetRecruitmentRecordFromDB(recordID)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		return
+	}
+
+	approved := false
+	if command == "approve" {
+		approved = true
+	} else if command == "deny" || command == "reject"{
+
+		if len(payload) < 2 {
+			s.ChannelMessageSend(m.ChannelID, "An advertisement application denial requires a reason. If you do not wish to provide a reason to the creator, you can use the word 'shadow' to skip sending them a rejection notification.")
+			return
+		}
+
+		approved = false
+	} else {
+		s.ChannelMessageSend(m.ChannelID, "Unknown error!")
+		return
+	}
+
+	// If we aren't changing anything just skip
+	if record.Approved {
+		s.ChannelMessageSend(m.ChannelID, "Record already approved, doing nothing.")
+		return
+	}
+
+	record.Approved = approved
+	record.Approver = m.Author.ID
+
+	err = h.recruitmentdb.UpdateRecruitmentRecord(record)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		return
+	}
+
+	if approved {
+		user, err := s.User(m.Author.ID)
+		username := ""
+		if err == nil {
+			username = user.Username
+		}
+		s.ChannelMessageSend(m.ChannelID, "Advertisement for \"**" + record.OrgName + "**\" has been approved by "+username)
+		h.NotifyOwner(record.ID, approved, "", s, m )
+		return
+	} else {
+		if payload[1] == "shadow" {
+			h.recruitmentdb.RemoveRecruitmentRecordFromDBByID(record.ID)
+			return
+		}
+		reason := ""
+		for i, word := range payload {
+			if i == 1 {
+				reason = word
+			}
+			if i > 1 {
+				reason = reason + " " + word
+			}
+		}
+
+		h.NotifyOwner(record.ID, approved, reason, s, m)
+		h.recruitmentdb.RemoveRecruitmentRecordFromDBByID(record.ID)
+
+		user, err := s.User(m.Author.ID)
+		username := ""
+		if err == nil {
+			username = user.Username
+		}
+		s.ChannelMessageSend(m.ChannelID, "Advertisement for \"**" + record.OrgName + "**\" has been rejected by " +
+			""+username+" and removed from the database.\n```\n"+reason+"\n```\n")
+		return
+	}
+
+}
+
+func (h *RecruitmentHandler) NotifyOwner(recordID string, approved bool, reason string, s *discordgo.Session, m *discordgo.MessageCreate) {
+
+	record, err := h.recruitmentdb.GetRecruitmentRecordFromDB(recordID)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		return
+	}
+
+	userprivatechannel, err := s.UserChannelCreate(record.OwnerID)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error initializing private channel to user " + record.OwnerID)
+		return
+	}
+
+	if approved {
+		s.ChannelMessageSend(userprivatechannel.ID, "Your advertisement has been approved")
+		return
+	} else {
+		s.ChannelMessageSend(userprivatechannel.ID, "Your advertisement has been rejected: \n```" + reason + "\n```\n")
+		return
+	}
+
+}
+
+
+func (h *RecruitmentHandler) QueueInfo(payload []string, s *discordgo.Session, m *discordgo.MessageCreate) {
+	h.querylocker.Lock()
+	defer h.querylocker.Unlock()
+
+	/*
+	// Grab our sender ID to verify if this user has permission to use this command
+	db := h.db.rawdb.From("Users")
+	var user User
+	err := db.One("ID", m.Author.ID, &user)
+	if err != nil {
+		fmt.Println("error retrieving user:" + m.Author.ID)
+		return
+	}
+
+	if !user.Moderator {
+		s.ChannelMessageSend(m.ChannelID, "You do not have permission to use this command!")
+		return
+	}
+	*/
 
 	displayRecordDB, err := h.recruitmentdb.GetAllRecruitmentDisplayDB()
 	if err != nil {
@@ -962,14 +1166,12 @@ func (h *RecruitmentHandler) QueueInfo(payload []string, s *discordgo.Session, m
 	pending := ""
 	for i, record := range displayRecordDB {
 		recruitmentRecord, err := h.recruitmentdb.GetRecruitmentRecordFromDB(record.RecruitmentID)
-		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
-			return
-		}
-		if i == len(displayRecordDB)-1{
-			pending = pending + recruitmentRecord.OrgName
-		} else {
-			pending = pending + recruitmentRecord.OrgName + ", "
+		if err == nil {
+			if i == len(displayRecordDB)-1{
+				pending = pending + recruitmentRecord.OrgName
+			} else {
+				pending = pending + recruitmentRecord.OrgName + ", "
+			}
 		}
 	}
 	output = output + pending + "\n\n"
@@ -1099,6 +1301,20 @@ func (h *RecruitmentHandler) FixUsers() (err error){
 
 		user.RecruitmentCount = user.RecruitmentCount + 1
 		h.userdb.UpdateUserRecord(user)
+	}
+
+	return nil
+}
+
+func (h *RecruitmentHandler) FixAds() (err error){
+	recruitmentrecords, err := h.recruitmentdb.GetAllRecruitmentDB()
+	if err != nil {
+		return err
+	}
+
+	for _, record := range recruitmentrecords {
+		record.Approved = true
+		h.recruitmentdb.UpdateRecruitmentRecord(record)
 	}
 
 	return nil

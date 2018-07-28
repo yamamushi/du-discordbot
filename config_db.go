@@ -121,3 +121,12 @@ func (h *ConfigDB) GetValue(configname string) (value int, err error) {
 
 	return entry.Value, nil
 }
+
+func (h *ConfigDB) GetSetting(configname string) (setting string, err error) {
+	entry, err := h.GetConfigFromDB(configname)
+	if err != nil {
+		return "", err
+	}
+
+	return entry.Setting, nil
+}

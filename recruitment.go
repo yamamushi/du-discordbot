@@ -19,6 +19,8 @@ type RecruitmentRecord struct {
 	OrgName  string
 	Description string
 	LastRun  time.Time
+	Approved bool
+	Approver string
 }
 
 // We store our records in the list so that bot reboots don't break displaying them

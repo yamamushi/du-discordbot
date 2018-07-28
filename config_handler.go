@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"errors"
 	"strconv"
-)
+	)
 
 // ConfigHandler handles global config options that can be changed from within discord
 type ConfigHandler struct {
@@ -127,6 +127,21 @@ func (h *ConfigHandler) ParseCommand(command []string, s *discordgo.Session, m *
 		}
 	}
 
+	if command[1] == "write" {
+		if len(command) <= 3 {
+			s.ChannelMessageSend(m.ChannelID, "Command expects two arguments")
+		} else {
+			option := command[2]
+			err := h.Write(option, command[3])
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
+				return
+			}
+			s.ChannelMessageSend(m.ChannelID, "Wrote " + command[3] + " to " + command[2])
+			return
+		}
+	}
+
 	if command[1] == "get" {
 		if len(command) <= 2 {
 			s.ChannelMessageSend(m.ChannelID, "Command expects an argument")
@@ -143,6 +158,9 @@ func (h *ConfigHandler) ValidateConfigName(configname string) bool {
 		return true
 	}
 	if configname == "recruitment-timer"{
+		return true
+	}
+	if configname == "recruitment-admin-channel"{
 		return true
 	}
 
@@ -188,6 +206,19 @@ func (h *ConfigHandler) Set(configname string, value int) (err error) {
 		return h.configdb.AddConfigToDB(entry)
 	}
 	entry.Value = value
+	return h.configdb.AddConfigToDB(entry)
+}
+
+func (h *ConfigHandler) Write(configname string, value string) (err error) {
+	if !h.ValidateConfigName(configname) {
+		return errors.New("invalid config " + configname)
+	}
+	entry, err := h.configdb.GetConfigFromDB(configname)
+	if err != nil {
+		entry := ConfigEntry{Name:configname, Setting:value}
+		return h.configdb.AddConfigToDB(entry)
+	}
+	entry.Setting = value
 	return h.configdb.AddConfigToDB(entry)
 }
 
