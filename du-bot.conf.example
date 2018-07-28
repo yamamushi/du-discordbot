@@ -105,5 +105,7 @@ openweather_key = ""
 
 recruitment_channel = ""
 recruitment_timeout = 120
+recruitment_reminder_timeout = 4320
+recruitment_expiration_timeout = 30240
 recruitment_shuffle_count = 25
 recruitment_wait_on_startup = true

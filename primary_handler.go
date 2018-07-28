@@ -128,7 +128,7 @@ func (h *PrimaryHandler) Init() error {
 	recruitment.Init()
 	h.dg.AddHandler(recruitment.Read)
 	go recruitment.RunListings(h.dg)
-
+	go recruitment.CheckValidity(h.dg)
 
 	//fmt.Println("Adding Music Handler")
 	//musichandler := MusicHandler{db: h.db, user: h.user, registry: h.command.registry,

@@ -7,10 +7,10 @@ import (
 	"math/rand"
 	"time"
 	"strconv"
-	"math"
-	"sync"
+		"sync"
 	"reflect"
-	)
+	"math"
+)
 
 // RecruitmentHandler struct
 type RecruitmentHandler struct {
@@ -130,6 +130,11 @@ func (h *RecruitmentHandler) ParseCommand(commandlist []string, s *discordgo.Ses
 		h.RecruitmentInfo(commandpayload, s, m)
 		return
 	}
+	if payload[0] == "validate" {
+		_, commandpayload := SplitPayload(payload)
+		h.Validate(commandpayload, s, m)
+		return
+	}
 	if payload[0] == "queue" {
 		_, commandpayload := SplitPayload(payload)
 		h.QueueInfo(commandpayload, s, m)
@@ -169,12 +174,14 @@ func (h *RecruitmentHandler) ParseCommand(commandlist []string, s *discordgo.Ses
 		//return
 	}
 	if payload[0] == "fixads" {
+		/*
 		err := h.FixAds()
 		if err != nil {
 			s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error() )
 			return
 		}
 		s.ChannelMessageSend(m.ChannelID, "Recruitment records repaired")
+		*/
 		return
 	}
 
@@ -246,6 +253,169 @@ func (h *RecruitmentHandler) RunListings(s *discordgo.Session){
 			}
 		}
 	}
+}
+
+func (h *RecruitmentHandler) CheckValidity(s *discordgo.Session){
+/*
+	if h.conf.Recruitment.RecruitmentWaitOnStartup {
+
+		select {
+		case <-h.timeoutchan:
+			break
+		case <-time.After(5 * time.Minute):
+			break
+		}
+	}
+*/
+
+	for true {
+		time.Sleep(5 * time.Minute)
+
+		recruitmentRecords, err := h.recruitmentdb.GetAllRecruitmentDB()
+		if err == nil {
+			for _, record := range recruitmentRecords {
+
+				expirationTime, err := h.configdb.GetValue("recruitment-expiration")
+				if err != nil {
+					expirationTime = int(h.conf.Recruitment.RecruitmentExpiration)
+				}
+
+				expiryMinutes := time.Duration(time.Duration(expirationTime) * time.Minute)
+				expiryDate := record.LastValidated.Add(expiryMinutes)
+
+				if time.Now().After(expiryDate) && record.ValidationReminderSent {
+					h.NotifyOwnerExpiredRecord(record.ID, s)
+					h.recruitmentdb.RemoveRecruitmentRecordFromDBByID(record.ID)
+				}
+
+				reminderTime, err := h.configdb.GetValue("recruitment-reminder")
+				if err != nil {
+					expirationTime = int(h.conf.Recruitment.RecruitmentExpiration)
+				}
+				reminderMinutes := time.Duration(time.Duration(expirationTime)*time.Minute) - time.Duration(time.Duration(reminderTime)*time.Minute)
+				reminderDate := record.LastValidated.Add(reminderMinutes)
+
+				if time.Now().After(reminderDate) && !record.ValidationReminderSent {
+					record.ValidationReminderSent = true
+					err = h.recruitmentdb.UpdateRecruitmentRecord(record)
+					if err == nil {
+						h.VerifyValidityWithOwner(record.ID, s)
+					}
+				}
+			}
+		}
+	}
+}
+
+func (h *RecruitmentHandler) NotifyOwnerExpiredRecord(recordID string, s *discordgo.Session) {
+
+	record, err := h.recruitmentdb.GetRecruitmentRecordFromDB(recordID)
+	if err != nil {
+		return
+	}
+
+	userprivatechannel, err := s.UserChannelCreate(record.OwnerID)
+	if err != nil {
+		return
+	}
+
+	output := ":rotating_light: This is a notification that your recruitment advertisement for \"**" + record.OrgName + "**\" has expired. \n\n" +
+		"This is done on an automated basis to keep the recruitment system from being filled with abandoned advertisements. " +
+		"Feel free to create a new advertisement at any time."
+
+	s.ChannelMessageSend(userprivatechannel.ID, output)
+
+	unformattedAdminChannel, err := h.configdb.GetSetting("recruitment-admin-channel")
+	if err != nil {
+		return
+	}
+
+	formattedAdminChannel := CleanChannel(unformattedAdminChannel)
+	s.ChannelMessageSend(formattedAdminChannel, "Recruitment ad for \"**" + record.OrgName + "**\" has expired and has been removed automatically.")
+	return
+}
+
+func (h *RecruitmentHandler) VerifyValidityWithOwner(recordID string, s *discordgo.Session) {
+
+	record, err := h.recruitmentdb.GetRecruitmentRecordFromDB(recordID)
+	if err != nil {
+		return
+	}
+
+	userprivatechannel, err := s.UserChannelCreate(record.OwnerID)
+	if err != nil {
+		return
+	}
+
+	output := ":rotating_light: This is a reminder that your recruitment advertisement for \"**" + record.OrgName + "**\" is about to expire in **72 hours**. \n\n" +
+		"This is done on an automated basis to keep the recruitment system from being filled with abandoned advertisements.\n\n" +
+		"If you would like to prevent your advertisement from being removed automatically, please use the following command in the Dual Universe discord:" +
+		"\n```\n~recruitment validate " + record.ID + "\n```\n"
+
+	s.ChannelMessageSend(userprivatechannel.ID, output)
+}
+
+func (h *RecruitmentHandler) Validate(payload []string, s *discordgo.Session, m *discordgo.MessageCreate){
+	if len(payload) < 1 {
+		s.ChannelMessageSend(m.ChannelID, "validate requires an argument.")
+		return
+	}
+
+	record, err := h.recruitmentdb.GetRecruitmentRecordFromDB(payload[0])
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		return
+	}
+
+	user, err := h.userdb.GetUser(m.Author.ID)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		return
+	}
+
+	if m.Author.ID != record.OwnerID && !user.Moderator {
+		s.ChannelMessageSend(m.ChannelID, "You do not have permission to validate this advertisement. If you believe this is an error, pelase contact a moderator.")
+		return
+	}
+
+	expirationTime, err := h.configdb.GetValue("recruitment-expiration")
+	if err != nil {
+		expirationTime = int(h.conf.Recruitment.RecruitmentExpiration)
+	}
+
+	expiryMinutes := time.Duration(time.Duration(expirationTime) * time.Minute)
+	expiryDate := record.LastValidated.Add(expiryMinutes)
+
+
+	reminderTime, err := h.configdb.GetValue("recruitment-reminder")
+	if err != nil {
+		expirationTime = int(h.conf.Recruitment.RecruitmentExpiration)
+	}
+	reminderMinutes := time.Duration(time.Duration(expirationTime)*time.Minute) - time.Duration(time.Duration(reminderTime)*time.Minute)
+	reminderDate := record.LastValidated.Add(reminderMinutes)
+
+	if !time.Now().After(reminderDate) {
+		s.ChannelMessageSend(m.ChannelID, "This command is only valid for an expiring advertisement.")
+		return
+	}
+
+	record.LastValidated = time.Now()
+	record.ValidationReminderSent = false
+	h.recruitmentdb.UpdateRecruitmentRecord(record)
+
+	loc, _ := time.LoadLocation("America/Chicago")
+	s.ChannelMessageSend(m.ChannelID, "Advertisement has been successfully validated until " + expiryDate.In(loc).Format("Mon Jan _2 03:04 MST 2006"))
+
+
+	unformattedAdminChannel, err := h.configdb.GetSetting("recruitment-admin-channel")
+	if err != nil {
+		return
+	}
+
+	formattedAdminChannel := CleanChannel(unformattedAdminChannel)
+
+	s.ChannelMessageSend(formattedAdminChannel, "Recruitment ad for \"**" + record.OrgName + "**\" has been validated by **"+m.Author.Username+"**("+m.Author.ID+") and will not be removed automatically until the next expiration period.")
+
 }
 
 func (h *RecruitmentHandler) PopulateDisplayDB() (err error){
@@ -488,7 +658,7 @@ func (h *RecruitmentHandler) ConfirmRecruitmentAd(payload string, s *discordgo.S
 		output := "**"+splitPayload[0]+"**" + "\n"
 		output = output + splitPayload[1]
 
-		recruitmentAd := RecruitmentRecord{ID: uuid, OwnerID: m.Author.ID, OrgName: splitPayload[0], Description: splitPayload[1], Created: time.Now()}
+		recruitmentAd := RecruitmentRecord{ID: uuid, OwnerID: m.Author.ID, OrgName: splitPayload[0], Description: splitPayload[1], Created: time.Now(), LastValidated: time.Now()}
 
 		err = h.recruitmentdb.AddRecruitmentRecordToDB(recruitmentAd)
 		if err != nil {
@@ -743,7 +913,11 @@ func (h *RecruitmentHandler) RecruitmentInfo(payload []string, s *discordgo.Sess
 	}
 	output = output + "Approver: " + approverName + "("+approverID+")\n"
 
-	output = output + "Last Run: " + record.LastRun.Format("2006-01-02 15:04:05") + "\n"
+	loc, _ := time.LoadLocation("America/Chicago")
+	output = output + "Last Run: " + record.LastRun.In(loc).Format("Mon Jan _2 03:04 MST 2006") + "\n"
+	output = output + "Last Validated: " + record.LastValidated.In(loc).Format("Mon Jan _2 03:04 MST 2006") + "\n"
+	output = output + "Validation Reminder Sent: " + strconv.FormatBool(record.ValidationReminderSent) + "\n"
+
 	output = output + "Org Name: " + record.OrgName + "\n"
 	output = output + "Description: " + record.Description + "\n"
 	output = output + "\n```\n"
@@ -1086,7 +1260,7 @@ func (h *RecruitmentHandler) NotifyDeleted(record RecruitmentRecord, userID stri
 	}
 
 	formattedChannelID := CleanChannel(unformattedChannel)
-	s.ChannelMessageSend(formattedChannelID, "**Record for " + record.OrgName + " has been deleted by "+user.Username+"**")
+	s.ChannelMessageSend(formattedChannelID, "Record for **" + record.OrgName + "** has been deleted by "+user.Username+".")
 	return
 }
 
@@ -1142,15 +1316,17 @@ func (h *RecruitmentHandler) ModifyApproval(command string, payload []string, s 
 	}
 
 	record.Approved = approved
-	record.Approver = m.Author.ID
-
-	err = h.recruitmentdb.UpdateRecruitmentRecord(record)
-	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
-		return
-	}
 
 	if approved {
+		record.ApprovedDate = time.Now()
+		record.Approver = m.Author.ID
+
+		err = h.recruitmentdb.UpdateRecruitmentRecord(record)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+			return
+		}
+
 		user, err := s.User(m.Author.ID)
 		username := ""
 		if err == nil {
@@ -1254,7 +1430,8 @@ func (h *RecruitmentHandler) QueueInfo(payload []string, s *discordgo.Session, m
 
 	output := ":satellite: Current Recruitment Advertisement Queue: ```\n"
 	output = output + "Records in Queue: " + strconv.Itoa(queuelen) + "\n"
-	output = output + "Last Post: " + h.lastpost.Format("2006-01-02 15:04:05") + "\n"
+	loc, _ := time.LoadLocation("America/Chicago")
+	output = output + "Last Post: " + h.lastpost.In(loc).Format("Mon Jan _2 03:04 MST 2006") + "\n"
 
 	timercount, err := h.configdb.GetValue("recruitment-timer")
 	if err != nil {
@@ -1425,6 +1602,7 @@ func (h *RecruitmentHandler) FixAds() (err error){
 		record.Approved = true
 		record.Created = time.Now()
 		record.ApprovedDate = time.Now()
+		record.LastValidated = time.Now()
 		h.recruitmentdb.UpdateRecruitmentRecord(record)
 	}
 
