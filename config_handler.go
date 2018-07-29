@@ -169,6 +169,9 @@ func (h *ConfigHandler) ValidateConfigName(configname string) bool {
 	if configname == "recruitment-reminder"{
 		return true
 	}
+	if configname == "reactions-expiration" {
+		return true
+	}
 
 	return false
 }

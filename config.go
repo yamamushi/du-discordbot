@@ -16,6 +16,7 @@ type Config struct {
 	RolesConfig   rolesConfig    `toml:"roles"`
 	APIConfig     apiConfig      `toml:"api"`
 	Recruitment   recruitmentConfig      `toml:"recruitment"`
+	Reactions     ReactionsConfig   `toml:"reactions"`
 }
 
 // discordConfig struct
@@ -105,6 +106,10 @@ type recruitmentConfig struct {
 	RecruitmentReminder          time.Duration `toml:"recruitment_reminder_timeout"`
 	RecruitmentShuffleCount      int `toml:"recruitment_shuffle_count"`
 	RecruitmentWaitOnStartup     bool `toml:"recruitment_wait_on_startup"`
+}
+
+type ReactionsConfig struct {
+	RactionsExpiration          time.Duration `toml:"reactions_timeout"`
 }
 
 // ReadConfig function

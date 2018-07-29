@@ -91,6 +91,9 @@ func (h *PrimaryHandler) Init() error {
 	confighandler := ConfigHandler{conf:h.conf, registry: h.command.registry, callback: h.callback, db: h.db}
 	confighandler.Init()
 	h.dg.AddHandler(confighandler.Read)
+	h.reactions.configdb = confighandler.configdb
+	go h.reactions.Cleaner()
+
 
 	fmt.Println("Adding Lander Handler")
 	landingzone := LanderHandler{configdb:confighandler.configdb, user: h.user}
@@ -129,6 +132,13 @@ func (h *PrimaryHandler) Init() error {
 	h.dg.AddHandler(recruitment.Read)
 	go recruitment.RunListings(h.dg)
 	go recruitment.CheckValidity(h.dg)
+
+	fmt.Println("Adding Wiki Handler")
+	wikihandler := WikiHandler{conf: h.conf, registry: h.command.registry, callback: h.callback,
+		db: h.db, userdb: h.user, configdb: confighandler.configdb, reactions: h.reactions}
+	wikihandler.Init()
+	h.dg.AddHandler(wikihandler.Read)
+
 
 	//fmt.Println("Adding Music Handler")
 	//musichandler := MusicHandler{db: h.db, user: h.user, registry: h.command.registry,

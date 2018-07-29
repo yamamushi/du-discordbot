@@ -26,6 +26,7 @@ RUN go get github.com/gofrs/uuid
 RUN go get github.com/lunixbochs/vtclean
 RUN go get github.com/yuin/gopher-lua
 RUN go get github.com/wcharczuk/go-chart
+RUN go get github.com/grokify/html-strip-tags-go
 #RUN go get github.com/jonas747/ogg
 #RUN go get -u github.com/rylio/ytdl/...
 

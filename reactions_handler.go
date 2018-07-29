@@ -4,6 +4,8 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"container/list"
 	"reflect"
+		"time"
+	"sync"
 	"fmt"
 )
 
@@ -23,11 +25,12 @@ import (
 */
 
 type ReactionsHandler struct {
-	WatchList list.List
-	dg        *discordgo.Session
-	logger    *Logger
-	conf     *Config
-
+	WatchList    list.List
+	dg           *discordgo.Session
+	logger       *Logger
+	conf         *Config
+	querylocker  sync.RWMutex
+	configdb     *ConfigDB
 }
 
 
@@ -37,6 +40,7 @@ type WatchReaction struct {
 	ChannelID     string
 	MessageID     string
 	Handler       func(string, string, *discordgo.Session, interface{})
+	Created       time.Time
 	Args          string
 }
 
@@ -59,10 +63,7 @@ func (h *ReactionsHandler) Create(Handler func(string, string, *discordgo.Sessio
 		//fmt.Println("Channel: " + message.ChannelID)
 
 		for _, reaction := range Reactions {
-			err = s.MessageReactionAdd(message.ChannelID, message.ID, reaction)
-			if err != nil {
-				fmt.Println(err.Error())
-			}
+			s.MessageReactionAdd(message.ChannelID, message.ID, reaction)
 		}
 
 		h.Watch(Handler, message.ID, TargetChannelID, Args, s)
@@ -73,13 +74,41 @@ func (h *ReactionsHandler) Create(Handler func(string, string, *discordgo.Sessio
 func (h *ReactionsHandler) Watch(Handler func(string, string, *discordgo.Session, interface{}),
 	MessageID string, TargetChannelID string,  Args string, s *discordgo.Session) {
 
-	item := WatchReaction{ChannelID: TargetChannelID, MessageID: MessageID, Handler: Handler, Args: Args}
+	//h.querylocker.Lock()
+	//defer h.querylocker.Unlock()
+
+	item := WatchReaction{ChannelID: TargetChannelID, MessageID: MessageID, Handler: Handler, Args: Args, Created: time.Now()}
 	h.WatchList.PushBack(item)
 
 }
 
+func (h *ReactionsHandler) Cleaner(){
+	for {
+		time.Sleep(3*time.Minute)
+		expirationTime, err := h.configdb.GetValue("reactions-expiration")
+		if err != nil {
+			expirationTime = int(h.conf.Reactions.RactionsExpiration)
+		}
+
+		//h.querylocker.Lock()
+		fmt.Print("Locked")
+		for e := h.WatchList.Front(); e != nil; e = e.Next() {
+			r := reflect.ValueOf(e.Value)
+			reaction := r.Interface().(WatchReaction)
+			if time.Now().After(reaction.Created.Add(time.Duration(expirationTime)*time.Minute)) {
+				h.WatchList.Remove(e)
+			}
+		}
+		//h.querylocker.Unlock()
+		fmt.Print("Unlocked")
+	}
+}
+
 // UnWatch function
 func (h *ReactionsHandler) UnWatch(ChannelID string, MessageID string) {
+
+	//h.querylocker.Lock()
+	//defer h.querylocker.Unlock()
 
 	// Clear user element by iterating
 	for e := h.WatchList.Front(); e != nil; e = e.Next() {
@@ -101,6 +130,9 @@ func (h *ReactionsHandler) ReadReactionAdd(s *discordgo.Session, m *discordgo.Me
 		return
 	}
 
+	//h.querylocker.Lock()
+	//defer h.querylocker.Unlock()
+
 	for e := h.WatchList.Front(); e != nil; e = e.Next() {
 		r := reflect.ValueOf(e.Value)
 		channelid := reflect.Indirect(r).FieldByName("ChannelID").String()
@@ -124,7 +156,7 @@ func (h *ReactionsHandler) ReadReactionAdd(s *discordgo.Session, m *discordgo.Me
 			rargs[2] = reflect.ValueOf(s)
 			rargs[3] = reflect.ValueOf(*m)
 
-			handler.Call(rargs)
+			go handler.Call(rargs)
 		}
 	}
 }
@@ -136,6 +168,9 @@ func (h *ReactionsHandler) ReadReactionRemove(s *discordgo.Session, m *discordgo
 		return
 	}
 
+	//h.querylocker.Lock()
+	//h.querylocker.Unlock()
+
 	for e := h.WatchList.Front(); e != nil; e = e.Next() {
 		r := reflect.ValueOf(e.Value)
 		channelid := reflect.Indirect(r).FieldByName("ChannelID").String()
@@ -159,7 +194,7 @@ func (h *ReactionsHandler) ReadReactionRemove(s *discordgo.Session, m *discordgo
 			rargs[2] = reflect.ValueOf(s)
 			rargs[3] = reflect.ValueOf(*m)
 
-			handler.Call(rargs)
+			go handler.Call(rargs)
 		}
 	}
 }
