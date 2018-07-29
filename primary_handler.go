@@ -139,6 +139,14 @@ func (h *PrimaryHandler) Init() error {
 	wikihandler.Init()
 	h.dg.AddHandler(wikihandler.Read)
 
+	fmt.Println("Adding Rabbit Handler")
+	rabbithandler := RabbitHandler{conf: h.conf, userdb: h.user, registry: h.command.registry, db: h.db, globalstate: h.globalstate,
+		configdb: confighandler.configdb, }
+	rabbithandler.Init()
+	h.dg.AddHandler(rabbithandler.Read)
+	h.dg.AddHandler(rabbithandler.Catch)
+	go rabbithandler.Release(h.dg)
+
 
 	//fmt.Println("Adding Music Handler")
 	//musichandler := MusicHandler{db: h.db, user: h.user, registry: h.command.registry,

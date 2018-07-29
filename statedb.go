@@ -3,6 +3,7 @@ package main
 import (
 	"sync"
 	"errors"
+	"time"
 )
 
 // StateDB struct
@@ -15,6 +16,8 @@ type StateDB struct {
 type StateRecord struct {
 	ID      string `storm:"id"`
 	LastRecruitmentIDPosted  string
+	RabbitLoose bool
+	LastRabbit  time.Time
 }
 
 func (h *StateDB) GetState()(state StateRecord, err error) {

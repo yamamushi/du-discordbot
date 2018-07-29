@@ -6,8 +6,7 @@ import (
 	"reflect"
 		"time"
 	"sync"
-	"fmt"
-)
+	)
 
 // This will come in handy later
 /*
@@ -91,7 +90,7 @@ func (h *ReactionsHandler) Cleaner(){
 		}
 
 		//h.querylocker.Lock()
-		fmt.Print("Locked")
+		//fmt.Print("Locked")
 		for e := h.WatchList.Front(); e != nil; e = e.Next() {
 			r := reflect.ValueOf(e.Value)
 			reaction := r.Interface().(WatchReaction)
@@ -100,7 +99,7 @@ func (h *ReactionsHandler) Cleaner(){
 			}
 		}
 		//h.querylocker.Unlock()
-		fmt.Print("Unlocked")
+		//fmt.Print("Unlocked")
 	}
 }
 

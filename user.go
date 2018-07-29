@@ -22,6 +22,9 @@ type User struct {
 	CurrentAutoRoleName   string
 	DisableAutoRole     bool
 
+	RabbitCount      int
+	RabbitWinner     bool
+
 	RecruitmentLimit int
 	RecruitmentCount int
 }

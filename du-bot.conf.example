@@ -113,3 +113,10 @@ recruitment_wait_on_startup = true
 [reactions]
 
 reactions_timeout = 60
+
+[rabbit]
+
+rabbit_random = 100000
+rabbit_count = 1
+rabbit_timer = 5
+rabbit_expiration = 5

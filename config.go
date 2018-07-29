@@ -17,6 +17,7 @@ type Config struct {
 	APIConfig     apiConfig      `toml:"api"`
 	Recruitment   recruitmentConfig      `toml:"recruitment"`
 	Reactions     ReactionsConfig   `toml:"reactions"`
+	Rabbit        RabbitConfig   `toml:"rabbit"`
 }
 
 // discordConfig struct
@@ -110,6 +111,16 @@ type recruitmentConfig struct {
 
 type ReactionsConfig struct {
 	RactionsExpiration          time.Duration `toml:"reactions_timeout"`
+}
+
+
+type RabbitConfig struct {
+
+	RabbitRandomWeight  int `toml:"rabbit_random"`
+	RabbitCount         int `toml:"rabbit_count"`
+	RabbitTimer         time.Duration `toml:"rabbit_timer"`
+	RabbitExpiration         time.Duration `toml:"rabbit_expiration"`
+
 }
 
 // ReadConfig function
