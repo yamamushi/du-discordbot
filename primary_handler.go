@@ -147,6 +147,12 @@ func (h *PrimaryHandler) Init() error {
 	h.dg.AddHandler(rabbithandler.Catch)
 	go rabbithandler.Release(h.dg)
 
+	fmt.Println("Adding Admin Handler")
+	adminhandler := AdminHandler{conf: h.conf, db: h.db, registry: h.command.registry, reactions: h.reactions,
+		configdb: confighandler.configdb, globalstate: h.globalstate, userdb: h.user}
+	adminhandler.Init()
+	h.dg.AddHandler(adminhandler.Read)
+
 
 	//fmt.Println("Adding Music Handler")
 	//musichandler := MusicHandler{db: h.db, user: h.user, registry: h.command.registry,

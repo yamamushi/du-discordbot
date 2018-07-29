@@ -69,6 +69,25 @@ func (h *ReactionsHandler) Create(Handler func(string, string, *discordgo.Sessio
 		return nil
 }
 
+func (h *ReactionsHandler) CreateEmbed(Handler func(string, string, *discordgo.Session, interface{}),
+	Reactions []string, TargetChannelID string, Output *discordgo.MessageEmbed, Args string,
+	s *discordgo.Session) (err error){
+
+	message, err := s.ChannelMessageSendEmbed(TargetChannelID, Output)
+	if err != nil {
+		return err
+	}
+	//fmt.Println("ID: " + message.ID)
+	//fmt.Println("Channel: " + message.ChannelID)
+
+	for _, reaction := range Reactions {
+		s.MessageReactionAdd(message.ChannelID, message.ID, reaction)
+	}
+
+	h.Watch(Handler, message.ID, TargetChannelID, Args, s)
+	return nil
+}
+
 // Watch function
 func (h *ReactionsHandler) Watch(Handler func(string, string, *discordgo.Session, interface{}),
 	MessageID string, TargetChannelID string,  Args string, s *discordgo.Session) {

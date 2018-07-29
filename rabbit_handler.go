@@ -34,7 +34,7 @@ func (h *RabbitHandler) Init() {
 
 // RegisterCommands function
 func (h *RabbitHandler) RegisterCommands() (err error) {
-	h.registry.Register("rabbit", "Shhh", "release|check|count")
+	h.registry.Register("rabbit", "Shhh", "check|count")
 	return nil
 }
 
@@ -334,24 +334,25 @@ func (h *RabbitHandler) Release(s *discordgo.Session){
 		time.Sleep((time.Duration(rabbitTimer)*time.Minute))
 		globalstate, err := h.globalstate.GetState()
 		if err == nil {
-			h.querylocker.Lock()
-			globalstate.RabbitLoose = true
-			err = h.globalstate.UpdateStateRecord(globalstate)
-			h.querylocker.Unlock()
+
+			unformatted, err := h.configdb.GetSetting("rabbit-channel")
 			if err == nil {
 
-				unformatted, err := h.configdb.GetSetting("rabbit-channel")
-				if err == nil {
+				rabbitRandom, err := h.configdb.GetValue("rabbit-random")
+				if err != nil {
+					rabbitRandom = int(h.conf.Rabbit.RabbitRandomWeight)
+				}
 
-					rabbitRandom, err := h.configdb.GetValue("rabbit-random")
-					if err != nil {
-						rabbitRandom = int(h.conf.Rabbit.RabbitRandomWeight)
-					}
+				rabbitChannel := CleanChannel(unformatted)
 
-					rabbitChannel := CleanChannel(unformatted)
+				randomresult := rand.Intn(100000)
+				if randomresult < rabbitRandom {
 
-					randomresult := rand.Intn(100000)
-					if randomresult < rabbitRandom {
+					h.querylocker.Lock()
+					globalstate.RabbitLoose = true
+					
+					err = h.globalstate.UpdateStateRecord(globalstate)
+					if err == nil {
 						s.ChannelMessageSend(rabbitChannel, ":rabbit: A rabbit hops into the room")
 
 						rabbitExpire, err := h.configdb.GetValue("rabbit-expiration")
@@ -360,11 +361,12 @@ func (h *RabbitHandler) Release(s *discordgo.Session){
 						}
 
 						time.Sleep(time.Duration(rabbitExpire)*time.Minute)
-						h.querylocker.Lock()
+
 						globalstate, err := h.globalstate.GetState()
 						if err == nil {
 							if globalstate.RabbitLoose {
 								globalstate.RabbitLoose = false
+
 								h.globalstate.UpdateStateRecord(globalstate)
 								s.ChannelMessageSend(rabbitChannel, ":rabbit2: The rabbit hops out of the room")
 								h.querylocker.Unlock()
@@ -374,6 +376,8 @@ func (h *RabbitHandler) Release(s *discordgo.Session){
 						} else {
 							h.querylocker.Unlock()
 						}
+					} else {
+						h.querylocker.Unlock()
 					}
 				}
 			}
