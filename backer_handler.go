@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/bwmarrin/discordgo"
 	"strings"
-)
+	)
 
 type BackerHandler struct {
 	db              *DBHandler
@@ -224,12 +224,9 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		output := "User record for " + m.Mentions[0].Mention() + "\n"
 		output += "Profile: " + record.ForumProfile + "\n"
 		output += "```"
-		output += "Founder Status: " + record.BackerStatus
-		if record.ATV == "true" {
-			output += "\nATV Status: true"
-		} else {
-			output += "\nATV Status: false"
-		}
+		output += "\nFounder Status: " + record.BackerStatus
+		output += "\nPreAlpha Status: " + record.PreAlpha
+		output += "\nATV Status: " + record.ATV
 		output += "\n```\n"
 		s.ChannelMessageSend(m.ChannelID, output)
 		return
@@ -297,6 +294,32 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		}
 		output = output + "\n```\n"
 		s.ChannelMessageSend(userprivatechannel.ID, output)
+		return
+	}
+	if command == "repairbackers" {
+		if !user.Owner {
+			return
+		}
+
+		records, err := h.backerInterface.GetAllBackers()
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+			return
+		}
+
+		for _, record := range records {
+			if record.BackerStatus == "Gold Founder" || record.BackerStatus == "Sapphire Founder" || record.BackerStatus == "Ruby Founder" ||
+				record.BackerStatus == "Emerald Founder" || record.BackerStatus == "Diamond Founder" || record.BackerStatus == "Kyrium Founder" ||
+				record.BackerStatus == "Patron" || record.ATV == "true" {
+				record.PreAlpha = "true"
+				err = h.backerInterface.SaveRecordToDB(record)
+				if err != nil {
+					s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+					return
+				}
+			}
+		}
+		s.ChannelMessageSend(m.ChannelID, "Records repaired")
 		return
 	}
 }

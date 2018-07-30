@@ -157,6 +157,11 @@ func (h *UtilitiesHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate
 // UnfoldURL function
 func (h *UtilitiesHandler) Say(channelID string, message string, s *discordgo.Session, m *discordgo.MessageCreate) {
 	channelID = CleanChannel(channelID)
+
+	if strings.Contains(strings.ToLower(message), "🐰" ) || strings.Contains(strings.ToLower(message), "🐇" ) {
+		s.ChannelMessageSend(m.ChannelID, "https://www.tenor.co/zBGa.gif")
+		return
+	}
 	s.ChannelMessageSend(channelID, message)
 	s.ChannelMessageSend(m.ChannelID, "Message sent to <#" + channelID + ">")
 	return

@@ -18,6 +18,8 @@ type RabbitHandler struct {
 	globalstate *StateDB
 	configdb *ConfigDB
 
+	backerdb *BackerInterface
+
 	timeoutchan chan bool
 	querylocker sync.RWMutex
 	lastpost time.Time
@@ -74,6 +76,67 @@ func (h *RabbitHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 }
 
 
+func (h *RabbitHandler) CarrotFinder(s *discordgo.Session, m *discordgo.MessageCreate) {
+
+	// Ignore all messages created by the bot itself
+	if m.Author.ID == s.State.User.ID {
+		return
+	}
+
+	// Ignore bots
+	if m.Author.Bot {
+		return
+	}
+
+	if strings.ToLower(m.Content) != "🥕" {
+		return
+	}
+
+	unformattedChannel, err := h.configdb.GetSetting("rabbit-channel")
+	if err != nil {
+		return
+	}
+	rabbitChannel := CleanChannel(unformattedChannel)
+	if m.ChannelID != rabbitChannel {
+		response, err := s.ChannelMessageSend(m.ChannelID, "Sorry, rabbits can only be found in " + unformattedChannel)
+		if err == nil {
+			time.Sleep(5*time.Second)
+			s.ChannelMessageDelete(m.ChannelID, response.ID)
+			s.ChannelMessageDelete(m.ChannelID, m.ID)
+			return
+		}
+		return
+	}
+
+	user, err := h.userdb.GetUser(m.Author.ID)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		return
+	}
+
+	if !user.Owner {
+		response, err := s.ChannelMessageSend(m.ChannelID, "Thanks for the treat, but no rabbits for you! (You don't have permissions to lure a rabbit)")
+		if err == nil {
+			time.Sleep(5*time.Second)
+			s.ChannelMessageDelete(m.ChannelID, response.ID)
+			s.ChannelMessageDelete(m.ChannelID, m.ID)
+			return
+		}
+		return
+	}
+
+	lure, err := s.ChannelMessageSend(m.ChannelID, "You attempt to lure a rabbit (this is not guaranteed to work!).")
+	if err == nil {
+		time.Sleep(5*time.Second)
+		s.ChannelMessageDelete(m.ChannelID, lure.ID)
+		s.ChannelMessageDelete(m.ChannelID, m.ID)
+	}
+	h.Carrot(s, m)
+
+	return
+}
+
+
 // Read function
 func (h *RabbitHandler) Catch(s *discordgo.Session, m *discordgo.MessageCreate){
 
@@ -91,8 +154,38 @@ func (h *RabbitHandler) Catch(s *discordgo.Session, m *discordgo.MessageCreate){
 		return
 	}
 
+	unformattedChannel, err := h.configdb.GetSetting("rabbit-channel")
+	if err != nil {
+		return
+	}
+	rabbitChannel := CleanChannel(unformattedChannel)
+	if m.ChannelID != rabbitChannel {
+		response, err := s.ChannelMessageSend(m.ChannelID, "Sorry, rabbits can only be found in " + unformattedChannel)
+		if err == nil {
+			time.Sleep(5*time.Second)
+			s.ChannelMessageDelete(m.ChannelID, response.ID)
+			s.ChannelMessageDelete(m.ChannelID, m.ID)
+			return
+		}
+		return
+	}
+
+
 	h.querylocker.Lock()
 	defer h.querylocker.Unlock()
+
+	record, err := h.backerdb.GetRecordFromDB(m.Author.ID)
+	if err == nil {
+		if record.PreAlpha == "true" || record.ATV == "true" {
+			response, err := s.ChannelMessageSend(m.ChannelID, "Sorry, you can only participate if you do not already have pre-alpha access.")
+			if err == nil {
+				time.Sleep(5*time.Second)
+				s.ChannelMessageDelete(m.ChannelID, response.ID)
+				s.ChannelMessageDelete(m.ChannelID, m.ID)
+				return
+			}
+		}
+	}
 
 	globalstate, err := h.globalstate.GetState()
 	if err != nil {
@@ -332,6 +425,23 @@ func (h *RabbitHandler) NotifyOwner(userID string, s *discordgo.Session, m *disc
 	return
 }
 
+func (h *RabbitHandler) Carrot(s *discordgo.Session, m *discordgo.MessageCreate){
+	db := h.db.rawdb.From("Users")
+	var user User
+	err := db.One("ID", m.Author.ID, &user)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		return
+	}
+
+	if !user.Owner {
+		return // Silent return
+	}
+
+	h.timeoutchan<-true
+	//s.ChannelMessageSend(m.ChannelID, "Successfully forced the latest post from the recruitment queue")
+	return
+}
 
 func (h *RabbitHandler) Release(s *discordgo.Session){
 
@@ -342,9 +452,17 @@ func (h *RabbitHandler) Release(s *discordgo.Session){
 			rabbitTimer = int(h.conf.Rabbit.RabbitTimer)
 		}
 
-		//randomOffset := rand.Intn(15)
+		randomOffset := rand.Intn(30)
 		//time.Sleep((time.Duration(rabbitTimer)*time.Minute)+(time.Duration(randomOffset)*time.Minute))
-		time.Sleep((time.Duration(rabbitTimer)*time.Minute))
+		//time.Sleep((time.Duration(rabbitTimer)*time.Minute))
+
+		select {
+		case <-h.timeoutchan:
+			break
+		case <-time.After((time.Duration(rabbitTimer) * time.Minute)+(time.Duration(randomOffset)*time.Minute)):
+			break
+		}
+
 		globalstate, err := h.globalstate.GetState()
 		if err == nil {
 

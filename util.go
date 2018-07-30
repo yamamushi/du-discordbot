@@ -471,3 +471,43 @@ func getRoleNameByID(roleID string, guildID string, s *discordgo.Session) (rolen
 
 	return "", errors.New("Role " + roleID + " not found in guild " + guildID)
 }
+
+// FlushMessages function
+func FlushMessages(s *discordgo.Session, channelID string, count int) (err error) {
+
+	if count <= 0 {
+		return errors.New(":rotating_light: Invalid message count supplied")
+	}
+
+	if count > 100 {
+		return errors.New(":rotating_light: Count must be less than or equal to 100")
+
+	}
+
+	_, err = s.Channel(channelID)
+	if err != nil {
+		return err
+	}
+
+	messages, err := s.ChannelMessages(channelID, count, "", "", "")
+	if err != nil {
+		return err
+	}
+
+	if count > len(messages) {
+		count = len(messages)
+	}
+
+	var flushmessages []string
+
+	for i := 0; i < count; i++ {
+		flushmessages = append(flushmessages, messages[i].ID)
+	}
+
+	err = s.ChannelMessagesBulkDelete(channelID, flushmessages)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

@@ -6,6 +6,7 @@ import (
 	"fmt"
 		"sync"
 	"time"
+	"strconv"
 )
 
 // AdminHandler struct
@@ -36,6 +37,91 @@ func (h *AdminHandler) RegisterCommands() (err error) {
 }
 
 
+func (h *AdminHandler) Flush(s *discordgo.Session, m *discordgo.MessageCreate) {
+	cp := h.conf.DUBotConfig.CP
+
+	if !SafeInput(s, m, h.conf) {
+		return
+	}
+
+	if strings.HasPrefix(m.Content, cp+"flush") {
+		// Grab our sender ID to verify if this user has permission to use this command
+		db := h.db.rawdb.From("Users")
+		var user User
+		err := db.One("ID", m.Author.ID, &user)
+		if err != nil {
+			fmt.Println("error retrieving user:" + m.Author.ID)
+		}
+
+		if user.Moderator {
+			message := strings.Fields(m.Content)
+			if len(message) < 2 {
+				response, err := s.ChannelMessageSend(m.ChannelID, ":rotating_light: Expected a value for flush!")
+				if err == nil {
+					time.Sleep(3*time.Second)
+					s.ChannelMessageDelete(m.ChannelID, response.ID)
+					s.ChannelMessageDelete(m.ChannelID, m.ID)
+				}
+				return
+			}
+			h.FlushChannel(message[1], s, m)
+			return
+		}
+	}
+}
+
+// FlushChannel function
+func (h *AdminHandler) FlushChannel(amount string, s *discordgo.Session, m *discordgo.MessageCreate) {
+
+	_, err := s.Channel(m.ChannelID)
+	if err != nil {
+		response, err := s.ChannelMessageSend(m.ChannelID, ":rotating_light: Error getting channel: "+err.Error())
+		if err == nil {
+			time.Sleep(3*time.Second)
+			s.ChannelMessageDelete(m.ChannelID, response.ID)
+			s.ChannelMessageDelete(m.ChannelID, m.ID)
+		}
+		return
+	}
+
+	count, err := strconv.Atoi(amount)
+	if err != nil {
+		response, err := s.ChannelMessageSend(m.ChannelID, ":rotating_light: Error with count: "+err.Error())
+		if err == nil {
+			time.Sleep(3*time.Second)
+			s.ChannelMessageDelete(m.ChannelID, response.ID)
+			s.ChannelMessageDelete(m.ChannelID, m.ID)
+		}
+		return
+	}
+
+	err = FlushMessages(s, m.ChannelID, count+1) // +1 to account for the flush command itself
+	if err != nil {
+		response, err := s.ChannelMessageSend(m.ChannelID, ":rotating_light: Error flushing channel: "+err.Error())
+		if err == nil {
+			time.Sleep(3*time.Second)
+			s.ChannelMessageDelete(m.ChannelID, response.ID)
+			s.ChannelMessageDelete(m.ChannelID, m.ID)
+		}
+		return
+	}
+
+	validated, err := s.ChannelMessageSend(m.ChannelID, ":ballot_box_with_check:  Deleted "+amount+" messages from channel!")
+	if err != nil {
+		//s.ChannelMessageSend(m.ChannelID, ":rotating_light: Error flushing channel: "+err.Error())
+		return
+	}
+	sleeptime := time.Duration(time.Second * 3)
+	time.Sleep(sleeptime)
+
+	err = s.ChannelMessageDelete(m.ChannelID, validated.ID)
+	if err != nil {
+		return
+	}
+	return
+}
+
+
 // Read function
 func (h *AdminHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
@@ -55,6 +141,9 @@ func (h *AdminHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		if h.registry.CheckPermission("admin", m.ChannelID, user) {
 
 			command := strings.Fields(m.Content)
+			if command[0] != cp+"admin" {
+				return 
+			}
 
 			// Grab our sender ID to verify if this user has permission to use this command
 			db := h.db.rawdb.From("Users")

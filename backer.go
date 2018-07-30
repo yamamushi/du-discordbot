@@ -9,10 +9,12 @@ import (
 	"strings"
 	//"fmt"
 	//"strconv"
-)
+	"sync"
+	)
 
 type BackerInterface struct {
 	db *DBHandler
+	querylocker sync.Mutex
 }
 
 type BackerRecord struct {
@@ -27,6 +29,8 @@ type BackerRecord struct {
 
 // SaveRecordToDB function
 func (h *BackerInterface) SaveRecordToDB(record BackerRecord) (err error) {
+	h.querylocker.Lock()
+	defer h.querylocker.Unlock()
 
 	db := h.db.rawdb.From("DiscordAuth")
 
@@ -51,6 +55,9 @@ func (h *BackerInterface) NewPlayerRecord(userid string) (err error) {
 
 // GetRecordFromDB function
 func (h *BackerInterface) GetRecordFromDB(userid string) (record BackerRecord, err error) {
+	h.querylocker.Lock()
+	defer h.querylocker.Unlock()
+
 	db := h.db.rawdb.From("DiscordAuth")
 
 	userrecord := BackerRecord{}
@@ -61,8 +68,27 @@ func (h *BackerInterface) GetRecordFromDB(userid string) (record BackerRecord, e
 	return userrecord, nil
 }
 
+// BackerInterface function
+func (h *BackerInterface) GetAllBackers() (records []BackerRecord, err error) {
+	h.querylocker.Lock()
+	defer h.querylocker.Unlock()
+
+	db := h.db.rawdb.From("DiscordAuth")
+	err = db.All(&records)
+	if err != nil {
+		return records, err
+	}
+
+	return records, nil
+}
+
+
 // GetRecordFromDB function
 func (h *BackerInterface) UniqueProfileCheck(userid string, profileurl string) (err error) {
+
+	h.querylocker.Lock()
+	defer h.querylocker.Unlock()
+
 	db := h.db.rawdb.From("DiscordAuth")
 
 	userrecords := []BackerRecord{}
@@ -457,6 +483,10 @@ func (h *BackerInterface) CheckStatus(userid string) (err error) {
 
 	if h.GetATVString(record) {
 		err = h.SetATVStatus(userid, "true")
+		if err != nil {
+			return err
+		}
+		err = h.SetPreAlphaStatus(userid, "true")
 		if err != nil {
 			return err
 		}
