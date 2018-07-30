@@ -87,7 +87,7 @@ func (h *RabbitHandler) Catch(s *discordgo.Session, m *discordgo.MessageCreate){
 		return
 	}
 
-	if m.Content != "catch" {
+	if strings.ToLower(m.Content) != "catch" {
 		return
 	}
 
@@ -109,7 +109,13 @@ func (h *RabbitHandler) Catch(s *discordgo.Session, m *discordgo.MessageCreate){
 		}
 
 		if user.RabbitWinner {
-			s.ChannelMessageSend(m.ChannelID, "Sorry, you can only win once!")
+			response, err := s.ChannelMessageSend(m.ChannelID, "Sorry "+m.Author.Mention()+", you can only win once!")
+			if err == nil {
+				time.Sleep(5*time.Second)
+				s.ChannelMessageDelete(m.ChannelID, response.ID)
+				s.ChannelMessageDelete(m.ChannelID, m.ID)
+				return
+			}
 			return
 		}
 
@@ -128,6 +134,7 @@ func (h *RabbitHandler) Catch(s *discordgo.Session, m *discordgo.MessageCreate){
 		s.ChannelMessageSend(m.ChannelID,":rabbit: "+ m.Author.Mention() + " caught a rabbit!")
 
 		globalstate.RabbitLoose = false
+
 		err = h.globalstate.SetState(globalstate)
 		if err != nil {
 			s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
@@ -137,7 +144,13 @@ func (h *RabbitHandler) Catch(s *discordgo.Session, m *discordgo.MessageCreate){
 		return
 
 	} else {
-		s.ChannelMessageSend(m.ChannelID, "There are no rabbits in sight.")
+		response, err := s.ChannelMessageSend(m.ChannelID, "There are no rabbits in sight.")
+		if err == nil {
+			time.Sleep(5*time.Second)
+			s.ChannelMessageDelete(m.ChannelID, response.ID)
+			s.ChannelMessageDelete(m.ChannelID, m.ID)
+			return
+		}
 		return
 	}
 
@@ -350,10 +363,11 @@ func (h *RabbitHandler) Release(s *discordgo.Session){
 
 					h.querylocker.Lock()
 					globalstate.RabbitLoose = true
-					
+
 					err = h.globalstate.UpdateStateRecord(globalstate)
 					if err == nil {
 						s.ChannelMessageSend(rabbitChannel, ":rabbit: A rabbit hops into the room")
+						h.querylocker.Unlock()
 
 						rabbitExpire, err := h.configdb.GetValue("rabbit-expiration")
 						if err != nil {
@@ -361,7 +375,7 @@ func (h *RabbitHandler) Release(s *discordgo.Session){
 						}
 
 						time.Sleep(time.Duration(rabbitExpire)*time.Minute)
-
+						h.querylocker.Lock()
 						globalstate, err := h.globalstate.GetState()
 						if err == nil {
 							if globalstate.RabbitLoose {
