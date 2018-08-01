@@ -1,9 +1,9 @@
 package main
 
 import (
-	"sync"
-	"github.com/bwmarrin/discordgo"
 	"errors"
+	"github.com/bwmarrin/discordgo"
+	"sync"
 )
 
 // Notifications struct
@@ -13,10 +13,12 @@ type ConfigDB struct {
 }
 
 type ConfigEntry struct {
-	Name        string `storm:"id"`// The name of our config option
+	Name        string `storm:"id"` // The name of our config option
 	Setting     string
-	Value      int
-	Enabled      bool
+	SettingList []string
+	Value       int
+	ValueList   []int
+	Enabled     bool
 }
 
 // AddNotificationToDB function
@@ -38,8 +40,6 @@ func (h *ConfigDB) RemoveConfigFromDB(config ConfigEntry) (err error) {
 	err = db.DeleteStruct(&config)
 	return err
 }
-
-
 
 // RemoveNotificationFromDBByID function
 func (h *ConfigDB) RemoveConfigFromDBByName(configname string, s *discordgo.Session) (err error) {
@@ -103,7 +103,6 @@ func (h *ConfigDB) UpdateConfig(entry ConfigEntry) (err error) {
 	return nil
 }
 
-
 func (h *ConfigDB) CheckEnabled(configname string) (enabled bool, err error) {
 	entry, err := h.GetConfigFromDB(configname)
 	if err != nil {
@@ -122,6 +121,15 @@ func (h *ConfigDB) GetValue(configname string) (value int, err error) {
 	return entry.Value, nil
 }
 
+func (h *ConfigDB) GetValueList(configname string) (valuelist []int, err error) {
+	entry, err := h.GetConfigFromDB(configname)
+	if err != nil {
+		return []int{0}, err
+	}
+
+	return entry.ValueList, nil
+}
+
 func (h *ConfigDB) GetSetting(configname string) (setting string, err error) {
 	entry, err := h.GetConfigFromDB(configname)
 	if err != nil {
@@ -129,4 +137,13 @@ func (h *ConfigDB) GetSetting(configname string) (setting string, err error) {
 	}
 
 	return entry.Setting, nil
+}
+
+func (h *ConfigDB) GetSettingList(configname string) (settinglist []string, err error) {
+	entry, err := h.GetConfigFromDB(configname)
+	if err != nil {
+		return []string{""}, err
+	}
+
+	return entry.SettingList, nil
 }

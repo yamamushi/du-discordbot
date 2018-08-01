@@ -1,12 +1,12 @@
 package main
 
 import (
-	"github.com/bwmarrin/discordgo"
-	"strings"
-	"fmt"
 	"errors"
+	"fmt"
+	"github.com/bwmarrin/discordgo"
 	"strconv"
-	)
+	"strings"
+)
 
 // ConfigHandler handles global config options that can be changed from within discord
 type ConfigHandler struct {
@@ -16,7 +16,6 @@ type ConfigHandler struct {
 	db       *DBHandler
 	configdb *ConfigDB
 }
-
 
 // Init function
 func (h *ConfigHandler) Init() {
@@ -68,8 +67,6 @@ func (h *ConfigHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 }
 
-
-
 func (h *ConfigHandler) ParseCommand(command []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if len(command) < 2 {
@@ -86,7 +83,7 @@ func (h *ConfigHandler) ParseCommand(command []string, s *discordgo.Session, m *
 				s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 				return
 			}
-			s.ChannelMessageSend(m.ChannelID, "Option " + command[2] + " enabled.")
+			s.ChannelMessageSend(m.ChannelID, "Option "+command[2]+" enabled.")
 			return
 		}
 		return
@@ -101,7 +98,7 @@ func (h *ConfigHandler) ParseCommand(command []string, s *discordgo.Session, m *
 				s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 				return
 			}
-			s.ChannelMessageSend(m.ChannelID, "Option " + command[2] + " disabled.")
+			s.ChannelMessageSend(m.ChannelID, "Option "+command[2]+" disabled.")
 			return
 		}
 	}
@@ -113,7 +110,7 @@ func (h *ConfigHandler) ParseCommand(command []string, s *discordgo.Session, m *
 			option := command[2]
 			value, err := strconv.Atoi(command[3])
 			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, "Invalid value: " + err.Error())
+				s.ChannelMessageSend(m.ChannelID, "Invalid value: "+err.Error())
 				return
 			}
 			err = h.Set(option, value)
@@ -122,7 +119,63 @@ func (h *ConfigHandler) ParseCommand(command []string, s *discordgo.Session, m *
 				return
 			}
 
-			s.ChannelMessageSend(m.ChannelID, "Option " + command[2] + " set to " + command[3])
+			s.ChannelMessageSend(m.ChannelID, "Option "+command[2]+" set to "+command[3])
+			return
+		}
+	}
+
+	if command[1] == "listset" {
+		if len(command) <= 3 {
+			s.ChannelMessageSend(m.ChannelID, "Command expects two arguments")
+		} else {
+			option := command[2]
+			value, err := strconv.Atoi(command[3])
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "Invalid value: "+err.Error())
+				return
+			}
+			err = h.SetToList(option, value)
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
+				return
+			}
+
+			s.ChannelMessageSend(m.ChannelID, "Option "+command[2]+" set to "+command[3])
+			return
+		}
+	}
+
+	if command[1] == "getsetlist" {
+		if len(command) <= 2 {
+			s.ChannelMessageSend(m.ChannelID, "Command expects oneargument")
+		} else {
+			option := command[2]
+			err := h.GetSetList(option, s, m)
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
+				return
+			}
+			return
+		}
+	}
+
+	if command[1] == "listsetrm" {
+		if len(command) <= 3 {
+			s.ChannelMessageSend(m.ChannelID, "Command expects two arguments")
+		} else {
+			option := command[2]
+			value, err := strconv.Atoi(command[3])
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "Invalid value: "+err.Error())
+				return
+			}
+			err = h.RemoveFromSetList(option, value)
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
+				return
+			}
+
+			s.ChannelMessageSend(m.ChannelID, "Removed "+command[2]+" from "+command[3])
 			return
 		}
 	}
@@ -137,7 +190,51 @@ func (h *ConfigHandler) ParseCommand(command []string, s *discordgo.Session, m *
 				s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 				return
 			}
-			s.ChannelMessageSend(m.ChannelID, "Wrote " + command[3] + " to " + command[2])
+			s.ChannelMessageSend(m.ChannelID, "Wrote "+command[3]+" to "+command[2])
+			return
+		}
+	}
+
+	if command[1] == "getwritelist" {
+		if len(command) <= 2 {
+			s.ChannelMessageSend(m.ChannelID, "Command expects one argument")
+		} else {
+			option := command[2]
+			err := h.GetWriteList(option, s, m)
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
+				return
+			}
+			return
+		}
+	}
+
+	if command[1] == "listwrite" {
+		if len(command) <= 3 {
+			s.ChannelMessageSend(m.ChannelID, "Command expects two arguments")
+		} else {
+			option := command[2]
+			err := h.WriteToList(option, command[3])
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
+				return
+			}
+			s.ChannelMessageSend(m.ChannelID, "Wrote "+command[3]+" to "+command[2])
+			return
+		}
+	}
+
+	if command[1] == "listwriterm" {
+		if len(command) <= 3 {
+			s.ChannelMessageSend(m.ChannelID, "Command expects two arguments")
+		} else {
+			option := command[2]
+			err := h.RemoveSettingFromList(option, command[3])
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
+				return
+			}
+			s.ChannelMessageSend(m.ChannelID, "Removed "+command[3]+" from "+command[2])
 			return
 		}
 	}
@@ -154,19 +251,19 @@ func (h *ConfigHandler) ParseCommand(command []string, s *discordgo.Session, m *
 
 func (h *ConfigHandler) ValidateConfigName(configname string) bool {
 
-	if configname == "autoland"{
+	if configname == "autoland" {
 		return true
 	}
-	if configname == "recruitment-timer"{
+	if configname == "recruitment-timer" {
 		return true
 	}
-	if configname == "recruitment-admin-channel"{
+	if configname == "recruitment-admin-channel" {
 		return true
 	}
-	if configname == "recruitment-expiration"{
+	if configname == "recruitment-expiration" {
 		return true
 	}
-	if configname == "recruitment-reminder"{
+	if configname == "recruitment-reminder" {
 		return true
 	}
 	if configname == "reactions-expiration" {
@@ -199,7 +296,7 @@ func (h *ConfigHandler) Enable(configname string) (err error) {
 
 	entry, err := h.configdb.GetConfigFromDB(configname)
 	if err != nil {
-		entry := ConfigEntry{Name:configname, Enabled:true}
+		entry := ConfigEntry{Name: configname, Enabled: true}
 		return h.configdb.AddConfigToDB(entry)
 	}
 	entry.Enabled = true
@@ -213,7 +310,7 @@ func (h *ConfigHandler) Disable(configname string) (err error) {
 
 	entry, err := h.configdb.GetConfigFromDB(configname)
 	if err != nil {
-		entry := ConfigEntry{Name:configname, Enabled:false}
+		entry := ConfigEntry{Name: configname, Enabled: false}
 		return h.configdb.AddConfigToDB(entry)
 	}
 	entry.Enabled = false
@@ -226,10 +323,40 @@ func (h *ConfigHandler) Set(configname string, value int) (err error) {
 	}
 	entry, err := h.configdb.GetConfigFromDB(configname)
 	if err != nil {
-		entry := ConfigEntry{Name:configname, Value:value}
+		entry := ConfigEntry{Name: configname, Value: value}
 		return h.configdb.AddConfigToDB(entry)
 	}
 	entry.Value = value
+	return h.configdb.AddConfigToDB(entry)
+}
+
+func (h *ConfigHandler) SetToList(configname string, value int) (err error) {
+	if !h.ValidateConfigName(configname) {
+		return errors.New("invalid config " + configname)
+	}
+	entry, err := h.configdb.GetConfigFromDB(configname)
+	if err != nil {
+		entry := ConfigEntry{Name: configname, ValueList: []int{value}}
+		return h.configdb.AddConfigToDB(entry)
+	}
+	for _, setting := range entry.ValueList {
+		if setting == value {
+			return nil
+		}
+	}
+	entry.ValueList = append(entry.ValueList, value)
+	return h.configdb.AddConfigToDB(entry)
+}
+
+func (h *ConfigHandler) RemoveFromSetList(configname string, value int) (err error) {
+	if !h.ValidateConfigName(configname) {
+		return errors.New("invalid config " + configname)
+	}
+	entry, err := h.configdb.GetConfigFromDB(configname)
+	if err != nil {
+		return err
+	}
+	entry.ValueList = RemoveIntFromSlice(entry.ValueList, value)
 	return h.configdb.AddConfigToDB(entry)
 }
 
@@ -239,17 +366,92 @@ func (h *ConfigHandler) Write(configname string, value string) (err error) {
 	}
 	entry, err := h.configdb.GetConfigFromDB(configname)
 	if err != nil {
-		entry := ConfigEntry{Name:configname, Setting:value}
+		entry := ConfigEntry{Name: configname, Setting: value}
 		return h.configdb.AddConfigToDB(entry)
 	}
 	entry.Setting = value
 	return h.configdb.AddConfigToDB(entry)
 }
 
-func (h *ConfigHandler) Get(configname string, s *discordgo.Session, m *discordgo.MessageCreate)  {
+func (h *ConfigHandler) WriteToList(configname string, value string) (err error) {
+	if !h.ValidateConfigName(configname) {
+		return errors.New("invalid config " + configname)
+	}
+	entry, err := h.configdb.GetConfigFromDB(configname)
+	if err != nil {
+		entry := ConfigEntry{Name: configname, SettingList: []string{value}}
+		return h.configdb.AddConfigToDB(entry)
+	}
+
+	for _, setting := range entry.SettingList {
+		if setting == value {
+			return nil
+		}
+	}
+	entry.SettingList = append(entry.SettingList, value)
+	return h.configdb.AddConfigToDB(entry)
+}
+
+func (h *ConfigHandler) RemoveSettingFromList(configname string, value string) (err error) {
+	if !h.ValidateConfigName(configname) {
+		return errors.New("invalid config " + configname)
+	}
+	entry, err := h.configdb.GetConfigFromDB(configname)
+	if err != nil {
+		return err
+	}
+	entry.SettingList = RemoveStringFromSlice(entry.SettingList, value)
+	return h.configdb.AddConfigToDB(entry)
+}
+
+func (h *ConfigHandler) GetSetList(configname string, s *discordgo.Session, m *discordgo.MessageCreate) (err error) {
+	if !h.ValidateConfigName(configname) {
+		return errors.New("invalid config " + configname)
+	}
+	entry, err := h.configdb.GetConfigFromDB(configname)
+	if err != nil {
+		return err
+	}
+
+	var output string
+	for i, value := range entry.ValueList {
+		if i == 0 {
+			output = strconv.Itoa(value)
+		} else {
+			output = output + ", " + strconv.Itoa(value)
+		}
+
+	}
+	s.ChannelMessageSend(m.ChannelID, "Config values for "+configname+"\n```\n"+output+"\n```\n")
+	return nil
+}
+
+func (h *ConfigHandler) GetWriteList(configname string, s *discordgo.Session, m *discordgo.MessageCreate) (err error) {
+	if !h.ValidateConfigName(configname) {
+		return errors.New("invalid config " + configname)
+	}
+	entry, err := h.configdb.GetConfigFromDB(configname)
+	if err != nil {
+		return err
+	}
+
+	var output string
+	for i, value := range entry.SettingList {
+		if i == 0 {
+			output = value
+		} else {
+			output = output + ", " + value
+		}
+
+	}
+	s.ChannelMessageSend(m.ChannelID, "Config values for "+configname+"\n```\n"+output+"\n```\n")
+	return nil
+}
+
+func (h *ConfigHandler) Get(configname string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if !h.ValidateConfigName(configname) {
-		s.ChannelMessageSend(m.ChannelID, "Invalid option " + configname)
+		s.ChannelMessageSend(m.ChannelID, "Invalid option "+configname)
 		return
 	}
 

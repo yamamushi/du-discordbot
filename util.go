@@ -3,12 +3,12 @@ package main
 // Utility Functions
 
 import (
+	"errors"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
+	"os"
 	"strings"
 	"time"
-	"os"
-	"errors"
 	//"strconv"
 	"strconv"
 )
@@ -21,6 +21,16 @@ const (
 
 // RemoveStringFromSlice function
 func RemoveStringFromSlice(s []string, r string) []string {
+	for i, v := range s {
+		if v == r {
+			return append(s[:i], s[i+1:]...)
+		}
+	}
+	return s
+}
+
+// RemoveStringFromSlice function
+func RemoveIntFromSlice(s []int, r int) []int {
 	for i, v := range s {
 		if v == r {
 			return append(s[:i], s[i+1:]...)
@@ -89,7 +99,7 @@ func SplitCommandFromArgs(input []string) (command string, message string) {
 	payload := RemoveStringFromSlice(input, command)
 
 	for _, value := range payload {
-			message = message + value + " "
+		message = message + value + " "
 	}
 	return command, message
 }
@@ -293,22 +303,22 @@ func MessageHasMeme(message string, meme string) bool {
 	if strings.Contains(message, " "+meme+" ") {
 		return true
 	}
-	if strings.Contains(message, " "+meme+"-")||strings.Contains(message, " "+meme+",")||strings.Contains(message, " "+meme+".") {
+	if strings.Contains(message, " "+meme+"-") || strings.Contains(message, " "+meme+",") || strings.Contains(message, " "+meme+".") {
 		return true
 	}
-	if strings.Contains(message, " "+meme+":")|| strings.Contains(message, " "+meme+";")||strings.Contains(message, " "+meme+"+"){
+	if strings.Contains(message, " "+meme+":") || strings.Contains(message, " "+meme+";") || strings.Contains(message, " "+meme+"+") {
 		return true
 	}
-	if strings.Contains(message, " "+meme+"=")||strings.Contains(message, " "+meme+"?")||strings.Contains(message, " "+meme+"/"){
+	if strings.Contains(message, " "+meme+"=") || strings.Contains(message, " "+meme+"?") || strings.Contains(message, " "+meme+"/") {
 		return true
 	}
-	if strings.Contains(message, " "+meme+"!")||strings.Contains(message, " "+meme+"'")||strings.Contains(message, " "+meme+"\""){
+	if strings.Contains(message, " "+meme+"!") || strings.Contains(message, " "+meme+"'") || strings.Contains(message, " "+meme+"\"") {
 		return true
 	}
 	return false
 }
 
-func VerifyNDAChannel(channelID string, conf *Config) (bool) {
+func VerifyNDAChannel(channelID string, conf *Config) bool {
 	if channelID == conf.RolesConfig.NDAChannelID {
 		return true
 	}
@@ -316,7 +326,7 @@ func VerifyNDAChannel(channelID string, conf *Config) (bool) {
 	return false
 }
 
-func CreateDirIfNotExist(dir string) (err error){
+func CreateDirIfNotExist(dir string) (err error) {
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		err = os.MkdirAll(dir, 0755)
 		if err != nil {
@@ -341,7 +351,6 @@ func getRoleIDByName(s *discordgo.Session, guildID string, name string) (roleid 
 	return "", errors.New("Role ID Not Found: " + name)
 }
 
-
 // getChannelIDByName function
 func getChannelIDByName(s *discordgo.Session, guildID string, name string) (roleid string, err error) {
 	//name = strings.Title(name)
@@ -357,7 +366,7 @@ func getChannelIDByName(s *discordgo.Session, guildID string, name string) (role
 	return "", errors.New("Channel ID Not Found: " + name)
 }
 
-func GetMemberList(s *discordgo.Session, conf *Config) ([]*discordgo.Member, error){
+func GetMemberList(s *discordgo.Session, conf *Config) ([]*discordgo.Member, error) {
 
 	guild, err := s.Guild(conf.DiscordConfig.GuildID)
 	if err != nil {
@@ -366,7 +375,6 @@ func GetMemberList(s *discordgo.Session, conf *Config) ([]*discordgo.Member, err
 	return guild.Members, nil
 
 }
-
 
 func SendFileToChannel(path string, message string, s *discordgo.Session, m *discordgo.MessageCreate) (err error) {
 
@@ -399,7 +407,6 @@ func SendFileToChannel(path string, message string, s *discordgo.Session, m *dis
 	}
 	return nil
 }
-
 
 func ParseDuration(duration string) (convertedTime time.Duration, totalminutes int64, err error) {
 
@@ -452,7 +459,6 @@ func ParseDuration(duration string) (convertedTime time.Duration, totalminutes i
 	convertedTime = time.Duration(totalminutes * 60 * 1000 * 1000 * 1000)
 	return convertedTime, totalminutes, nil
 }
-
 
 // getRoleNameByID function
 func getRoleNameByID(roleID string, guildID string, s *discordgo.Session) (rolename string, err error) {

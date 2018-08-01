@@ -1,38 +1,35 @@
 package main
 
 import (
+	"fmt"
+	"github.com/bwmarrin/discordgo"
+	"math/rand"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
-	"github.com/bwmarrin/discordgo"
-	"strings"
-	"fmt"
-	"strconv"
-	"math/rand"
 )
 
 type RabbitHandler struct {
-	conf     *Config
-	registry *CommandRegistry
-	db       *DBHandler
-	userdb   *UserHandler
+	conf        *Config
+	registry    *CommandRegistry
+	db          *DBHandler
+	userdb      *UserHandler
 	globalstate *StateDB
-	configdb *ConfigDB
+	configdb    *ConfigDB
 
 	backerdb *BackerInterface
 
 	timeoutchan chan bool
 	querylocker sync.RWMutex
-	lastpost time.Time
+	lastpost    time.Time
 }
-
-
 
 // Init function
 func (h *RabbitHandler) Init() {
 	h.RegisterCommands()
 	h.timeoutchan = make(chan bool)
 }
-
 
 // RegisterCommands function
 func (h *RabbitHandler) RegisterCommands() (err error) {
@@ -75,7 +72,6 @@ func (h *RabbitHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 }
 
-
 func (h *RabbitHandler) CarrotFinder(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	// Ignore all messages created by the bot itself
@@ -92,15 +88,22 @@ func (h *RabbitHandler) CarrotFinder(s *discordgo.Session, m *discordgo.MessageC
 		return
 	}
 
-	unformattedChannel, err := h.configdb.GetSetting("rabbit-channel")
+	channellist, err := h.configdb.GetSettingList("rabbit-channel")
 	if err != nil {
 		return
 	}
-	rabbitChannel := CleanChannel(unformattedChannel)
-	if m.ChannelID != rabbitChannel {
-		response, err := s.ChannelMessageSend(m.ChannelID, "Sorry, rabbits can only be found in " + unformattedChannel)
+
+	found := false
+	for _, channel := range channellist {
+		if CleanChannel(channel) == m.ChannelID {
+			found = true
+		}
+	}
+
+	if !found {
+		response, err := s.ChannelMessageSend(m.ChannelID, "Sorry, rabbits cannot be found in this channel!")
 		if err == nil {
-			time.Sleep(5*time.Second)
+			time.Sleep(5 * time.Second)
 			s.ChannelMessageDelete(m.ChannelID, response.ID)
 			s.ChannelMessageDelete(m.ChannelID, m.ID)
 			return
@@ -110,14 +113,14 @@ func (h *RabbitHandler) CarrotFinder(s *discordgo.Session, m *discordgo.MessageC
 
 	user, err := h.userdb.GetUser(m.Author.ID)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 		return
 	}
 
 	if !user.Owner {
 		response, err := s.ChannelMessageSend(m.ChannelID, "Thanks for the treat, but no rabbits for you! (You don't have permissions to lure a rabbit)")
 		if err == nil {
-			time.Sleep(5*time.Second)
+			time.Sleep(5 * time.Second)
 			s.ChannelMessageDelete(m.ChannelID, response.ID)
 			s.ChannelMessageDelete(m.ChannelID, m.ID)
 			return
@@ -127,7 +130,7 @@ func (h *RabbitHandler) CarrotFinder(s *discordgo.Session, m *discordgo.MessageC
 
 	lure, err := s.ChannelMessageSend(m.ChannelID, "You attempt to lure a rabbit (this is not guaranteed to work!).")
 	if err == nil {
-		time.Sleep(5*time.Second)
+		time.Sleep(5 * time.Second)
 		s.ChannelMessageDelete(m.ChannelID, lure.ID)
 		s.ChannelMessageDelete(m.ChannelID, m.ID)
 	}
@@ -136,9 +139,8 @@ func (h *RabbitHandler) CarrotFinder(s *discordgo.Session, m *discordgo.MessageC
 	return
 }
 
-
 // Read function
-func (h *RabbitHandler) Catch(s *discordgo.Session, m *discordgo.MessageCreate){
+func (h *RabbitHandler) Catch(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	// Ignore all messages created by the bot itself
 	if m.Author.ID == s.State.User.ID {
@@ -154,22 +156,28 @@ func (h *RabbitHandler) Catch(s *discordgo.Session, m *discordgo.MessageCreate){
 		return
 	}
 
-	unformattedChannel, err := h.configdb.GetSetting("rabbit-channel")
+	channellist, err := h.configdb.GetSettingList("rabbit-channel")
 	if err != nil {
 		return
 	}
-	rabbitChannel := CleanChannel(unformattedChannel)
-	if m.ChannelID != rabbitChannel {
-		response, err := s.ChannelMessageSend(m.ChannelID, "Sorry, rabbits can only be found in " + unformattedChannel)
+
+	found := false
+	for _, channel := range channellist {
+		if CleanChannel(channel) == m.ChannelID {
+			found = true
+		}
+	}
+
+	if !found {
+		response, err := s.ChannelMessageSend(m.ChannelID, "Sorry, rabbits cannot be found in this channel!")
 		if err == nil {
-			time.Sleep(5*time.Second)
+			time.Sleep(5 * time.Second)
 			s.ChannelMessageDelete(m.ChannelID, response.ID)
 			s.ChannelMessageDelete(m.ChannelID, m.ID)
 			return
 		}
 		return
 	}
-
 
 	h.querylocker.Lock()
 	defer h.querylocker.Unlock()
@@ -179,7 +187,7 @@ func (h *RabbitHandler) Catch(s *discordgo.Session, m *discordgo.MessageCreate){
 		if record.PreAlpha == "true" || record.ATV == "true" {
 			response, err := s.ChannelMessageSend(m.ChannelID, "Sorry, you can only participate if you do not already have pre-alpha access.")
 			if err == nil {
-				time.Sleep(5*time.Second)
+				time.Sleep(5 * time.Second)
 				s.ChannelMessageDelete(m.ChannelID, response.ID)
 				s.ChannelMessageDelete(m.ChannelID, m.ID)
 				return
@@ -189,7 +197,7 @@ func (h *RabbitHandler) Catch(s *discordgo.Session, m *discordgo.MessageCreate){
 
 	globalstate, err := h.globalstate.GetState()
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 		return
 	}
 
@@ -197,14 +205,14 @@ func (h *RabbitHandler) Catch(s *discordgo.Session, m *discordgo.MessageCreate){
 
 		user, err := h.db.GetUser(m.Author.ID)
 		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+			s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 			return
 		}
 
 		if user.RabbitWinner {
 			response, err := s.ChannelMessageSend(m.ChannelID, "Sorry "+m.Author.Mention()+", you can only win once!")
 			if err == nil {
-				time.Sleep(5*time.Second)
+				time.Sleep(5 * time.Second)
 				s.ChannelMessageDelete(m.ChannelID, response.ID)
 				s.ChannelMessageDelete(m.ChannelID, m.ID)
 				return
@@ -224,13 +232,13 @@ func (h *RabbitHandler) Catch(s *discordgo.Session, m *discordgo.MessageCreate){
 			h.NotifyOwner(user.ID, s, m)
 		}
 
-		s.ChannelMessageSend(m.ChannelID,":rabbit: "+ m.Author.Mention() + " caught a rabbit!")
+		s.ChannelMessageSend(m.ChannelID, ":rabbit: "+m.Author.Mention()+" caught a rabbit!")
 
 		globalstate.RabbitLoose = false
 
 		err = h.globalstate.SetState(globalstate)
 		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+			s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 			return
 		}
 
@@ -239,7 +247,7 @@ func (h *RabbitHandler) Catch(s *discordgo.Session, m *discordgo.MessageCreate){
 	} else {
 		response, err := s.ChannelMessageSend(m.ChannelID, "There are no rabbits in sight.")
 		if err == nil {
-			time.Sleep(5*time.Second)
+			time.Sleep(5 * time.Second)
 			s.ChannelMessageDelete(m.ChannelID, response.ID)
 			s.ChannelMessageDelete(m.ChannelID, m.ID)
 			return
@@ -249,14 +257,13 @@ func (h *RabbitHandler) Catch(s *discordgo.Session, m *discordgo.MessageCreate){
 
 }
 
-
 // ParseCommand function
 func (h *RabbitHandler) ParseCommand(commandlist []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	command, payload := SplitPayload(commandlist)
 
 	if len(payload) == 0 {
-		s.ChannelMessageSend(m.ChannelID, "Command " + command + " expects an argument, see help for usage.")
+		s.ChannelMessageSend(m.ChannelID, "Command "+command+" expects an argument, see help for usage.")
 		return
 	}
 	if payload[0] == "help" {
@@ -284,12 +291,11 @@ func (h *RabbitHandler) ParseCommand(commandlist []string, s *discordgo.Session,
 		h.RewardUser(m.Mentions[0].ID, s, m)
 		return
 	}
-	s.ChannelMessageSend(m.ChannelID, "Unrecognized option: " + payload[0])
+	s.ChannelMessageSend(m.ChannelID, "Unrecognized option: "+payload[0])
 	return
 }
 
-
-func (h *RabbitHandler) HelpOutput( s *discordgo.Session, m *discordgo.MessageCreate ) {
+func (h *RabbitHandler) HelpOutput(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	output := ":rabbit2: Usage: \n```\n~rabbit check\n~rabbit count\n```\n"
 	s.ChannelMessageSend(m.ChannelID, output)
@@ -297,22 +303,21 @@ func (h *RabbitHandler) HelpOutput( s *discordgo.Session, m *discordgo.MessageCr
 
 }
 
-
 func (h *RabbitHandler) GetCount(userID string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	user, err := h.userdb.GetUser(userID)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 		return
 	}
 
 	discorduser, err := s.User(userID)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 		return
 	}
 
-	s.ChannelMessageSend(m.ChannelID, discorduser.Username + " has " + strconv.Itoa(user.RabbitCount) + " rabbits in their inventory")
+	s.ChannelMessageSend(m.ChannelID, discorduser.Username+" has "+strconv.Itoa(user.RabbitCount)+" rabbits in their inventory")
 	return
 
 }
@@ -324,7 +329,7 @@ func (h *RabbitHandler) CheckActive(payload []string, s *discordgo.Session, m *d
 
 	globalstate, err := h.globalstate.GetState()
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 		return
 	}
 
@@ -339,14 +344,13 @@ func (h *RabbitHandler) CheckActive(payload []string, s *discordgo.Session, m *d
 	return
 }
 
-
 func (h *RabbitHandler) RewardUser(userID string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	db := h.db.rawdb.From("Users")
 	var user User
 	err := db.One("ID", m.Author.ID, &user)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 		return
 	}
 
@@ -356,7 +360,7 @@ func (h *RabbitHandler) RewardUser(userID string, s *discordgo.Session, m *disco
 
 	rewardedUser, err := h.userdb.GetUser(userID)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 		return
 	}
 
@@ -368,33 +372,31 @@ func (h *RabbitHandler) RewardUser(userID string, s *discordgo.Session, m *disco
 	if rewardedUser.RabbitCount < rabbitWinCount {
 		diff := rabbitWinCount - rewardedUser.RabbitCount
 		if diff > 1 {
-			s.ChannelMessageSend(m.ChannelID, "The selected user is not eligible for a prize yet, they need " +strconv.Itoa(diff)+ " more rabbits to win.")
+			s.ChannelMessageSend(m.ChannelID, "The selected user is not eligible for a prize yet, they need "+strconv.Itoa(diff)+" more rabbits to win.")
 		} else {
-			s.ChannelMessageSend(m.ChannelID, "The selected user is not eligible for a prize yet, they need " +strconv.Itoa(diff)+ " more rabbit to win.")
+			s.ChannelMessageSend(m.ChannelID, "The selected user is not eligible for a prize yet, they need "+strconv.Itoa(diff)+" more rabbit to win.")
 		}
 		return
 	}
-
 
 	rewardedUser.RabbitCount = 0
 	rewardedUser.RabbitWinner = true
 
 	err = h.userdb.UpdateUserRecord(rewardedUser)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 		return
 	}
 
-
 	discorduser, err := s.User(userID)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 		return
 	}
 
 	unformatted, err := h.configdb.GetSetting("rabbit-channel")
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error - Could not get rabbit-channel from configdb: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error - Could not get rabbit-channel from configdb: "+err.Error())
 		return
 	}
 	rabbitChannel := CleanChannel(unformatted)
@@ -403,7 +405,6 @@ func (h *RabbitHandler) RewardUser(userID string, s *discordgo.Session, m *disco
 	s.ChannelMessageSend(rabbitChannel, output)
 	return
 }
-
 
 func (h *RabbitHandler) NotifyOwner(userID string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
@@ -421,16 +422,16 @@ func (h *RabbitHandler) NotifyOwner(userID string, s *discordgo.Session, m *disc
 		return
 	}
 
-	s.ChannelMessageSend(userprivatechannel.ID, user.Username + " has won, please verify their rabbit count and give them their prize!")
+	s.ChannelMessageSend(userprivatechannel.ID, user.Username+" has won, please verify their rabbit count and give them their prize!")
 	return
 }
 
-func (h *RabbitHandler) Carrot(s *discordgo.Session, m *discordgo.MessageCreate){
+func (h *RabbitHandler) Carrot(s *discordgo.Session, m *discordgo.MessageCreate) {
 	db := h.db.rawdb.From("Users")
 	var user User
 	err := db.One("ID", m.Author.ID, &user)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 		return
 	}
 
@@ -438,12 +439,12 @@ func (h *RabbitHandler) Carrot(s *discordgo.Session, m *discordgo.MessageCreate)
 		return // Silent return
 	}
 
-	h.timeoutchan<-true
+	h.timeoutchan <- true
 	//s.ChannelMessageSend(m.ChannelID, "Successfully forced the latest post from the recruitment queue")
 	return
 }
 
-func (h *RabbitHandler) Release(s *discordgo.Session){
+func (h *RabbitHandler) Release(s *discordgo.Session) {
 
 	for {
 
@@ -459,14 +460,14 @@ func (h *RabbitHandler) Release(s *discordgo.Session){
 		select {
 		case <-h.timeoutchan:
 			break
-		case <-time.After((time.Duration(rabbitTimer) * time.Minute)+(time.Duration(randomOffset)*time.Minute)):
+		case <-time.After((time.Duration(rabbitTimer) * time.Minute) + (time.Duration(randomOffset) * time.Minute)):
 			break
 		}
 
 		globalstate, err := h.globalstate.GetState()
 		if err == nil {
 
-			unformatted, err := h.configdb.GetSetting("rabbit-channel")
+			channellist, err := h.configdb.GetSettingList("rabbit-channel")
 			if err == nil {
 
 				rabbitRandom, err := h.configdb.GetValue("rabbit-random")
@@ -474,9 +475,20 @@ func (h *RabbitHandler) Release(s *discordgo.Session){
 					rabbitRandom = int(h.conf.Rabbit.RabbitRandomWeight)
 				}
 
-				rabbitChannel := CleanChannel(unformatted)
+				var channelrand int
+				if len(channellist) == 1 {
+					channelrand = 0
+				} else {
+					channelrand = rand.Intn(len(channellist))
+				}
+
+				if channelrand == len(channellist) {
+					channelrand = channelrand - 1
+				}
+				rabbitChannel := CleanChannel(channellist[channelrand])
 
 				randomresult := rand.Intn(100000)
+				//fmt.Println(strconv.Itoa(randomresult))
 				if randomresult < rabbitRandom {
 
 					h.querylocker.Lock()
@@ -492,7 +504,7 @@ func (h *RabbitHandler) Release(s *discordgo.Session){
 							rabbitExpire = int(h.conf.Rabbit.RabbitExpiration)
 						}
 
-						time.Sleep(time.Duration(rabbitExpire)*time.Minute)
+						time.Sleep(time.Duration(rabbitExpire) * time.Minute)
 						h.querylocker.Lock()
 						globalstate, err := h.globalstate.GetState()
 						if err == nil {
