@@ -106,11 +106,11 @@ func (h *UtilitiesHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate
 	}
 	if command == "estimatesutime" || command == "sutime" || command == "su-convert" {
 		if VerifyNDAChannel(m.ChannelID, h.conf){
-			if len(payload) < 1 {
-				s.ChannelMessageSend(m.ChannelID, command + " expects an argument: <su>")
+			if len(payload) < 2 {
+				s.ChannelMessageSend(m.ChannelID, command + " expects two arguments: <su> <speed>")
 				return
 			}
-			estimate, err := h.SUToMinutes(payload[0])
+			estimate, err := h.SUToMinutes(payload[0], payload[1])
 			if err != nil {
 				s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
 				return
@@ -344,19 +344,32 @@ func (h *UtilitiesHandler) Events() (output string) {
 	return output
 }
 
-func (h *UtilitiesHandler) SUToMinutes(distance string) (conversion string, err error){
-	distanceInt, err := strconv.Atoi(distance)
+func (h *UtilitiesHandler) SUToMinutes(distance string, speed string) (conversion string, err error){
+
+	distanceFloat, err := strconv.ParseFloat(distance, 64)
 	if err != nil {
-		distanceFloat, err := strconv.ParseFloat(distance, 64)
+		return "", err
+	}
+	if distanceFloat > 100000000 || distanceFloat <= 0 {
+		return "", errors.New("Distance value out of bounds")
+	}
+
+	speedFloat := 0.0
+	if speed == "max" {
+		speedFloat = 30000
+	} else {
+		speedFloat, err = strconv.ParseFloat(speed, 64)
 		if err != nil {
 			return "", err
 		}
-		distanceInt = int(distanceFloat + 0.5)
 	}
-	if distanceInt > 100000000 {
-		return "", errors.New("Value out of bounds")
+
+	if speedFloat > 100000 || speedFloat <= 0 {
+		return "", errors.New("Speed value out of bounds")
 	}
-	secondsInt := distanceInt * 36
+	distanceFloat = distanceFloat * 200.00
+	secondsInt := (distanceFloat / speedFloat) * 3600.00
+
 	duration := time.Duration(time.Second * time.Duration(secondsInt))
 	return duration.String(), nil
 }
