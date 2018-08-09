@@ -1,19 +1,19 @@
 package main
 
 import (
-	"encoding/json"
-	"errors"
-	"fmt"
-	"github.com/bwmarrin/discordgo"
-	"github.com/lunixbochs/vtclean"
-	"io/ioutil"
-	"net/http"
+		"errors"
+		"github.com/bwmarrin/discordgo"
+			"net/http"
 	//"strconv"
 	"strings"
 	"time"
 	"strconv"
 	"os"
 	"io"
+	"io/ioutil"
+	"encoding/json"
+	"fmt"
+	"github.com/lunixbochs/vtclean"
 )
 
 // UtilitiesHandler struct
@@ -104,6 +104,7 @@ func (h *UtilitiesHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate
 		s.ChannelMessageSend(m.ChannelID, h.Events())
 		return
 	}
+	/*
 	if command == "estimatesutime" || command == "sutime" || command == "su-convert" {
 		if VerifyNDAChannel(m.ChannelID, h.conf){
 			if len(payload) < 2 {
@@ -119,6 +120,7 @@ func (h *UtilitiesHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate
 			return
 		}
 	}
+	*/
 	if command == "profilemosaic" {
 		if !user.Owner {
 			return

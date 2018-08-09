@@ -142,7 +142,7 @@ func (h *AdminHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 			command := strings.Fields(m.Content)
 			if command[0] != cp+"admin" {
-				return 
+				return
 			}
 
 			// Grab our sender ID to verify if this user has permission to use this command

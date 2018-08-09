@@ -148,6 +148,11 @@ func (h *PrimaryHandler) Init() error {
 	h.dg.AddHandler(rabbithandler.CarrotFinder)
 	go rabbithandler.Release(h.dg)
 
+	fmt.Println("Adding SUTime Handler")
+	sutimehandler := SUTimeHandler{conf: h.conf, registry: h.command.registry,db: h.db, userdb: h.user}
+	sutimehandler.Init()
+	h.dg.AddHandler(sutimehandler.Read)
+
 	fmt.Println("Adding Admin Handler")
 	adminhandler := AdminHandler{conf: h.conf, db: h.db, registry: h.command.registry, reactions: h.reactions,
 		configdb: confighandler.configdb, globalstate: h.globalstate, userdb: h.user}

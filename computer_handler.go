@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/bwmarrin/discordgo"
 	"strings"
-)
+	)
 
 // ComputerHandler struct
 type ComputerHandler struct {
@@ -39,6 +39,12 @@ func (h *ComputerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate)
 		payload = RemoveStringFromSlice(payload, command)
 	*/
 
+	phrase := strings.ToLower(strings.Trim(m.Content, h.conf.DUBotConfig.CP+command))
+	if strings.Contains(phrase, "open the pod bay doors"){
+		s.ChannelMessageSend(m.ChannelID, "https://www.youtube.com/watch?v=7qnd-hdmgfk")
+		return
+	}
+
 	if command == "computer" || command == "Computer" {
 
 		if !h.registry.CheckPermission("computer", m.ChannelID, user) {
@@ -48,6 +54,7 @@ func (h *ComputerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate)
 		if len(payload) < 2 {
 			return
 		}
+
 		if payload[0] == "nude" && payload[1] == "tayne" {
 			s.ChannelMessageSend(m.ChannelID, "This is not suitable for work. Are you sure?")
 			uuid, err := GetUUID()
@@ -68,7 +75,7 @@ func (h *ComputerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate)
 		}
 
 		if payload[0] == "and" && payload[1] == "a" && payload[2] == "flarhgunnstow?" {
-			s.ChannelMessageSend(m.ChannelID, "Yes. http://i.imgur.com/zlz25iD.gif")
+			s.ChannelMessageSend(m.ChannelID, "Yes. https://i.imgur.com/8JzHqhj.gif")
 			return
 		}
 
@@ -76,7 +83,7 @@ func (h *ComputerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate)
 			return
 		}
 		if payload[0] == "load" && payload[1] == "up" && payload[2] == "celery" && payload[3] == "man" && payload[4] == "please" {
-			s.ChannelMessageSend(m.ChannelID, "Yes "+m.Author.Mention()+" https://www.tenor.co/zSBS.gif")
+			s.ChannelMessageSend(m.ChannelID, "Yes "+m.Author.Mention()+" http://gph.is/1UTCMVa")
 			return
 		}
 

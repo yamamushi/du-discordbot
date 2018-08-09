@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"strconv"
+	"fmt"
 )
 
 // MemeHandler struct -> This operates without relying on a command string.
@@ -57,6 +58,10 @@ func (h *MemeHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 	if MessageHasMeme(message, "diesel") {
 		s.MessageReactionAdd(m.ChannelID, m.Message.ID, ":diesel:442400293972475904")
+	}
+	if MessageHasMeme(message, "nomad") {
+		fmt.Println(message)
+		s.MessageReactionAdd(m.ChannelID, m.Message.ID, ":nomad:477252497002594315")
 	}
 	/*
 	if MessageHasMeme(message, "thanks") || MessageHasMeme(message, "thank you") ||
