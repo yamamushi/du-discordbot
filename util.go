@@ -517,3 +517,11 @@ func FlushMessages(s *discordgo.Session, channelID string, count int) (err error
 
 	return nil
 }
+
+func fmtDuration(d time.Duration) string {
+	d = d.Round(time.Minute)
+	h := d / time.Hour
+	d -= h * time.Hour
+	m := d / time.Minute
+	return fmt.Sprintf("%02d hours %02d minutes", h, m)
+}

@@ -153,6 +153,11 @@ func (h *PrimaryHandler) Init() error {
 	sutimehandler.Init()
 	h.dg.AddHandler(sutimehandler.Read)
 
+	fmt.Println("Adding Server Status Handler")
+	statushandler := ServerStatusHandler{conf: h.conf, registry: h.command.registry,db: h.db, userdb: h.user}
+	statushandler.Init()
+	h.dg.AddHandler(statushandler.Read)
+
 	fmt.Println("Adding Admin Handler")
 	adminhandler := AdminHandler{conf: h.conf, db: h.db, registry: h.command.registry, reactions: h.reactions,
 		configdb: confighandler.configdb, globalstate: h.globalstate, userdb: h.user}

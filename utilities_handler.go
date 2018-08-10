@@ -79,10 +79,12 @@ func (h *UtilitiesHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate
 		return
 
 	}
+	/*
 	if command == "countdown" {
 		s.ChannelMessageSend(m.ChannelID, h.GetCountdownStatus())
 		return
 	}
+	*/
 	if command == "pledging" || command == "pledges" || command == "crowdfunding" || command == "founderspacks" {
 
 		s.ChannelMessageSend(m.ChannelID, h.GetPledgingStatus())
