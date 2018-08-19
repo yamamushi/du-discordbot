@@ -403,6 +403,7 @@ func (h *RecruitmentHandler) Validate(payload []string, s *discordgo.Session, m 
 	record.ValidationReminderSent = false
 	h.recruitmentdb.UpdateRecruitmentRecord(record)
 
+	expiryDate = record.LastValidated.Add(expiryMinutes)
 	loc, _ := time.LoadLocation("America/Chicago")
 	s.ChannelMessageSend(m.ChannelID, "Advertisement has been successfully validated until " + expiryDate.In(loc).Format("Mon Jan _2 03:04 MST 2006"))
 
@@ -916,6 +917,16 @@ func (h *RecruitmentHandler) RecruitmentInfo(payload []string, s *discordgo.Sess
 	loc, _ := time.LoadLocation("America/Chicago")
 	output = output + "Last Run: " + record.LastRun.In(loc).Format("Mon Jan _2 03:04 MST 2006") + "\n"
 	output = output + "Last Validated: " + record.LastValidated.In(loc).Format("Mon Jan _2 03:04 MST 2006") + "\n"
+
+	expirationTime, err := h.configdb.GetValue("recruitment-expiration")
+	if err != nil {
+		expirationTime = int(h.conf.Recruitment.RecruitmentExpiration)
+	}
+
+	expiryMinutes := time.Duration(time.Duration(expirationTime) * time.Minute)
+	expiryDate := record.LastValidated.Add(expiryMinutes)
+
+	output = output + "Expires: " + expiryDate.In(loc).Format("Mon Jan _2 03:04 MST 2006") + "\n"
 	output = output + "Validation Reminder Sent: " + strconv.FormatBool(record.ValidationReminderSent) + "\n"
 
 	output = output + "Org Name: " + record.OrgName + "\n"

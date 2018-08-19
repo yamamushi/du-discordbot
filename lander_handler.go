@@ -75,10 +75,22 @@ func (h *LanderHandler) Read(s *discordgo.Session, m *discordgo.GuildMemberAdd) 
 }
 
 func (h *LanderHandler) ReadRemove(s *discordgo.Session, m *discordgo.GuildMemberRemove) {
-	member, err := s.GuildMember(s.State.Guilds[0].ID, m.User.ID)
-	if err != nil {
-		return
-	}
-	s.State.MemberRemove(member)
+	//fmt.Println("Remove event caught")
+	// Don't use this as it will malloc panic
+	//member, _ := s.GuildMember(s.State.Guilds[0].ID, m.User.ID)
+	//s.State.MemberRemove(member)
+
+
+	// Wipe our autoroles so that when the user rejoins they start at Guest again
+	userrecord, _ := h.user.GetUser(m.User.ID)
+	userrecord.LatestRoleTimeout = 0
+	//userrecord.RabbitCount = 0
+	userrecord.HistoricalAutoRoles = []string{""}
+
+	h.user.UpdateUserRecord(userrecord)
+
+	//generalChannelID, _ := getChannelIDByName(s, s.State.Guilds[0].ID, "general")
+	//s.ChannelMessageSend(generalChannelID, "<@"+m.User.ID+"> has left the server.")
+	return
 }
 

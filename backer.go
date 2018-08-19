@@ -24,6 +24,7 @@ type BackerRecord struct {
 	ForumProfile string
 	ATV          string
 	PreAlpha     string
+	Alpha        string
 	Validated    int
 }
 
@@ -506,7 +507,7 @@ func (h *BackerInterface) GetBackerString(record BackerRecord) (status string) {
 
 	resp, err := soup.Get(record.ForumProfile) // Append page=1000 so we get the last page
 	if err != nil {
-		//fmt.Println("Could not retreive page: " + record.ForumProfile)
+		//fmt.Println("Could not retrieve page: " + record.ForumProfile)
 		return ""
 	}
 

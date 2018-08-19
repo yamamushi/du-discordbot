@@ -40,9 +40,22 @@ func (h *MemeHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 				val, err := strconv.Atoi(scpnum)
 				if err == nil && val > 0 {
 					s.ChannelMessageSend(m.ChannelID, "http://www.scp-wiki.net/"+word)
+					return
 				}
 			}
 		}
+	}
+	if strings.Contains(message, "/r/"){
+		words := strings.Split(message, " ")
+		for _, word := range words {
+			if strings.HasPrefix(word, "/r/") {
+				s.ChannelMessageSend(m.ChannelID, "https://reddit.com"+word)
+				return
+			}
+		}
+	}
+	if strings.Contains(message, "@everyone") {
+		s.MessageReactionAdd(m.ChannelID, m.Message.ID, "a:everyone:480218065196417046")
 	}
 	if MessageHasMeme(message, "jc") {
 		s.MessageReactionAdd(m.ChannelID, m.Message.ID, ":jc:236526936573214720")
