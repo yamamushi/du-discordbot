@@ -20,6 +20,8 @@ RUN go get github.com/anaskhan96/soup
 RUN cd /go/src/github.com/anaskhan96/soup && git checkout ad448eafe
 RUN go get github.com/bwmarrin/discordgo
 RUN go get github.com/BurntSushi/toml
+RUN go get github.com/coreos/bbolt
+RUN cd /go/src/github.com/coreos/bbolt && git checkout af9db202
 RUN go get github.com/asdine/storm
 RUN go get gopkg.in/oleiade/lane.v1
 RUN go get github.com/gofrs/uuid

@@ -108,6 +108,17 @@ func (h *LuaHandler) RunReadLuaInput(s *discordgo.Session, m *discordgo.MessageC
 
 	message = strings.TrimSuffix(message, "```")
 
+	if strings.Contains(message, "loadfile") {
+		s.ChannelMessageSend(m.ChannelID, "loadfile is disabled!")
+		return
+	}
+
+	if strings.Contains(message, "dofile") {
+		s.ChannelMessageSend(m.ChannelID, "dofile is disabled!")
+		return
+	}
+
+
 	h.RunLua(message, s, m)
 	return
 }
@@ -120,7 +131,7 @@ func (h *LuaHandler) RunLua(script string, s *discordgo.Session, m *discordgo.Me
 	os.Stdout = w        // Reassign stdout to our temporary pipe
 
 	// Create our new lua state
-	l := lua.NewState()
+	l := lua.NewState(lua.Options{SkipOpenLibs: true})
 	defer l.Close()
 
 	// Create our context pattern with a timeout as set in the config file
@@ -129,6 +140,26 @@ func (h *LuaHandler) RunLua(script string, s *discordgo.Session, m *discordgo.Me
 
 	// set the context to our LuaState
 	l.SetContext(ctx)
+
+	for _, pair := range []struct {
+		n string
+		f lua.LGFunction
+	}{
+		{lua.LoadLibName, lua.OpenPackage}, // Must be first
+		{lua.BaseLibName, lua.OpenBase},
+		{lua.TabLibName, lua.OpenTable},
+		{lua.StringLibName, lua.OpenString},
+		{lua.CoroutineLibName, lua.OpenCoroutine},
+		{lua.MathLibName, lua.OpenMath},
+	} {
+		if err := l.CallByParam(lua.P{
+			Fn:      l.NewFunction(pair.f),
+			NRet:    0,
+			Protect: true,
+		}, lua.LString(pair.n)); err != nil {
+			panic(err)
+		}
+	}
 
 	err := l.DoString(script)
 	if err != nil {
