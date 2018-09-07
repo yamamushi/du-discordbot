@@ -4,28 +4,34 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"github.com/anaskhan96/soup"
+	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 	"io"
 	"strings"
+	"time"
+
 	//"fmt"
 	//"strconv"
 	"sync"
-	)
+)
 
 type BackerInterface struct {
 	db *DBHandler
 	querylocker sync.Mutex
+	conf *Config
 }
 
 type BackerRecord struct {
-	UserID       string `storm:"id"`
-	HashedID     string
-	BackerStatus string
-	ForumProfile string
-	ATV          string
-	PreAlpha     string
-	Alpha        string
-	Validated    int
+	UserID       string `storm:"id",json:"userid"`
+	HashedID     string `json:"hashedid"`
+	BackerStatus string `json:"backerstatus"`
+	ForumProfile string `json:"forumprofile"`
+	ATV          string `json:"atv"`
+	PreAlpha     string `json:"prealpha"`
+	Alpha        string `json:"alpha"`
+	Validated    int    `json:"validated"`
 }
 
 // SaveRecordToDB function
@@ -33,15 +39,27 @@ func (h *BackerInterface) SaveRecordToDB(record BackerRecord) (err error) {
 	h.querylocker.Lock()
 	defer h.querylocker.Unlock()
 
-	db := h.db.rawdb.From("DiscordAuth")
-
-	//	fmt.Println("Creating New Record")
-	err = db.Save(&record)
-	if err != nil {
-		return err
+	mongoDBDialInfo := &mgo.DialInfo{
+		Addrs:    []string{h.conf.DBConfig.MongoHost},
+		Timeout:  30 * time.Second,
+		Database: h.conf.DBConfig.MongoDB,
+		Username: h.conf.DBConfig.MongoUser,
+		Password: h.conf.DBConfig.MongoPass,
 	}
 
-	return nil
+	session, err := mgo.DialWithInfo(mongoDBDialInfo)
+	if err != nil {
+		//log.Println("Could not connect to mongo: ", err.Error())
+		return err
+	}
+	defer session.Close()
+
+	session.SetMode(mgo.Monotonic, true)
+
+	c := session.DB("duauthbot").C(h.conf.DBConfig.BackerRecordColumn)
+
+	_, err = c.UpsertId(record.UserID, record)
+	return err
 }
 
 // NewPlayerRecord function
@@ -59,18 +77,60 @@ func (h *BackerInterface) GetRecordFromDB(userid string) (record BackerRecord, e
 	h.querylocker.Lock()
 	defer h.querylocker.Unlock()
 
-	db := h.db.rawdb.From("DiscordAuth")
+	mongoDBDialInfo := &mgo.DialInfo{
+		Addrs:    []string{h.conf.DBConfig.MongoHost},
+		Timeout:  30 * time.Second,
+		Database: h.conf.DBConfig.MongoDB,
+		Username: h.conf.DBConfig.MongoUser,
+		Password: h.conf.DBConfig.MongoPass,
+	}
+
+	session, err := mgo.DialWithInfo(mongoDBDialInfo)
+	if err != nil {
+		//log.Println("Could not connect to mongo: ", err.Error())
+		return record, err
+	}
+	defer session.Close()
+
+	session.SetMode(mgo.Monotonic, true)
+
+	c := session.DB("duauthbot").C(h.conf.DBConfig.BackerRecordColumn)
 
 	userrecord := BackerRecord{}
-	err = db.One("UserID", userid, &userrecord)
-	if err != nil {
-		return userrecord, err
-	}
-	return userrecord, nil
+	err = c.Find(bson.M{"userid": userid}).One(&userrecord)
+	return userrecord, err
 }
 
 // BackerInterface function
 func (h *BackerInterface) GetAllBackers() (records []BackerRecord, err error) {
+	h.querylocker.Lock()
+	defer h.querylocker.Unlock()
+
+	mongoDBDialInfo := &mgo.DialInfo{
+		Addrs:    []string{h.conf.DBConfig.MongoHost},
+		Timeout:  30 * time.Second,
+		Database: h.conf.DBConfig.MongoDB,
+		Username: h.conf.DBConfig.MongoUser,
+		Password: h.conf.DBConfig.MongoPass,
+	}
+
+	session, err := mgo.DialWithInfo(mongoDBDialInfo)
+	if err != nil {
+		//log.Println("Could not connect to mongo: ", err.Error())
+		return records, err
+	}
+	defer session.Close()
+
+	session.SetMode(mgo.Monotonic, true)
+
+	c := session.DB("duauthbot").C(h.conf.DBConfig.BackerRecordColumn)
+
+	err = c.Find(bson.M{}).All(&records)
+	return records, err
+}
+
+// BackerInterface function
+func (h *BackerInterface) GetAllBackersDeprecated() (records []BackerRecord, err error) {
 	h.querylocker.Lock()
 	defer h.querylocker.Unlock()
 
@@ -83,17 +143,33 @@ func (h *BackerInterface) GetAllBackers() (records []BackerRecord, err error) {
 	return records, nil
 }
 
-
 // GetRecordFromDB function
 func (h *BackerInterface) UniqueProfileCheck(userid string, profileurl string) (err error) {
 
 	h.querylocker.Lock()
 	defer h.querylocker.Unlock()
 
-	db := h.db.rawdb.From("DiscordAuth")
+	mongoDBDialInfo := &mgo.DialInfo{
+		Addrs:    []string{h.conf.DBConfig.MongoHost},
+		Timeout:  30 * time.Second,
+		Database: h.conf.DBConfig.MongoDB,
+		Username: h.conf.DBConfig.MongoUser,
+		Password: h.conf.DBConfig.MongoPass,
+	}
+
+	session, err := mgo.DialWithInfo(mongoDBDialInfo)
+	if err != nil {
+		//log.Println("Could not connect to mongo: ", err.Error())
+		return err
+	}
+	defer session.Close()
+
+	session.SetMode(mgo.Monotonic, true)
+
+	c := session.DB("duauthbot").C(h.conf.DBConfig.BackerRecordColumn)
 
 	userrecords := []BackerRecord{}
-	err = db.Find("ForumProfile", profileurl, &userrecords)
+	err = c.Find(bson.M{}).All(&userrecords)
 	if err != nil {
 		if err.Error() == "not found" {
 			return nil
@@ -316,6 +392,7 @@ func (h *BackerInterface) ForumAuth(url string, userid string) (err error) {
 	if !h.UserHasRecord(userid) {
 		err := h.NewPlayerRecord(userid)
 		if err != nil {
+			fmt.Println("Error: " + err.Error())
 			return err
 		}
 	}

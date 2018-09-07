@@ -30,6 +30,11 @@ type discordConfig struct {
 // databaseConfig struct
 type databaseConfig struct {
 	DBFile string `toml:"filename"`
+	MongoHost string `toml:"mongohost"`
+	MongoDB string  `toml:"mongodb"`
+	BackerRecordColumn string `toml:"backerrecordcolumn"`
+	MongoUser string    `toml:"mongouser"`
+	MongoPass string    `toml:"mongopass"`
 }
 
 // dubotConfig struct

@@ -2,8 +2,10 @@ package main
 
 import (
 	"github.com/bwmarrin/discordgo"
+	"gopkg.in/mgo.v2"
 	"strings"
-	)
+	"time"
+)
 
 type BackerHandler struct {
 	db              *DBHandler
@@ -14,7 +16,7 @@ type BackerHandler struct {
 
 func (h *BackerHandler) Init() {
 
-	h.backerInterface = &BackerInterface{db: h.db}
+	h.backerInterface = &BackerInterface{db: h.db, conf: h.conf}
 
 }
 
@@ -28,6 +30,23 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 	user, err := h.db.GetUser(m.Author.ID)
 	if err != nil {
 		//fmt.Println("Error finding user")
+		return
+	}
+
+	if command == "migrateauth" {
+		if !user.Owner {
+			return
+		}
+
+		s.ChannelMessageSend(m.ChannelID, "DB Migration Started - This may take a while!")
+		time.Sleep(5*time.Second)
+		err = h.MigrateDB()
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+			return
+		}
+		//s.ChannelMessageSend(m.ChannelID, "DB Migration Successful")
+		s.ChannelMessageSend(m.ChannelID, "DB Migration [Under Construction]")
 		return
 	}
 
@@ -322,6 +341,42 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		s.ChannelMessageSend(m.ChannelID, "Records repaired")
 		return
 	}
+}
+
+func (h *BackerHandler) MigrateDB() (err error){
+
+	mongoDBDialInfo := &mgo.DialInfo{
+		Addrs:    []string{h.conf.DBConfig.MongoHost},
+		Timeout:  30 * time.Second,
+		Database: h.conf.DBConfig.MongoDB,
+		Username: h.conf.DBConfig.MongoUser,
+		Password: h.conf.DBConfig.MongoPass,
+	}
+
+	session, err := mgo.DialWithInfo(mongoDBDialInfo)
+	if err != nil {
+		//log.Println("Could not connect to mongo: ", err.Error())
+		return err
+	}
+	defer session.Close()
+
+	session.SetMode(mgo.Monotonic, true)
+
+	backerrecords, err := h.backerInterface.GetAllBackersDeprecated()
+	if err != nil {
+		return err
+	}
+
+	c := session.DB("duauthbot").C(h.conf.DBConfig.BackerRecordColumn)
+
+	for _, record := range backerrecords {
+		_, err = c.UpsertId(record.UserID, record)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (h *BackerHandler) ResetBackerConfirm(payload string, s *discordgo.Session, m *discordgo.MessageCreate) {

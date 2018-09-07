@@ -118,6 +118,16 @@ func (h *LuaHandler) RunReadLuaInput(s *discordgo.Session, m *discordgo.MessageC
 		return
 	}
 
+	if strings.Contains(message, "while true") || strings.Contains(message, "while 1") {
+		s.ChannelMessageSend(m.ChannelID, "Invalid input!")
+		return
+	}
+
+	if strings.Contains(message, "until false") || strings.Contains(message, "until nil") || strings.Contains(message, "until true"){
+		s.ChannelMessageSend(m.ChannelID, "Invalid input!")
+		return
+	}
+
 
 	h.RunLua(message, s, m)
 	return
@@ -157,7 +167,8 @@ func (h *LuaHandler) RunLua(script string, s *discordgo.Session, m *discordgo.Me
 			NRet:    0,
 			Protect: true,
 		}, lua.LString(pair.n)); err != nil {
-			panic(err)
+			s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
+			return
 		}
 	}
 

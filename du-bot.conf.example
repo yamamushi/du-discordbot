@@ -7,7 +7,11 @@ admin_id = "the bot owner user id goes here"
 
 [database]
 filename = "database.db"
-
+mongohost = "localhost:27017"
+mongodb = "dbname"
+backerrecordcolumn = "columnname"
+mongouser = "username"
+mongopass = "password"
 
 [du-bot]
 default_now_playing = "InDev"
