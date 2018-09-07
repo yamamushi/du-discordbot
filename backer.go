@@ -56,7 +56,7 @@ func (h *BackerInterface) SaveRecordToDB(record BackerRecord) (err error) {
 
 	session.SetMode(mgo.Monotonic, true)
 
-	c := session.DB("duauthbot").C(h.conf.DBConfig.BackerRecordColumn)
+	c := session.DB(h.conf.DBConfig.MongoDB).C(h.conf.DBConfig.BackerRecordColumn)
 
 	_, err = c.UpsertId(record.UserID, record)
 	return err
@@ -94,7 +94,7 @@ func (h *BackerInterface) GetRecordFromDB(userid string) (record BackerRecord, e
 
 	session.SetMode(mgo.Monotonic, true)
 
-	c := session.DB("duauthbot").C(h.conf.DBConfig.BackerRecordColumn)
+	c := session.DB(h.conf.DBConfig.MongoDB).C(h.conf.DBConfig.BackerRecordColumn)
 
 	userrecord := BackerRecord{}
 	err = c.Find(bson.M{"userid": userid}).One(&userrecord)
@@ -123,7 +123,7 @@ func (h *BackerInterface) GetAllBackers() (records []BackerRecord, err error) {
 
 	session.SetMode(mgo.Monotonic, true)
 
-	c := session.DB("duauthbot").C(h.conf.DBConfig.BackerRecordColumn)
+	c := session.DB(h.conf.DBConfig.MongoDB).C(h.conf.DBConfig.BackerRecordColumn)
 
 	err = c.Find(bson.M{}).All(&records)
 	return records, err
@@ -166,11 +166,12 @@ func (h *BackerInterface) UniqueProfileCheck(userid string, profileurl string) (
 
 	session.SetMode(mgo.Monotonic, true)
 
-	c := session.DB("duauthbot").C(h.conf.DBConfig.BackerRecordColumn)
+	c := session.DB(h.conf.DBConfig.MongoDB).C(h.conf.DBConfig.BackerRecordColumn)
 
 	userrecords := []BackerRecord{}
-	err = c.Find(bson.M{}).All(&userrecords)
+	err = c.Find(bson.M{"forumprofile": profileurl}).All(&userrecords)
 	if err != nil {
+		//fmt.Println("UniqueProfilecheck Error: " + err.Error())
 		if err.Error() == "not found" {
 			return nil
 		}
@@ -473,10 +474,11 @@ func (h *BackerInterface) GetValidationString(record BackerRecord) (validation s
 		//fmt.Println("Could not retreive page: " + record.ForumProfile)
 		return "", err
 	}
+	//fmt.Println("URL: " + record.ForumProfile)
 
 	doc := soup.HTMLParse(resp)
 	activityStream := doc.Find("div", "class", "ipsTabs_panels ipsPad_double ipsAreaBackground_reset").FindAll("li")
-
+	//fmt.Println("ActivityStream: " + strconv.Itoa(len(activityStream)))
 	if len(activityStream) > 0 {
 
 		for _, activityitem := range activityStream {
@@ -487,7 +489,9 @@ func (h *BackerInterface) GetValidationString(record BackerRecord) (validation s
 					if len(content) > 0 {
 						if content[0].Attrs()["title"] == "Status Update" {
 							commenterurls := comments.FindAll("a")
+							//fmt.Println("commenturls: " + strconv.Itoa(len(commenterurls)))
 							if len(commenterurls) > 0 {
+								//fmt.Println(commenterurls[0].Attrs()["href"])
 								if commenterurls[0].Attrs()["href"] == record.ForumProfile {
 									commentp := activityitem.Find("div", "class", "ipsStreamItem_snippet").FindAll("p")
 									if len(commentp) > 0 {

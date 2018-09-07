@@ -102,7 +102,12 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 			return
 		}
 
-		err = h.backerInterface.ForumAuth(payload[0], m.Author.ID)
+		profileurl := payload[0]
+		if string(profileurl[len(profileurl)-1]) != "/" {
+			profileurl = profileurl + "/"
+		}
+
+		err = h.backerInterface.ForumAuth(profileurl, m.Author.ID)
 		if err != nil {
 			output := "Error validating account: " + err.Error()
 			s.ChannelMessageSend(userprivatechannel.ID, output)
@@ -193,7 +198,12 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 			h.ResetAuth(m.Mentions[0].ID, s, m)
 		}
 
-		err = h.backerInterface.ForumAuth(payload[1], m.Mentions[0].ID)
+		profileurl := payload[1]
+		if string(profileurl[len(profileurl)-1]) != "/" {
+			profileurl = profileurl + "/"
+		}
+
+		err = h.backerInterface.ForumAuth(profileurl, m.Mentions[0].ID)
 		if err != nil {
 			output := "Error validating account: " + err.Error()
 			s.ChannelMessageSend(m.ChannelID, output)
