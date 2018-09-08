@@ -52,6 +52,13 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if command == "backerauth" || command == "atvauth" || command == "forumauth" {
 
+		if len(payload) > 0 {
+			if strings.ToLower(payload[0]) == "help"{
+				s.ChannelMessageSend(m.ChannelID, ":bulb: Forum Auth Tutorial - https://www.youtube.com/watch?v=oTivgKFHNUk")
+				return
+			}
+		}
+
 		userprivatechannel, err := s.UserChannelCreate(m.Author.ID)
 		if err != nil {
 			s.ChannelMessageSend(m.ChannelID, "Error initializing backerauth.")
@@ -97,7 +104,26 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 			return
 		}
 
-		if h.backerInterface.UserValidated(m.Author.ID) {
+		mongoDBDialInfo := &mgo.DialInfo{
+			Addrs:    []string{h.conf.DBConfig.MongoHost},
+			Timeout:  30 * time.Second,
+			Database: h.conf.DBConfig.MongoDB,
+			Username: h.conf.DBConfig.MongoUser,
+			Password: h.conf.DBConfig.MongoPass,
+		}
+
+		session, err := mgo.DialWithInfo(mongoDBDialInfo)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+			return
+		}
+		defer session.Close()
+
+		session.SetMode(mgo.Monotonic, true)
+
+		c := session.DB(h.conf.DBConfig.MongoDB).C(h.conf.DBConfig.BackerRecordColumn)
+
+		if h.backerInterface.UserValidated(m.Author.ID, *c) {
 			s.ChannelMessageSend(m.ChannelID, "Error: user already validated, contact a discord admin!")
 			return
 		}
@@ -107,14 +133,14 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 			profileurl = profileurl + "/"
 		}
 
-		err = h.backerInterface.ForumAuth(profileurl, m.Author.ID)
+		err = h.backerInterface.ForumAuth(profileurl, m.Author.ID, *c)
 		if err != nil {
 			output := "Error validating account: " + err.Error()
 			s.ChannelMessageSend(userprivatechannel.ID, output)
 			return
 		}
 
-		if h.backerInterface.UserValidated(m.Author.ID) {
+		if h.backerInterface.UserValidated(m.Author.ID, *c) {
 
 			err := h.UpdateRoles(s, m, m.Author.ID)
 			if err != nil {
@@ -168,12 +194,31 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 			return
 		}
 
-		if !h.backerInterface.UserValidated(m.Mentions[0].ID) {
+		mongoDBDialInfo := &mgo.DialInfo{
+			Addrs:    []string{h.conf.DBConfig.MongoHost},
+			Timeout:  30 * time.Second,
+			Database: h.conf.DBConfig.MongoDB,
+			Username: h.conf.DBConfig.MongoUser,
+			Password: h.conf.DBConfig.MongoPass,
+		}
+
+		session, err := mgo.DialWithInfo(mongoDBDialInfo)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+			return
+		}
+		defer session.Close()
+
+		session.SetMode(mgo.Monotonic, true)
+
+		c := session.DB(h.conf.DBConfig.MongoDB).C(h.conf.DBConfig.BackerRecordColumn)
+
+		if !h.backerInterface.UserValidated(m.Mentions[0].ID, *c) {
 			s.ChannelMessageSend(m.ChannelID, "Selected user has not linked their profile yet.")
 			return
 		}
 
-		err := h.UpdateRoles(s, m, m.Mentions[0].ID)
+		err = h.UpdateRoles(s, m, m.Mentions[0].ID)
 		if err != nil {
 			s.ChannelMessageSend(m.ChannelID, "Could not update user roles: "+err.Error()+" , please contact a discord administrator")
 			return
@@ -194,7 +239,27 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 			s.ChannelMessageSend(m.ChannelID, "Error: <adminlink> requires an argument!")
 			return
 		}
-		if h.backerInterface.UserValidated(m.Mentions[0].ID) {
+
+		mongoDBDialInfo := &mgo.DialInfo{
+			Addrs:    []string{h.conf.DBConfig.MongoHost},
+			Timeout:  30 * time.Second,
+			Database: h.conf.DBConfig.MongoDB,
+			Username: h.conf.DBConfig.MongoUser,
+			Password: h.conf.DBConfig.MongoPass,
+		}
+
+		session, err := mgo.DialWithInfo(mongoDBDialInfo)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+			return
+		}
+		defer session.Close()
+
+		session.SetMode(mgo.Monotonic, true)
+
+		c := session.DB(h.conf.DBConfig.MongoDB).C(h.conf.DBConfig.BackerRecordColumn)
+
+		if h.backerInterface.UserValidated(m.Mentions[0].ID, *c) {
 			h.ResetAuth(m.Mentions[0].ID, s, m)
 		}
 
@@ -203,14 +268,14 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 			profileurl = profileurl + "/"
 		}
 
-		err = h.backerInterface.ForumAuth(profileurl, m.Mentions[0].ID)
+		err = h.backerInterface.ForumAuth(profileurl, m.Mentions[0].ID, *c)
 		if err != nil {
 			output := "Error validating account: " + err.Error()
 			s.ChannelMessageSend(m.ChannelID, output)
 			return
 		}
 
-		if h.backerInterface.UserValidated(m.Mentions[0].ID) {
+		if h.backerInterface.UserValidated(m.Mentions[0].ID, *c) {
 
 			err := h.UpdateRoles(s, m, m.Mentions[0].ID)
 			if err != nil {
@@ -238,13 +303,31 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 			s.ChannelMessageSend(m.ChannelID, command+" too many users selected.")
 			return
 		}
+		mongoDBDialInfo := &mgo.DialInfo{
+			Addrs:    []string{h.conf.DBConfig.MongoHost},
+			Timeout:  30 * time.Second,
+			Database: h.conf.DBConfig.MongoDB,
+			Username: h.conf.DBConfig.MongoUser,
+			Password: h.conf.DBConfig.MongoPass,
+		}
 
-		if !h.backerInterface.UserValidated(m.Mentions[0].ID) {
+		session, err := mgo.DialWithInfo(mongoDBDialInfo)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+			return
+		}
+		defer session.Close()
+
+		session.SetMode(mgo.Monotonic, true)
+
+		c := session.DB(h.conf.DBConfig.MongoDB).C(h.conf.DBConfig.BackerRecordColumn)
+
+		if !h.backerInterface.UserValidated(m.Mentions[0].ID, *c) {
 			s.ChannelMessageSend(m.ChannelID, "Selected user has not linked their profile yet.")
 			return
 		}
 
-		record, err := h.backerInterface.GetRecordFromDB(m.Mentions[0].ID)
+		record, err := h.backerInterface.GetRecordFromDB(m.Mentions[0].ID, *c)
 		if err != nil {
 			s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 			return
@@ -270,14 +353,33 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 			return
 		}
 
+		mongoDBDialInfo := &mgo.DialInfo{
+			Addrs:    []string{h.conf.DBConfig.MongoHost},
+			Timeout:  30 * time.Second,
+			Database: h.conf.DBConfig.MongoDB,
+			Username: h.conf.DBConfig.MongoUser,
+			Password: h.conf.DBConfig.MongoPass,
+		}
+
+		session, err := mgo.DialWithInfo(mongoDBDialInfo)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+			return
+		}
+		defer session.Close()
+
+		session.SetMode(mgo.Monotonic, true)
+
+		c := session.DB(h.conf.DBConfig.MongoDB).C(h.conf.DBConfig.BackerRecordColumn)
+
 		mentionid := payload[0]
 
-		if !h.backerInterface.UserValidated(mentionid) {
+		if !h.backerInterface.UserValidated(mentionid, *c) {
 			s.ChannelMessageSend(m.ChannelID, "Selected user has not linked their profile yet.")
 			return
 		}
 
-		record, err := h.backerInterface.GetRecordFromDB(mentionid)
+		record, err := h.backerInterface.GetRecordFromDB(mentionid, *c)
 		if err != nil {
 			s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 			return
@@ -330,7 +432,26 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 			return
 		}
 
-		records, err := h.backerInterface.GetAllBackers()
+		mongoDBDialInfo := &mgo.DialInfo{
+			Addrs:    []string{h.conf.DBConfig.MongoHost},
+			Timeout:  30 * time.Second,
+			Database: h.conf.DBConfig.MongoDB,
+			Username: h.conf.DBConfig.MongoUser,
+			Password: h.conf.DBConfig.MongoPass,
+		}
+
+		session, err := mgo.DialWithInfo(mongoDBDialInfo)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+			return
+		}
+		defer session.Close()
+
+		session.SetMode(mgo.Monotonic, true)
+
+		c := session.DB(h.conf.DBConfig.MongoDB).C(h.conf.DBConfig.BackerRecordColumn)
+
+		records, err := h.backerInterface.GetAllBackers(*c)
 		if err != nil {
 			s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
 			return
@@ -341,7 +462,7 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 				record.BackerStatus == "Emerald Founder" || record.BackerStatus == "Diamond Founder" || record.BackerStatus == "Kyrium Founder" ||
 				record.BackerStatus == "Patron" || record.ATV == "true" {
 				record.PreAlpha = "true"
-				err = h.backerInterface.SaveRecordToDB(record)
+				err = h.backerInterface.SaveRecordToDB(record, *c)
 				if err != nil {
 					s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
 					return
@@ -417,25 +538,46 @@ func (h *BackerHandler) ResetBackerConfirm(payload string, s *discordgo.Session,
 }
 
 func (h *BackerHandler) ResetAuth(userid string, s *discordgo.Session, m *discordgo.MessageCreate) (err error){
-	atvStatus, err := h.backerInterface.GetATVStatus(userid)
+
+	mongoDBDialInfo := &mgo.DialInfo{
+		Addrs:    []string{h.conf.DBConfig.MongoHost},
+		Timeout:  30 * time.Second,
+		Database: h.conf.DBConfig.MongoDB,
+		Username: h.conf.DBConfig.MongoUser,
+		Password: h.conf.DBConfig.MongoPass,
+	}
+
+	session, err := mgo.DialWithInfo(mongoDBDialInfo)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		return
+	}
+	defer session.Close()
+
+	session.SetMode(mgo.Monotonic, true)
+
+	c := session.DB(h.conf.DBConfig.MongoDB).C(h.conf.DBConfig.BackerRecordColumn)
+
+
+	atvStatus, err := h.backerInterface.GetATVStatus(userid, *c)
 	/*if err != nil {
 		s.ChannelMessageSend(m.ChannelID, "Error retrieving ATV Status")
 		return
 	}*/
 
-	prealphaStatus, err := h.backerInterface.GetPreAlphaStatus(userid)
+	prealphaStatus, err := h.backerInterface.GetPreAlphaStatus(userid, *c)
 	/*if err != nil {
 		s.ChannelMessageSend(m.ChannelID, err.Error())
 		return
 	}*/
 
-	backerStatus, err := h.backerInterface.GetBackerStatus(userid)
+	backerStatus, err := h.backerInterface.GetBackerStatus(userid, *c)
 	/*if err != nil {
 		s.ChannelMessageSend(m.ChannelID, err.Error())
 		return
 	}*/
 
-	err = h.backerInterface.ResetUser(userid)
+	err = h.backerInterface.ResetUser(userid, *c)
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, "Could not reset user: "+userid+" : "+err.Error())
 		return
@@ -501,17 +643,36 @@ func (h *BackerHandler) ResetAuth(userid string, s *discordgo.Session, m *discor
 
 func (h *BackerHandler) UpdateRoles(s *discordgo.Session, m *discordgo.MessageCreate, userid string) (err error) {
 
-	atvStatus, err := h.backerInterface.GetATVStatus(userid)
+	mongoDBDialInfo := &mgo.DialInfo{
+		Addrs:    []string{h.conf.DBConfig.MongoHost},
+		Timeout:  30 * time.Second,
+		Database: h.conf.DBConfig.MongoDB,
+		Username: h.conf.DBConfig.MongoUser,
+		Password: h.conf.DBConfig.MongoPass,
+	}
+
+	session, err := mgo.DialWithInfo(mongoDBDialInfo)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		return
+	}
+	defer session.Close()
+
+	session.SetMode(mgo.Monotonic, true)
+
+	c := session.DB(h.conf.DBConfig.MongoDB).C(h.conf.DBConfig.BackerRecordColumn)
+
+	atvStatus, err := h.backerInterface.GetATVStatus(userid, *c)
 	if err != nil {
 		return err
 	}
 
-	prealphaStatus, err := h.backerInterface.GetPreAlphaStatus(userid)
+	prealphaStatus, err := h.backerInterface.GetPreAlphaStatus(userid, *c)
 	if err != nil {
 		return err
 	}
 
-	backerStatus, err := h.backerInterface.GetBackerStatus(userid)
+	backerStatus, err := h.backerInterface.GetBackerStatus(userid, *c)
 	if err != nil {
 		return err
 	}

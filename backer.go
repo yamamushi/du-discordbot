@@ -10,8 +10,6 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"io"
 	"strings"
-	"time"
-
 	//"fmt"
 	//"strconv"
 	"sync"
@@ -35,66 +33,28 @@ type BackerRecord struct {
 }
 
 // SaveRecordToDB function
-func (h *BackerInterface) SaveRecordToDB(record BackerRecord) (err error) {
+func (h *BackerInterface) SaveRecordToDB(record BackerRecord, c mgo.Collection) (err error) {
 	h.querylocker.Lock()
 	defer h.querylocker.Unlock()
-
-	mongoDBDialInfo := &mgo.DialInfo{
-		Addrs:    []string{h.conf.DBConfig.MongoHost},
-		Timeout:  30 * time.Second,
-		Database: h.conf.DBConfig.MongoDB,
-		Username: h.conf.DBConfig.MongoUser,
-		Password: h.conf.DBConfig.MongoPass,
-	}
-
-	session, err := mgo.DialWithInfo(mongoDBDialInfo)
-	if err != nil {
-		//log.Println("Could not connect to mongo: ", err.Error())
-		return err
-	}
-	defer session.Close()
-
-	session.SetMode(mgo.Monotonic, true)
-
-	c := session.DB(h.conf.DBConfig.MongoDB).C(h.conf.DBConfig.BackerRecordColumn)
 
 	_, err = c.UpsertId(record.UserID, record)
 	return err
 }
 
 // NewPlayerRecord function
-func (h *BackerInterface) NewPlayerRecord(userid string) (err error) {
+func (h *BackerInterface) NewPlayerRecord(userid string, c mgo.Collection) (err error) {
 
 	hashedid := h.HashUserID(userid)
 	record := BackerRecord{UserID: userid, HashedID: hashedid, Validated: 0, BackerStatus: "nil"}
-	err = h.SaveRecordToDB(record)
+	err = h.SaveRecordToDB(record, c)
 	return err
 
 }
 
 // GetRecordFromDB function
-func (h *BackerInterface) GetRecordFromDB(userid string) (record BackerRecord, err error) {
+func (h *BackerInterface) GetRecordFromDB(userid string, c mgo.Collection) (record BackerRecord, err error) {
 	h.querylocker.Lock()
 	defer h.querylocker.Unlock()
-
-	mongoDBDialInfo := &mgo.DialInfo{
-		Addrs:    []string{h.conf.DBConfig.MongoHost},
-		Timeout:  30 * time.Second,
-		Database: h.conf.DBConfig.MongoDB,
-		Username: h.conf.DBConfig.MongoUser,
-		Password: h.conf.DBConfig.MongoPass,
-	}
-
-	session, err := mgo.DialWithInfo(mongoDBDialInfo)
-	if err != nil {
-		//log.Println("Could not connect to mongo: ", err.Error())
-		return record, err
-	}
-	defer session.Close()
-
-	session.SetMode(mgo.Monotonic, true)
-
-	c := session.DB(h.conf.DBConfig.MongoDB).C(h.conf.DBConfig.BackerRecordColumn)
 
 	userrecord := BackerRecord{}
 	err = c.Find(bson.M{"userid": userid}).One(&userrecord)
@@ -102,28 +62,9 @@ func (h *BackerInterface) GetRecordFromDB(userid string) (record BackerRecord, e
 }
 
 // BackerInterface function
-func (h *BackerInterface) GetAllBackers() (records []BackerRecord, err error) {
+func (h *BackerInterface) GetAllBackers(c mgo.Collection) (records []BackerRecord, err error) {
 	h.querylocker.Lock()
 	defer h.querylocker.Unlock()
-
-	mongoDBDialInfo := &mgo.DialInfo{
-		Addrs:    []string{h.conf.DBConfig.MongoHost},
-		Timeout:  30 * time.Second,
-		Database: h.conf.DBConfig.MongoDB,
-		Username: h.conf.DBConfig.MongoUser,
-		Password: h.conf.DBConfig.MongoPass,
-	}
-
-	session, err := mgo.DialWithInfo(mongoDBDialInfo)
-	if err != nil {
-		//log.Println("Could not connect to mongo: ", err.Error())
-		return records, err
-	}
-	defer session.Close()
-
-	session.SetMode(mgo.Monotonic, true)
-
-	c := session.DB(h.conf.DBConfig.MongoDB).C(h.conf.DBConfig.BackerRecordColumn)
 
 	err = c.Find(bson.M{}).All(&records)
 	return records, err
@@ -144,29 +85,10 @@ func (h *BackerInterface) GetAllBackersDeprecated() (records []BackerRecord, err
 }
 
 // GetRecordFromDB function
-func (h *BackerInterface) UniqueProfileCheck(userid string, profileurl string) (err error) {
+func (h *BackerInterface) UniqueProfileCheck(userid string, profileurl string, c mgo.Collection) (err error) {
 
 	h.querylocker.Lock()
 	defer h.querylocker.Unlock()
-
-	mongoDBDialInfo := &mgo.DialInfo{
-		Addrs:    []string{h.conf.DBConfig.MongoHost},
-		Timeout:  30 * time.Second,
-		Database: h.conf.DBConfig.MongoDB,
-		Username: h.conf.DBConfig.MongoUser,
-		Password: h.conf.DBConfig.MongoPass,
-	}
-
-	session, err := mgo.DialWithInfo(mongoDBDialInfo)
-	if err != nil {
-		//log.Println("Could not connect to mongo: ", err.Error())
-		return err
-	}
-	defer session.Close()
-
-	session.SetMode(mgo.Monotonic, true)
-
-	c := session.DB(h.conf.DBConfig.MongoDB).C(h.conf.DBConfig.BackerRecordColumn)
 
 	userrecords := []BackerRecord{}
 	err = c.Find(bson.M{"forumprofile": profileurl}).All(&userrecords)
@@ -192,9 +114,9 @@ func (h *BackerInterface) UniqueProfileCheck(userid string, profileurl string) (
 }
 
 // UserHasRecord function
-func (h *BackerInterface) UserHasRecord(userid string) bool {
+func (h *BackerInterface) UserHasRecord(userid string, c mgo.Collection) bool {
 
-	record, err := h.GetRecordFromDB(userid)
+	record, err := h.GetRecordFromDB(userid, c)
 	if err != nil {
 		return false
 	}
@@ -205,16 +127,16 @@ func (h *BackerInterface) UserHasRecord(userid string) bool {
 	return true
 }
 
-func (h *BackerInterface) UserValidated(userid string) bool {
+func (h *BackerInterface) UserValidated(userid string, c mgo.Collection) bool {
 
-	if !h.UserHasRecord(userid) {
-		err := h.NewPlayerRecord(userid)
+	if !h.UserHasRecord(userid, c) {
+		err := h.NewPlayerRecord(userid, c)
 		if err != nil {
 			return false
 		}
 	}
 
-	record, err := h.GetRecordFromDB(userid)
+	record, err := h.GetRecordFromDB(userid, c)
 	if err != nil {
 		return false
 	}
@@ -225,14 +147,14 @@ func (h *BackerInterface) UserValidated(userid string) bool {
 }
 
 // SetForumProfile function
-func (h *BackerInterface) SetValidatedStatus(userid string, validated int) (err error) {
+func (h *BackerInterface) SetValidatedStatus(userid string, validated int, c mgo.Collection) (err error) {
 
-	record, err := h.GetRecordFromDB(userid)
+	record, err := h.GetRecordFromDB(userid, c)
 	if err != nil {
 		return err
 	}
 	record.Validated = validated
-	err = h.SaveRecordToDB(record)
+	err = h.SaveRecordToDB(record, c)
 	if err != nil {
 		return err
 	}
@@ -240,11 +162,11 @@ func (h *BackerInterface) SetValidatedStatus(userid string, validated int) (err 
 }
 
 // UserHasRecord function
-func (h *BackerInterface) GetBackerStatus(userid string) (status string, err error) {
-	if !h.UserHasRecord(userid) {
+func (h *BackerInterface) GetBackerStatus(userid string, c mgo.Collection) (status string, err error) {
+	if !h.UserHasRecord(userid, c) {
 		return "", errors.New("Error: No User Record Exists!")
 	}
-	record, err := h.GetRecordFromDB(userid)
+	record, err := h.GetRecordFromDB(userid, c)
 	if err != nil {
 		return "", err
 	}
@@ -252,14 +174,14 @@ func (h *BackerInterface) GetBackerStatus(userid string) (status string, err err
 }
 
 // SetForumProfile function
-func (h *BackerInterface) SetBackerStatus(userid string, backerstatus string) (err error) {
+func (h *BackerInterface) SetBackerStatus(userid string, backerstatus string, c mgo.Collection) (err error) {
 
-	record, err := h.GetRecordFromDB(userid)
+	record, err := h.GetRecordFromDB(userid, c)
 	if err != nil {
 		return err
 	}
 	record.BackerStatus = backerstatus
-	err = h.SaveRecordToDB(record)
+	err = h.SaveRecordToDB(record, c)
 	if err != nil {
 		return err
 	}
@@ -267,11 +189,11 @@ func (h *BackerInterface) SetBackerStatus(userid string, backerstatus string) (e
 }
 
 // GetATVStatus function
-func (h *BackerInterface) GetATVStatus(userid string) (status string, err error) {
-	if !h.UserHasRecord(userid) {
+func (h *BackerInterface) GetATVStatus(userid string, c mgo.Collection) (status string, err error) {
+	if !h.UserHasRecord(userid, c) {
 		return "", errors.New("Error: No User Record Exists!")
 	}
-	record, err := h.GetRecordFromDB(userid)
+	record, err := h.GetRecordFromDB(userid, c)
 	if err != nil {
 		return "", err
 	}
@@ -279,14 +201,14 @@ func (h *BackerInterface) GetATVStatus(userid string) (status string, err error)
 }
 
 // GetATVStatus function
-func (h *BackerInterface) SetATVStatus(userid string, atvstatus string) (err error) {
+func (h *BackerInterface) SetATVStatus(userid string, atvstatus string, c mgo.Collection) (err error) {
 
-	record, err := h.GetRecordFromDB(userid)
+	record, err := h.GetRecordFromDB(userid, c)
 	if err != nil {
 		return err
 	}
 	record.ATV = atvstatus
-	err = h.SaveRecordToDB(record)
+	err = h.SaveRecordToDB(record, c)
 	if err != nil {
 		return err
 	}
@@ -294,11 +216,11 @@ func (h *BackerInterface) SetATVStatus(userid string, atvstatus string) (err err
 }
 
 // GetATVStatus function
-func (h *BackerInterface) GetPreAlphaStatus(userid string) (status string, err error) {
-	if !h.UserHasRecord(userid) {
+func (h *BackerInterface) GetPreAlphaStatus(userid string, c mgo.Collection) (status string, err error) {
+	if !h.UserHasRecord(userid, c) {
 		return "", errors.New("Error: No User Record Exists!")
 	}
-	record, err := h.GetRecordFromDB(userid)
+	record, err := h.GetRecordFromDB(userid, c)
 	if err != nil {
 		return "", err
 	}
@@ -306,14 +228,14 @@ func (h *BackerInterface) GetPreAlphaStatus(userid string) (status string, err e
 }
 
 // GetATVStatus function
-func (h *BackerInterface) SetPreAlphaStatus(userid string, prealphastatus string) (err error) {
+func (h *BackerInterface) SetPreAlphaStatus(userid string, prealphastatus string, c mgo.Collection) (err error) {
 
-	record, err := h.GetRecordFromDB(userid)
+	record, err := h.GetRecordFromDB(userid, c)
 	if err != nil {
 		return err
 	}
 	record.PreAlpha = prealphastatus
-	err = h.SaveRecordToDB(record)
+	err = h.SaveRecordToDB(record, c)
 	if err != nil {
 		return err
 	}
@@ -321,11 +243,11 @@ func (h *BackerInterface) SetPreAlphaStatus(userid string, prealphastatus string
 }
 
 // UserHasRecord function
-func (h *BackerInterface) GetForumProfile(userid string) (profileurl string, err error) {
-	if !h.UserHasRecord(userid) {
+func (h *BackerInterface) GetForumProfile(userid string, c mgo.Collection) (profileurl string, err error) {
+	if !h.UserHasRecord(userid, c) {
 		return "", errors.New("Error: No User Record Exists!")
 	}
-	record, err := h.GetRecordFromDB(userid)
+	record, err := h.GetRecordFromDB(userid, c)
 	if err != nil {
 		return "", err
 	}
@@ -333,22 +255,22 @@ func (h *BackerInterface) GetForumProfile(userid string) (profileurl string, err
 }
 
 // SetForumProfile function
-func (h *BackerInterface) SetForumProfile(userid string, profileurl string) (err error) {
+func (h *BackerInterface) SetForumProfile(userid string, profileurl string, c mgo.Collection) (err error) {
 
 	//fmt.Println("Unique Profile Check")
-	err = h.UniqueProfileCheck(userid, profileurl)
+	err = h.UniqueProfileCheck(userid, profileurl, c)
 	if err != nil {
 		return err
 	}
 
 	//fmt.Println("Getting DB Record")
-	record, err := h.GetRecordFromDB(userid)
+	record, err := h.GetRecordFromDB(userid, c)
 	if err != nil {
 		return err
 	}
 
 	record.ForumProfile = profileurl
-	err = h.SaveRecordToDB(record)
+	err = h.SaveRecordToDB(record, c)
 	if err != nil {
 		return err
 	}
@@ -364,13 +286,13 @@ func (h *BackerInterface) HashUserID(userid string) string {
 
 }
 
-func (h *BackerInterface) ResetUser(userid string) error {
+func (h *BackerInterface) ResetUser(userid string, c mgo.Collection) error {
 
 	/* if !h.UserHasRecord(userid){
 		return errors.New("Error: No User Record Exists!")
 	} */
 
-	record, err := h.GetRecordFromDB(userid)
+	record, err := h.GetRecordFromDB(userid, c)
 	if err != nil {
 		return err
 	}
@@ -379,7 +301,7 @@ func (h *BackerInterface) ResetUser(userid string) error {
 	record.ForumProfile = ""
 	record.PreAlpha = "false"
 
-	err = h.SaveRecordToDB(record)
+	err = h.SaveRecordToDB(record, c)
 	if err != nil {
 		return err
 	}
@@ -388,10 +310,10 @@ func (h *BackerInterface) ResetUser(userid string) error {
 	return nil
 }
 
-func (h *BackerInterface) ForumAuth(url string, userid string) (err error) {
+func (h *BackerInterface) ForumAuth(url string, userid string, c mgo.Collection) (err error) {
 
-	if !h.UserHasRecord(userid) {
-		err := h.NewPlayerRecord(userid)
+	if !h.UserHasRecord(userid, c) {
+		err := h.NewPlayerRecord(userid, c)
 		if err != nil {
 			fmt.Println("Error: " + err.Error())
 			return err
@@ -403,41 +325,41 @@ func (h *BackerInterface) ForumAuth(url string, userid string) (err error) {
 	}
 
 	//fmt.Println("Setting Forum Profile")
-	err = h.SetForumProfile(userid, url)
+	err = h.SetForumProfile(userid, url, c)
 	if err != nil {
 		return err
 	}
 
 	//fmt.Println("Checking User Validation")
-	err = h.CheckUserValidation(userid)
+	err = h.CheckUserValidation(userid, c)
 	if err != nil {
 		return err
 	}
 
 	//fmt.Println("Checking User Status")
-	err = h.CheckStatus(userid)
+	err = h.CheckStatus(userid, c)
 	if err != nil {
 		return err
 	}
 
 	//fmt.Println("Checking Backer Status")
-	backerstatus, err := h.GetBackerStatus(userid)
+	backerstatus, err := h.GetBackerStatus(userid, c)
 	if err != nil {
 		return err
 	}
 
-	atvstatus, err := h.GetATVStatus(userid)
+	atvstatus, err := h.GetATVStatus(userid, c)
 	if err != nil {
 		return err
 	}
 
-	prealphastatus, err := h.GetPreAlphaStatus(userid)
+	prealphastatus, err := h.GetPreAlphaStatus(userid, c)
 	if err != nil {
 		return err
 	}
 
 	if backerstatus != "" || atvstatus == "true" || prealphastatus == "true" {
-		err = h.SetValidatedStatus(userid, 1)
+		err = h.SetValidatedStatus(userid, 1, c)
 		if err != nil {
 			//fmt.Println("Setting validated status")
 			return err
@@ -446,9 +368,9 @@ func (h *BackerInterface) ForumAuth(url string, userid string) (err error) {
 	return nil
 }
 
-func (h *BackerInterface) CheckUserValidation(userid string) (err error) {
+func (h *BackerInterface) CheckUserValidation(userid string, c mgo.Collection) (err error) {
 
-	record, err := h.GetRecordFromDB(userid)
+	record, err := h.GetRecordFromDB(userid, c)
 	if err != nil {
 		return err
 	}
@@ -548,34 +470,34 @@ func (h *BackerInterface) GetValidationString(record BackerRecord) (validation s
 	return "", errors.New("could not retrieve validation string")
 }
 
-func (h *BackerInterface) CheckStatus(userid string) (err error) {
+func (h *BackerInterface) CheckStatus(userid string, c mgo.Collection) (err error) {
 
-	record, err := h.GetRecordFromDB(userid)
+	record, err := h.GetRecordFromDB(userid, c)
 	if err != nil {
 		return err
 	}
 
 	backerstatus := h.GetBackerString(record)
 	if backerstatus != "" {
-		err = h.SetBackerStatus(userid, backerstatus)
+		err = h.SetBackerStatus(userid, backerstatus, c)
 		if err != nil {
 			return err
 		}
 	}
 
 	if h.GetATVString(record) {
-		err = h.SetATVStatus(userid, "true")
+		err = h.SetATVStatus(userid, "true", c)
 		if err != nil {
 			return err
 		}
-		err = h.SetPreAlphaStatus(userid, "true")
+		err = h.SetPreAlphaStatus(userid, "true", c)
 		if err != nil {
 			return err
 		}
 	}
 
 	if h.GetPreAlphaString(record) {
-		err = h.SetPreAlphaStatus(userid, "true")
+		err = h.SetPreAlphaStatus(userid, "true", c)
 		if err != nil {
 			return err
 		}

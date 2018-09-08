@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
+	"gopkg.in/mgo.v2"
 	"math/rand"
 	"strconv"
 	"strings"
@@ -182,7 +183,26 @@ func (h *RabbitHandler) Catch(s *discordgo.Session, m *discordgo.MessageCreate) 
 	h.querylocker.Lock()
 	defer h.querylocker.Unlock()
 
-	record, err := h.backerdb.GetRecordFromDB(m.Author.ID)
+	mongoDBDialInfo := &mgo.DialInfo{
+		Addrs:    []string{h.conf.DBConfig.MongoHost},
+		Timeout:  30 * time.Second,
+		Database: h.conf.DBConfig.MongoDB,
+		Username: h.conf.DBConfig.MongoUser,
+		Password: h.conf.DBConfig.MongoPass,
+	}
+
+	session, err := mgo.DialWithInfo(mongoDBDialInfo)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		return
+	}
+	defer session.Close()
+
+	session.SetMode(mgo.Monotonic, true)
+
+	c := session.DB(h.conf.DBConfig.MongoDB).C(h.conf.DBConfig.BackerRecordColumn)
+
+	record, err := h.backerdb.GetRecordFromDB(m.Author.ID, *c)
 	if err == nil {
 		if record.PreAlpha == "true" || record.ATV == "true" {
 			response, err := s.ChannelMessageSend(m.ChannelID, "Sorry, you can only participate if you do not already have pre-alpha access.")
