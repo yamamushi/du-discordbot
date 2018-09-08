@@ -54,7 +54,7 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 		if len(payload) > 0 {
 			if strings.ToLower(payload[0]) == "help"{
-				s.ChannelMessageSend(m.ChannelID, ":bulb: Forum Auth Tutorial - https://www.youtube.com/watch?v=oTivgKFHNUk")
+				s.ChannelMessageSend(m.ChannelID, ":bulb: Forum Auth Tutorial - https://www.youtube.com/watch?v=tPZuxhz6KeE")
 				return
 			}
 		}
