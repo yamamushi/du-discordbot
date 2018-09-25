@@ -26,7 +26,7 @@ func (h *LanderHandler) Read(s *discordgo.Session, m *discordgo.GuildMemberAdd) 
 	landingZoneID, err := getChannelIDByName(s, s.State.Guilds[0].ID, "landing_pad")
 	serverinfoID, err := getChannelIDByName(s, s.State.Guilds[0].ID, "server-information")
 
-	s.ChannelMessageSend(landingZoneID, "Welcome to the **Dual Universe** community discord server "+
+	s.ChannelMessageSend(landingZoneID, "Welcome to the Official **Dual Universe** Discord Server "+
 		m.User.Mention()+ "! Please take a moment to read <#"+ serverinfoID+ "> to find your way in to the rest of the server."+
 		" (This is just the lobby, there are other channels here)")
 

@@ -159,13 +159,15 @@ func (h *ServerStatusHandler) GetServerStatusList() (statuslist []ServerStatus, 
 							status.Access = strings.TrimSpace(column.Text())
 						}
 						if colNumber == 3 {
-							status.StartDate, err  = time.Parse("January 02, 2006 03:04 PM MST", strings.TrimSpace(column.Text()))
+							//fmt.Println(strings.TrimSpace(column.Text()))
+							status.StartDate, err  = time.Parse("January 02, 2006 - 15:04 MST", strings.TrimSpace(column.Text()))
 							if err != nil {
+								//fmt.Println(err.Error())
 								return statuslist, errors.New("Could not parse start date for row " + strconv.Itoa(rowNum))
 							}
 						}
 						if colNumber == 4 {
-							status.EndDate, err  = time.Parse("January 02, 2006 03:04 PM MST", strings.TrimSpace(column.Text()))
+							status.EndDate, err  = time.Parse("January 02, 2006 - 15:04 MST", strings.TrimSpace(column.Text()))
 							if err != nil {
 								return statuslist, errors.New("Could not parse end date for row " + strconv.Itoa(rowNum))
 							}
