@@ -25,6 +25,7 @@ type discordConfig struct {
 	Token   string `toml:"bot_token"`
 	AdminID string `toml:"admin_id"`
 	GuildID string `toml:"guild_id"`
+	DevID   string `toml:"dev_id"`
 }
 
 // databaseConfig struct

@@ -92,8 +92,8 @@ func (h *ReactionsHandler) CreateEmbed(Handler func(string, string, *discordgo.S
 func (h *ReactionsHandler) Watch(Handler func(string, string, *discordgo.Session, interface{}),
 	MessageID string, TargetChannelID string,  Args string, s *discordgo.Session) {
 
-	//h.querylocker.Lock()
-	//defer h.querylocker.Unlock()
+	h.querylocker.Lock()
+	defer h.querylocker.Unlock()
 
 	item := WatchReaction{ChannelID: TargetChannelID, MessageID: MessageID, Handler: Handler, Args: Args, Created: time.Now()}
 	h.WatchList.PushBack(item)
@@ -125,8 +125,8 @@ func (h *ReactionsHandler) Cleaner(){
 // UnWatch function
 func (h *ReactionsHandler) UnWatch(ChannelID string, MessageID string) {
 
-	//h.querylocker.Lock()
-	//defer h.querylocker.Unlock()
+	h.querylocker.Lock()
+	defer h.querylocker.Unlock()
 
 	// Clear user element by iterating
 	for e := h.WatchList.Front(); e != nil; e = e.Next() {

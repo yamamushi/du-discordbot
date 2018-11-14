@@ -1,15 +1,15 @@
 package main
 
 import (
-	"github.com/bwmarrin/discordgo"
-	"strings"
 	"fmt"
-	"math/rand"
-	"time"
-	"strconv"
-		"sync"
-	"reflect"
+	"github.com/bwmarrin/discordgo"
 	"math"
+	"math/rand"
+	"reflect"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
 )
 
 // RecruitmentHandler struct
@@ -27,6 +27,7 @@ type RecruitmentHandler struct {
 	timeoutchan chan bool
 	querylocker sync.RWMutex
 	lastpost time.Time
+
 }
 
 
@@ -1083,8 +1084,20 @@ func (h *RecruitmentHandler) ListRecruitment(payload []string, s *discordgo.Sess
 	}
 	output = output + "\n```\n"
 	//output = output + "Total Records: " + strconv.Itoa(len(recordlist))
+	/*messageID, err := s.ChannelMessageSend(m.ChannelID, output)
+	if err != nil {
+		return
+	}
+	*/
 
-	s.ChannelMessageSend(m.ChannelID, output)
+	var reactions []string
+
+	reactions = append(reactions, "⬅")
+	reactions = append(reactions, "➡")
+
+	args := strconv.Itoa(page)+"||"+userIDSearch
+	err = h.reactions.Create(h.HandlePageReaction, reactions, m.ChannelID, output, args, s)
+
 	return
 }
 
@@ -1168,6 +1181,103 @@ func (h *RecruitmentHandler) NotifyForApprovals(recordID string, s *discordgo.Se
 		fmt.Println(err.Error())
 	}
 	//s.ChannelMessageSend(formattedChannelID, )
+	return
+}
+
+func (h *RecruitmentHandler) HandlePageReaction(reaction string, payload string, s *discordgo.Session, m interface{}) {
+
+	h.querylocker.Lock()
+	defer h.querylocker.Unlock()
+
+	splitstring := strings.Split(payload, "||")
+	if len(splitstring) != 2 {
+		return // Error
+	}
+	pagestring := splitstring[0]
+	userIDSearch := splitstring[1]
+	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("MessageID").String()
+	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
+
+	recordlist, err := h.recruitmentdb.GetAllRecruitmentDB()
+	if err != nil {
+		_, _ = s.ChannelMessageSend(channelID, "Error retrieving record list!")
+		return
+	}
+
+	count := 0
+	if userIDSearch != "" {
+		for _, record := range recordlist {
+			if userIDSearch == record.OwnerID {
+				count = count + 1
+			}
+		}
+	} else {
+		count = len(recordlist)
+	}
+
+	if count == 0 {
+		s.ChannelMessageSend(channelID, "No records found in search!")
+		return
+	}
+
+	page, err := strconv.Atoi(pagestring)
+	if err != nil {
+		page = 1
+	}
+
+	pagesF := float64(count) / float64(5.0)
+	pages := int(math.Ceil(pagesF))
+
+	if reaction == "➡" {
+		page = page + 1
+		if page > pages {
+			page = pages
+		}
+	}
+	if reaction == "⬅" {
+		page = page - 1
+		if page == 0 {
+			return
+		}
+	}
+
+	output := ":satellite: Recruitment records "
+	output = output + "(Page "+strconv.Itoa(page)+" of "+strconv.Itoa(pages)+")"
+	output = output + ": \n```\n"
+
+	recordCount := 0
+	for _, record := range recordlist {
+		if userIDSearch != "" {
+			if userIDSearch == record.OwnerID {
+				if recordCount < (page*5) && recordCount >= ((page-1)*5) {
+					userrecord, err := s.User(record.OwnerID)
+					if err == nil {
+						output = output + "Org Name: " + record.OrgName + "\nOwner: " + userrecord.Username + "\nID: " + record.ID + "\n\n"
+					}
+				}
+				recordCount = recordCount + 1
+			}
+		} else {
+			if recordCount < (page*5) && recordCount >= ((page-1)*5) {
+				userrecord, err := s.User(record.OwnerID)
+				if err == nil {
+					output = output + "Org Name: " + record.OrgName + "\nOwner: " + userrecord.Username + "\nID: " + record.ID + "\n\n"
+				}
+			}
+			recordCount = recordCount + 1
+		}
+	}
+	output = output + "\n```\n"
+
+
+	sentmsg, err := s.ChannelMessageEdit(channelID,messageID,output)
+	if err != nil {
+		fmt.Println(sentmsg.ID + " " + err.Error())
+	}
+
+	h.reactions.UnWatch(channelID, messageID)
+	args := strconv.Itoa(page)+"||"+userIDSearch
+	h.reactions.Watch(h.HandlePageReaction, messageID, channelID, args, s)
 	return
 }
 

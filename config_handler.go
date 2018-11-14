@@ -254,6 +254,9 @@ func (h *ConfigHandler) ValidateConfigName(configname string) bool {
 	if configname == "autoland" {
 		return true
 	}
+	if configname == "backersystem" {
+		return true
+	}
 	if configname == "recruitment-timer" {
 		return true
 	}

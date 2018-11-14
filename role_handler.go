@@ -192,7 +192,7 @@ func (h *RoleHandler) RoleSynchronizer(s *discordgo.Session) {
 
 				for _, member := range memberlist {
 
-					memberjoined, err := time.Parse(time.RFC3339, member.JoinedAt)
+					memberjoined, err := time.Parse(time.RFC3339, string(member.JoinedAt))
 					if err == nil && !member.User.Bot {
 
 						memberAge := time.Since(memberjoined)
@@ -679,7 +679,7 @@ func (h *RoleHandler) User(userid string, s *discordgo.Session, m *discordgo.Mes
 
 
 	member, err := s.GuildMember(h.conf.DiscordConfig.GuildID, userid)
-	memberjoined, err := time.Parse(time.RFC3339, member.JoinedAt)
+	memberjoined, err := time.Parse(time.RFC3339, string(member.JoinedAt))
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
 		return

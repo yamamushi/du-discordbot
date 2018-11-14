@@ -1,11 +1,11 @@
 package main
 
 import (
-	"github.com/bwmarrin/discordgo"
-	"strings"
-	"fmt"
-	"strconv"
 	"errors"
+	"fmt"
+	"github.com/bwmarrin/discordgo"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -72,41 +72,48 @@ func (h *SUTimeHandler) ParseCommand(commandlist []string, s *discordgo.Session,
 
 	command, payload := SplitPayload(commandlist)
 
-	if len(payload) == 0 {
-		s.ChannelMessageSend(m.ChannelID, command + " expects two arguments: <su> <speed>")
+	if len(payload) == 0 || len(payload) < 2 {
+		_, _ = s.ChannelMessageSend(m.ChannelID, command + " expects two arguments: <su> <speed>")
 		return
 	}
-	if len(payload) < 2 {
-		s.ChannelMessageSend(m.ChannelID, command + " expects two arguments: <su> <speed>")
-		return
-	}
-	estimate, err := h.SUToMinutes(payload[0], payload[1])
+
+
+	speedFloat := 0.0
+	payload[1] = strings.ToLower(payload[1])
+	speedFloat, err := strconv.ParseFloat(payload[1], 64)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		if strings.HasSuffix(payload[1], "k"){
+			payload[1] = strings.TrimSuffix(payload[1], "k")
+			speedFloat, err = strconv.ParseFloat(payload[1], 64)
+			if err != nil {
+				_, _ = s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+				return
+			}
+			speedFloat = speedFloat * 1000
+		} else if strings.ToLower(payload[1]) == "max" {
+			speedFloat = 30000
+		}
+	}
+
+	distanceFloat, err := strconv.ParseFloat(payload[0], 64)
+	if err != nil {
+		_, _ = s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
 		return
 	}
-	s.ChannelMessageSend(m.ChannelID, "Estimated travel time: " + estimate)
+
+	estimate, err := h.CalculateTime(distanceFloat, speedFloat)
+	if err != nil {
+		_, _ = s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		return
+	}
+	_, _ = s.ChannelMessageSend(m.ChannelID, "Estimated travel time: " + estimate)
 	return
 }
 
-func (h *SUTimeHandler) SUToMinutes(distance string, speed string) (conversion string, err error){
+func (h *SUTimeHandler) CalculateTime(distanceFloat float64, speedFloat float64) (duration string, err error) {
 
-	distanceFloat, err := strconv.ParseFloat(distance, 64)
-	if err != nil {
-		return "", err
-	}
 	if distanceFloat > 100000000 || distanceFloat <= 0 {
 		return "", errors.New("Distance value out of bounds")
-	}
-
-	speedFloat := 0.0
-	if speed == "max" {
-		speedFloat = 30000
-	} else {
-		speedFloat, err = strconv.ParseFloat(speed, 64)
-		if err != nil {
-			return "", err
-		}
 	}
 
 	if speedFloat > 100000 || speedFloat <= 0 {
@@ -115,6 +122,7 @@ func (h *SUTimeHandler) SUToMinutes(distance string, speed string) (conversion s
 	distanceFloat = distanceFloat * 200.00
 	secondsInt := (distanceFloat / speedFloat) * 3600.00
 
-	duration := time.Duration(time.Second * time.Duration(secondsInt))
-	return duration.String(), nil
+	timeDuration := time.Duration(time.Second * time.Duration(secondsInt))
+	return timeDuration.String(), nil
+
 }

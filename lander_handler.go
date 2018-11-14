@@ -15,7 +15,7 @@ type LanderHandler struct {
 
 // Read function
 // This handler will wait when a new user joins, and automatically assign roles to users who have not yet authenticated properly
-// After a five minute period.
+// After a 2 minute period.
 func (h *LanderHandler) Read(s *discordgo.Session, m *discordgo.GuildMemberAdd) {
 	unlandedRoleID, err := getRoleIDByName(s, s.State.Guilds[0].ID, "Unlanded")
 	if err != nil {
@@ -27,8 +27,8 @@ func (h *LanderHandler) Read(s *discordgo.Session, m *discordgo.GuildMemberAdd) 
 	serverinfoID, err := getChannelIDByName(s, s.State.Guilds[0].ID, "server-information")
 
 	s.ChannelMessageSend(landingZoneID, "Welcome to the Official **Dual Universe** Discord Server "+
-		m.User.Mention()+ "! Please take a moment to read <#"+ serverinfoID+ "> to find your way in to the rest of the server."+
-		" (This is just the lobby, there are other channels here)")
+		m.User.Mention()+ ":bulb: Please take a moment to read <#"+ serverinfoID+ ">. You will be granted access automatically"+
+		" to the rest of the Discord Server in approximately 2 minutes (This is just the lobby, there are other channels here).")
 
 	h.user.CheckUser(m.User.ID)
 

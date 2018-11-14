@@ -124,7 +124,7 @@ func (h *UtilitiesHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate
 	}
 	*/
 	if command == "profilemosaic" {
-		if !user.Owner {
+		if !user.Owner || user.ID != h.conf.DiscordConfig.DevID{
 			return
 		}
 		s.ChannelMessageSend(m.ChannelID, "Storing profile images cache")

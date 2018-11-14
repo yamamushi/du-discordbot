@@ -12,6 +12,7 @@ type BackerHandler struct {
 	callback        *CallbackHandler
 	conf            *Config
 	backerInterface *BackerInterface
+	configdb        *ConfigDB
 }
 
 func (h *BackerHandler) Init() {
@@ -30,6 +31,15 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 	user, err := h.db.GetUser(m.Author.ID)
 	if err != nil {
 		//fmt.Println("Error finding user")
+		return
+	}
+
+	// Verify forumauth is enabled or disabled
+	forumauth, err := h.configdb.CheckEnabled("backersystem")
+	if err != nil {
+		return
+	}
+	if !forumauth {
 		return
 	}
 
@@ -100,7 +110,7 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		}
 
 		if len(payload) < 1 {
-			s.ChannelMessageSend(m.ChannelID, "Error: <forumauth> requires an argument!")
+			s.ChannelMessageSend(m.ChannelID, "Error: <linkprofile> requires an argument!")
 			return
 		}
 

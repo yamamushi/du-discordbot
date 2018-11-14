@@ -76,11 +76,6 @@ func (h *PrimaryHandler) Init() error {
 	memes := MemeHandler{}
 	h.dg.AddHandler(memes.Read)
 
-	fmt.Println("Adding Backer Handler")
-	backer := BackerHandler{db: h.db, callback: h.callback, conf: h.conf}
-	backer.Init()
-	h.dg.AddHandler(backer.Read)
-
 	fmt.Println("Adding Notifications Handler")
 	notifications := NotificationsHandler{db: h.db, callback: h.callback, conf: h.conf, registry: h.command.registry}
 	notifications.Init()
@@ -94,6 +89,11 @@ func (h *PrimaryHandler) Init() error {
 	h.reactions.configdb = confighandler.configdb
 	go h.reactions.Cleaner()
 
+	fmt.Println("Adding Backer Handler")
+	backer := BackerHandler{db: h.db, callback: h.callback, conf: h.conf}
+	backer.configdb = confighandler.configdb
+	backer.Init()
+	h.dg.AddHandler(backer.Read)
 
 	fmt.Println("Adding Lander Handler")
 	landingzone := LanderHandler{configdb:confighandler.configdb, user: h.user}
