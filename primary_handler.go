@@ -153,6 +153,12 @@ func (h *PrimaryHandler) Init() error {
 	sutimehandler.Init()
 	h.dg.AddHandler(sutimehandler.Read)
 
+	fmt.Println("Adding Joy Handler")
+	joyhandler := JoyHandler{conf: h.conf, registry: h.command.registry, db: h.db, userdb: h.user}
+	joyhandler.Init()
+	h.dg.AddHandler(joyhandler.React)
+	h.dg.AddHandler(joyhandler.Read)
+
 	fmt.Println("Adding Server Status Handler")
 	statushandler := ServerStatusHandler{conf: h.conf, registry: h.command.registry,db: h.db, userdb: h.user}
 	statushandler.Init()

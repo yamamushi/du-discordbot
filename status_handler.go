@@ -156,7 +156,12 @@ func (h *ServerStatusHandler) GetServerStatusList() (statuslist []ServerStatus, 
 							status.TestType = strings.TrimSpace(column.Text())
 						}
 						if colNumber == 2 {
-							status.Access = strings.TrimSpace(column.Text())
+							if len(column.Text()) > 0 {
+								status.Access = strings.TrimSpace(column.Text())
+							} else {
+								afield := column.Find("a")
+								status.Access = afield.Text()
+							}
 						}
 						if colNumber == 3 {
 							//fmt.Println(strings.TrimSpace(column.Text()))
@@ -316,6 +321,7 @@ func (h *ServerStatusHandler) FormatStatusEmbed(status ServerStatus,  s *discord
 	access := discordgo.MessageEmbedField{}
 	access.Name = "Access"
 	access.Value = strings.TrimPrefix(status.Access, "Access for ")
+	access.Value = strings.TrimSpace(access.Value)
 	fields = append(fields, &access)
 
 
