@@ -96,6 +96,9 @@ type rolesConfig struct {
 	ForumLinkedRoleID       string `toml:"forumlinked_role"`
 	ATVForumLinkedRoleID    string `toml:"atvforumlinked_role"`
 	PreAlphaForumLinkedRole string `toml:"prealpha_role"`
+	KickstarterRole         string `toml:"kickstarter_role"`
+	AlphaAuthorizedRole     string `toml:"alpha_role"`
+
 	NDAChannelID            string `toml:"nda_channel_id"`
 }
 

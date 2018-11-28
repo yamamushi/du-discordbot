@@ -429,7 +429,7 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 		output := ":bulb: Backer Roles for this server: \n```"
 		for _, role := range s.State.Guilds[0].Roles {
-			if strings.Contains(role.Name, "Founder") || strings.Contains(role.Name, "Supporter"){
+			if strings.Contains(role.Name, "Founder") || strings.Contains(role.Name, "Supporter") || strings.Contains(role.Name, "Authorized"){
 				output = output + "\n" + role.Name + " : " + role.ID
 			}
 		}
@@ -438,7 +438,7 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 	if command == "repairbackers" {
-		if !user.Owner {
+		if !user.Admin {
 			return
 		}
 
@@ -477,6 +477,17 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 					s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
 					return
 				}
+			}
+			if record.BackerStatus == "Gold Founder" || record.BackerStatus == "Sapphire Founder" || record.BackerStatus == "Ruby Founder" ||
+				record.BackerStatus == "Emerald Founder" || record.BackerStatus == "Diamond Founder" || record.BackerStatus == "Kyrium Founder" ||
+				record.BackerStatus == "Patron" || record.BackerStatus == "Sponsor" || record.ATV == "true" {
+				record.Alpha = "true"
+				err = h.backerInterface.SaveRecordToDB(record, *c)
+				if err != nil {
+					s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+					return
+				}
+				s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, record.UserID, h.conf.RolesConfig.AlphaAuthorizedRole)
 			}
 		}
 		s.ChannelMessageSend(m.ChannelID, "Records repaired")
@@ -604,6 +615,7 @@ func (h *BackerHandler) ResetAuth(userid string, s *discordgo.Session, m *discor
 
 	} else if backerStatus == "Sponsor" {
 		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.SponsorRoleID)
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.AlphaAuthorizedRole)
 
 	} else if backerStatus == "Silver Founder" {
 		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.SilverRoleID)
@@ -611,40 +623,49 @@ func (h *BackerHandler) ResetAuth(userid string, s *discordgo.Session, m *discor
 	} else if backerStatus == "Patron" {
 		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PatronRoleID)
 		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.AlphaAuthorizedRole)
 
 	} else if backerStatus == "Gold Founder" {
 		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.GoldRoleID)
 		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.AlphaAuthorizedRole)
 
 	} else if backerStatus == "Sapphire Founder" {
 		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.SapphireRoleID)
 		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.AlphaAuthorizedRole)
 
 	} else if backerStatus == "Ruby Founder" {
 		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.RubyRoleID)
 		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.AlphaAuthorizedRole)
 
 	} else if backerStatus == "Emerald Founder" {
 		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.EmeraldRoleID)
 		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.AlphaAuthorizedRole)
 
 	} else if backerStatus == "Diamond Founder" {
 		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.DiamondRoleID)
 		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.AlphaAuthorizedRole)
 
 	} else if backerStatus == "Kyrium Founder" {
 		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.KyriumRoleID)
 		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.AlphaAuthorizedRole)
 	}
 
 	if atvStatus == "true" {
 		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.ATVRoleID)
 		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.ATVForumLinkedRoleID)
 		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.AlphaAuthorizedRole)
 	}
 
 	if prealphaStatus == "true" {
 		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.AlphaAuthorizedRole)
 	}
 
 	s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.ForumLinkedRoleID)
@@ -696,40 +717,49 @@ func (h *BackerHandler) UpdateRoles(s *discordgo.Session, m *discordgo.MessageCr
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.BronzeRoleID)
 	} else if backerStatus == "Sponsor" {
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.SponsorRoleID)
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.AlphaAuthorizedRole)
 	} else if backerStatus == "Silver Founder" {
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.SilverRoleID)
 	} else if backerStatus == "Patron" {
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PatronRoleID)
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
+		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.AlphaAuthorizedRole)
 		notify = true
 	} else if backerStatus == "Gold Founder" {
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.GoldRoleID)
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
+		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.AlphaAuthorizedRole)
 		notify = true
 	} else if backerStatus == "Sapphire Founder" {
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.SapphireRoleID)
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
+		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.AlphaAuthorizedRole)
 		notify = true
 	} else if backerStatus == "Ruby Founder" {
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.RubyRoleID)
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
+		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.AlphaAuthorizedRole)
 		notify = true
 	} else if backerStatus == "Emerald Founder" {
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.EmeraldRoleID)
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
+		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.AlphaAuthorizedRole)
 		notify = true
 	} else if backerStatus == "Diamond Founder" {
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.DiamondRoleID)
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.AlphaAuthorizedRole)
 		notify = true
 	} else if backerStatus == "Kyrium Founder" {
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.KyriumRoleID)
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
+		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.AlphaAuthorizedRole)
 		notify = true
 	}
 
 	if prealphaStatus == "true" {
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
+		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.AlphaAuthorizedRole)
 		notify = true
 	}
 
@@ -737,6 +767,7 @@ func (h *BackerHandler) UpdateRoles(s *discordgo.Session, m *discordgo.MessageCr
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.ATVRoleID)
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.ATVForumLinkedRoleID)
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
+		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.AlphaAuthorizedRole)
 		notify = true
 	}
 

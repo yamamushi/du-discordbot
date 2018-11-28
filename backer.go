@@ -242,6 +242,33 @@ func (h *BackerInterface) SetPreAlphaStatus(userid string, prealphastatus string
 	return nil
 }
 
+// GetATVStatus function
+func (h *BackerInterface) GetAlphaStatus(userid string, c mgo.Collection) (status string, err error) {
+	if !h.UserHasRecord(userid, c) {
+		return "", errors.New("Error: No User Record Exists!")
+	}
+	record, err := h.GetRecordFromDB(userid, c)
+	if err != nil {
+		return "", err
+	}
+	return record.Alpha, nil
+}
+
+// GetATVStatus function
+func (h *BackerInterface) SetAlphaStatus(userid string, alphastatus string, c mgo.Collection) (err error) {
+
+	record, err := h.GetRecordFromDB(userid, c)
+	if err != nil {
+		return err
+	}
+	record.Alpha = alphastatus
+	err = h.SaveRecordToDB(record, c)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // UserHasRecord function
 func (h *BackerInterface) GetForumProfile(userid string, c mgo.Collection) (profileurl string, err error) {
 	if !h.UserHasRecord(userid, c) {
