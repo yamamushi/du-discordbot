@@ -530,6 +530,13 @@ func (h *BackerInterface) CheckStatus(userid string, c mgo.Collection) (err erro
 		}
 	}
 
+	if h.GetAlphaString(record) {
+		err = h.SetAlphaStatus(userid, "true", c)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -569,6 +576,47 @@ func (h *BackerInterface) GetBackerString(record BackerRecord) (status string) {
 	}
 
 	return ""
+}
+
+func (h *BackerInterface) GetAlphaString(record BackerRecord) (status bool) {
+
+	resp, err := soup.Get(record.ForumProfile) // Append page=1000 so we get the last page
+	if err != nil {
+		//fmt.Println("Could not retrieve page: " + record.ForumProfile)
+		return false
+	}
+
+	doc := soup.HTMLParse(resp)
+	profile_info := doc.FindAll("div", "class", "ipsWidget ipsWidget_vertical cProfileSidebarBlock ipsBox ipsSpacer_bottom")
+
+	if len(profile_info) > 0 {
+		for _, field := range profile_info {
+			//fmt.Println(field.Attrs())
+			inner_items := field.Find("div", "class", "ipsWidget_inner ipsPad").FindAll("li")
+
+			if len(inner_items) > 0 {
+				for _, pad := range inner_items {
+					pad_titles := pad.Find("span", "class", "ipsDataItem_generic ipsDataItem_size3 ipsType_break").FindAll("strong")
+					pad_contents := pad.FindAll("div", "class", "ipsType_break ipsContained")
+					if len(pad_titles) > 0 {
+						for _, title := range pad_titles {
+							if title.Text() == "Alpha 1" {
+								if len(pad_contents) > 0 {
+									//fmt.Println(pad_contents[0].Text())
+									alpha1status := strings.ToLower(pad_contents[0].Text())
+									if alpha1status == "yes" || alpha1status == "1" {
+										return true
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return false
 }
 
 func (h *BackerInterface) GetPreAlphaString(record BackerRecord) (status bool) {

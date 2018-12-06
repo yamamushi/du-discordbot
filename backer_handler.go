@@ -77,7 +77,7 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 		hashedid := h.backerInterface.HashUserID(m.Author.ID)
 		output := ":satellite:**Authorization**:satellite: " +
-			"\nIn order to validate your access to the pre-alpha sections of this discord, you must first validate " +
+			"\nIn order to validate your access to the Alpha sections of this discord, you must first validate " +
 			"your backer status or ATV status through the Dual Universe forum.\n\n"
 		output += ":one: To complete this process, please post the following text on your " +
 			"public message feed through your **forum profile**:"
@@ -136,6 +136,7 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		if h.backerInterface.UserValidated(m.Author.ID, *c) {
 			s.ChannelMessageSend(m.ChannelID, "Error: user already validated, contact a discord admin!")
 			return
+			//h.ResetAuth(m.Author.ID, s, m)
 		}
 
 		profileurl := payload[0]
@@ -270,7 +271,7 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		c := session.DB(h.conf.DBConfig.MongoDB).C(h.conf.DBConfig.BackerRecordColumn)
 
 		if h.backerInterface.UserValidated(m.Mentions[0].ID, *c) {
-			h.ResetAuth(m.Mentions[0].ID, s, m)
+			_ = h.ResetAuth(m.Mentions[0].ID, s, m)
 		}
 
 		profileurl := payload[1]
@@ -347,6 +348,7 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		output += "Profile: " + record.ForumProfile + "\n"
 		output += "```"
 		output += "\nFounder Status: " + record.BackerStatus
+		output += "\nAlpha Status: " + record.Alpha
 		output += "\nPreAlpha Status: " + record.PreAlpha
 		output += "\nATV Status: " + record.ATV
 		output += "\n```\n"
@@ -468,6 +470,25 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		}
 
 		for _, record := range records {
+			if record.BackerStatus == "Silver Founder" || record.BackerStatus == "Bronze Founder" || record.BackerStatus == "Iron Founder"{
+				if record.Alpha != "true" {
+					if h.backerInterface.GetAlphaString(record) {
+						record.Alpha = "true"
+						record.PreAlpha = "false"
+						err = h.backerInterface.SaveRecordToDB(record, *c)
+						if err != nil {
+							s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+							return
+						}
+						err = h.UpdateRoles(s, m, record.UserID)
+						if err != nil {
+							s.ChannelMessageSend(m.ChannelID, "Error repairing "+record.UserID+": " + err.Error())
+							return
+						}
+					}
+				}
+			}
+			/*
 			if record.BackerStatus == "Gold Founder" || record.BackerStatus == "Sapphire Founder" || record.BackerStatus == "Ruby Founder" ||
 				record.BackerStatus == "Emerald Founder" || record.BackerStatus == "Diamond Founder" || record.BackerStatus == "Kyrium Founder" ||
 				record.BackerStatus == "Patron" || record.ATV == "true" {
@@ -489,6 +510,7 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 				}
 				s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, record.UserID, h.conf.RolesConfig.AlphaAuthorizedRole)
 			}
+			*/
 		}
 		s.ChannelMessageSend(m.ChannelID, "Records repaired")
 		return
@@ -592,6 +614,9 @@ func (h *BackerHandler) ResetAuth(userid string, s *discordgo.Session, m *discor
 		return
 	}*/
 
+	alphaStatus, err := h.backerInterface.GetAlphaStatus(userid, *c)
+
+
 	backerStatus, err := h.backerInterface.GetBackerStatus(userid, *c)
 	/*if err != nil {
 		s.ChannelMessageSend(m.ChannelID, err.Error())
@@ -613,12 +638,12 @@ func (h *BackerHandler) ResetAuth(userid string, s *discordgo.Session, m *discor
 	} else if backerStatus == "Bronze Founder" {
 		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.BronzeRoleID)
 
+	} else if backerStatus == "Silver Founder" {
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.SilverRoleID)
+
 	} else if backerStatus == "Sponsor" {
 		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.SponsorRoleID)
 		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.AlphaAuthorizedRole)
-
-	} else if backerStatus == "Silver Founder" {
-		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.SilverRoleID)
 
 	} else if backerStatus == "Patron" {
 		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PatronRoleID)
@@ -668,6 +693,10 @@ func (h *BackerHandler) ResetAuth(userid string, s *discordgo.Session, m *discor
 		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.AlphaAuthorizedRole)
 	}
 
+	if alphaStatus == "true" {
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.AlphaAuthorizedRole)
+	}
+
 	s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.ForumLinkedRoleID)
 	return nil
 }
@@ -703,6 +732,11 @@ func (h *BackerHandler) UpdateRoles(s *discordgo.Session, m *discordgo.MessageCr
 		return err
 	}
 
+	alphaStatus, err := h.backerInterface.GetAlphaStatus(userid, *c)
+	if err != nil {
+		return err
+	}
+
 	backerStatus, err := h.backerInterface.GetBackerStatus(userid, *c)
 	if err != nil {
 		return err
@@ -715,11 +749,12 @@ func (h *BackerHandler) UpdateRoles(s *discordgo.Session, m *discordgo.MessageCr
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.ContributorRoleID)
 	} else if backerStatus == "Bronze Founder" {
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.BronzeRoleID)
-	} else if backerStatus == "Sponsor" {
-		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.SponsorRoleID)
-		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.AlphaAuthorizedRole)
 	} else if backerStatus == "Silver Founder" {
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.SilverRoleID)
+	} else if backerStatus == "Sponsor" {
+		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.SponsorRoleID)
+		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.AlphaAuthorizedRole)
+		notify = true
 	} else if backerStatus == "Patron" {
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PatronRoleID)
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
@@ -763,6 +798,11 @@ func (h *BackerHandler) UpdateRoles(s *discordgo.Session, m *discordgo.MessageCr
 		notify = true
 	}
 
+	if alphaStatus == "true" {
+		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.AlphaAuthorizedRole)
+		notify = true
+	}
+
 	if atvStatus == "true" {
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.ATVRoleID)
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.ATVForumLinkedRoleID)
@@ -786,7 +826,7 @@ func (h *BackerHandler) NotifyNDAChannelOnAuth(s *discordgo.Session, userid stri
 		return
 	}
 
-	s.ChannelMessageSend(h.conf.RolesConfig.NDAChannelID, user.Mention() + " has been authorized as having pre-alpha " +
+	s.ChannelMessageSend(h.conf.RolesConfig.NDAChannelID, user.Mention() + " has been authorized as having Alpha " +
 							"access, and can now use the NDA Discord channels. Congrats!")
 	return
 }
