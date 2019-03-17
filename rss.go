@@ -437,7 +437,8 @@ func (h *RSS) GetLatestItem(url string, channel string) (rssitem RSSItem, err er
 		} else if rssfeed.Reddit {
 
 			// The first two items on Reddit's RSS will be stickied posts, weird.
-			item := feed.Items[2]
+			item := feed.Items[1]
+
 			rssitem.Twitter = false
 			rssitem.Reddit = true
 			rssitem.Youtube = false

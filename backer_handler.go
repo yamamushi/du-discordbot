@@ -97,8 +97,13 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		output += "\n```\n"
 		output += "If you continue to have issues with this process, please contact a discord moderator for assistance.\n" +
 			"(This message may not display properly on mobile due to a discord bug!)"
+		output += "\n:bulb: Forum Auth Tutorial - https://www.youtube.com/watch?v=tPZuxhz6KeE"
 
-		s.ChannelMessageSend(userprivatechannel.ID, output)
+		_, err = s.ChannelMessageSend(userprivatechannel.ID, output)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+			return
+		}
 		return
 	}
 	if command == "linkprofile" {
@@ -470,7 +475,8 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		}
 
 		for _, record := range records {
-			if record.BackerStatus == "Silver Founder" || record.BackerStatus == "Bronze Founder" || record.BackerStatus == "Iron Founder"{
+			if record.BackerStatus == "Silver Founder" || record.BackerStatus == "Bronze Founder" || record.BackerStatus == "Iron Founder" ||
+				record.BackerStatus == "Contributor" {
 				if record.Alpha != "true" {
 					if h.backerInterface.GetAlphaString(record) {
 						record.Alpha = "true"

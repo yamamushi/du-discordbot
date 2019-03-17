@@ -34,6 +34,7 @@ type databaseConfig struct {
 	MongoHost string `toml:"mongohost"`
 	MongoDB string  `toml:"mongodb"`
 	BackerRecordColumn string `toml:"backerrecordcolumn"`
+	InfoRecordColumn string `toml:"inforecordcolumn"`
 	MongoUser string    `toml:"mongouser"`
 	MongoPass string    `toml:"mongopass"`
 }

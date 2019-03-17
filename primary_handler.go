@@ -171,6 +171,10 @@ func (h *PrimaryHandler) Init() error {
 	h.dg.AddHandler(adminhandler.Read)
 	h.dg.AddHandler(adminhandler.Flush)
 
+	fmt.Println("Adding Info Handler")
+	infohandler := InfoHandler{conf: h.conf, registry: h.command.registry, db: h.db, userdb: h.user}
+	infohandler.Init()
+	h.dg.AddHandler(infohandler.Read)
 
 	//fmt.Println("Adding Music Handler")
 	//musichandler := MusicHandler{db: h.db, user: h.user, registry: h.command.registry,
