@@ -9,19 +9,20 @@ import (
 
 // PrimaryHandler struct
 type PrimaryHandler struct {
-	db          *DBHandler
-	conf        *Config
-	dg          *discordgo.Session
-	callback    *CallbackHandler
-	perm        *PermissionsHandler
-	user        *UserHandler
-	command     *CommandHandler
-	registry    *CommandRegistry
-	logchan     chan string
-	bankhandler *BankHandler
-	channel     *ChannelHandler
-	globalstate *StateDB
-	reactions   *ReactionsHandler
+	db            *DBHandler
+	conf          *Config
+	dg            *discordgo.Session
+	callback      *CallbackHandler
+	perm          *PermissionsHandler
+	user          *UserHandler
+	command       *CommandHandler
+	registry      *CommandRegistry
+	logchan       chan string
+	bankhandler   *BankHandler
+	channel       *ChannelHandler
+	globalstate   *StateDB
+	reactions     *ReactionsHandler
+	inforeactions *InfoReactionsHandler
 }
 
 // Init function
@@ -172,7 +173,8 @@ func (h *PrimaryHandler) Init() error {
 	h.dg.AddHandler(adminhandler.Flush)
 
 	fmt.Println("Adding Info Handler")
-	infohandler := InfoHandler{conf: h.conf, registry: h.command.registry, db: h.db, userdb: h.user}
+	infohandler := InfoHandler{conf: h.conf, registry: h.command.registry, db: h.db, userdb: h.user, reactions: h.inforeactions,
+		callback: h.callback}
 	infohandler.Init()
 	h.dg.AddHandler(infohandler.Read)
 

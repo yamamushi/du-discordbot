@@ -16,6 +16,8 @@ type InfoHandler struct {
 	db          *DBHandler
 	userdb      *UserHandler
 	infodb      *InfoDBInterface
+	reactions   *InfoReactionsHandler
+	callback    *CallbackHandler
 
 }
 
@@ -73,7 +75,6 @@ func (h *InfoHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 func (h *InfoHandler) ParseCommand(commandlist []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	command, payload := SplitPayload(commandlist)
-fmt.Print("Parsing")
 	if len(payload) == 0 {
 		s.ChannelMessageSend(m.ChannelID, "Command "+command+" expects an argument, see help for usage.")
 		return
@@ -83,7 +84,7 @@ fmt.Print("Parsing")
 		return
 	}
 	if payload[0] == "edit" {
-		if len(m.Mentions) < 1 {
+		if len(payload) < 2 {
 			s.ChannelMessageSend(m.ChannelID, "edit expects a record name")
 			return
 		}
@@ -95,7 +96,7 @@ fmt.Print("Parsing")
 		return
 	}
 	if payload[0] == "new" {
-		if len(m.Mentions) < 1 {
+		if len(payload) < 2 {
 			s.ChannelMessageSend(m.ChannelID, "new expects a record name")
 			return
 		}
@@ -184,6 +185,12 @@ func (h  *InfoHandler) Edit(args []string, s *discordgo.Session, m *discordgo.Me
 		return errors.New("Info page for \"" + recordname + "\" not found")
 	}
 
+	err = h.EditMenu(recordname, *collection, s, m)
+	if err != nil {
+		return err
+	}
+
+
 	return nil
 }
 
@@ -197,10 +204,127 @@ func (h  *InfoHandler) New(args []string, s *discordgo.Session, m *discordgo.Mes
 	if !user.Admin {
 		return errors.New("You do not have permission to use this command!")
 	}
+
+	// Setup our db session
+	collection, session, err := h.GetMongoCollecton()
+	if err != nil {
+		return err
+	}
+	defer session.Close()
+
 	// Remove first element from argument list (which is "edit" here)
 	args = append(args[:0], args[1:]...)
 
+
+	recordname := strings.Join(args, " ")
+	_, err = h.infodb.GetRecordFromDB(recordname, *collection)
+	if err == nil {
+		return errors.New("Record \""+ recordname + "\" already exists")
+	}
+
+	err = h.infodb.NewInfoRecord(recordname, *collection)
+	if err != nil {
+		return err
+	}
+
+	err = h.EditMenu(recordname, *collection, s, m)
+	if err != nil {
+		return err
+	}
+
 	return nil
+}
+
+func (h *InfoHandler) EditMenu(recordname string, collection mgo.Collection, s *discordgo.Session, m *discordgo.MessageCreate) (err error){
+
+
+	record, err := h.infodb.GetRecordFromDB(recordname, collection)
+	if err != nil {
+		return err
+	}
+
+
+	embed := &discordgo.MessageEmbed{}
+	embed.Title = "Info System Editor"
+	embed.Description = "Currently Editing \""+record.Name+"\""
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ImageURL}
+
+	fields := []*discordgo.MessageEmbedField{}
+
+	optionone := discordgo.MessageEmbedField{}
+	optionone.Name = "1⃣"
+	optionone.Value = "Set the record type"
+	optionone.Inline = true
+	fields = append(fields, &optionone)
+
+	optiontwo := discordgo.MessageEmbedField{}
+	optiontwo.Name = "2⃣"
+	optiontwo.Value = "Set the record description"
+	optiontwo.Inline = true
+	fields = append(fields, &optiontwo)
+
+	optionthree := discordgo.MessageEmbedField{}
+	optionthree.Name = "3⃣"
+	optionthree.Value = "Set the record image"
+	optionthree.Inline = true
+	fields = append(fields, &optionthree)
+
+	optionfour := discordgo.MessageEmbedField{}
+	optionfour.Name = "4⃣"
+	optionfour.Value = "Set the record color"
+	optionfour.Inline = true
+	fields = append(fields, &optionfour)
+
+	optionfive := discordgo.MessageEmbedField{}
+	optionfive.Name = "5⃣"
+	optionfive.Value = "Configure record properties"
+	optionfive.Inline = true
+	fields = append(fields, &optionfive)
+
+	optionsix := discordgo.MessageEmbedField{}
+	optionsix.Name = "6⃣"
+	optionsix.Value = "Close this editing session"
+	optionsix.Inline = true
+	fields = append(fields, &optionsix)
+
+/*
+	if record.RecordType == "element" {
+		return h.RenderElementPage(record, s, m)
+	} else if record.RecordType == "location" {
+		return h.RenderLocationPage(record, s, m)
+	} else if record.RecordType == "resource" {
+		return h.RenderResourcePage(record, s, m)
+	} else if record.RecordType == "skill" {
+		return h.RenderSkillPage(record, s, m)
+	}
+ */
+
+    var reactions []string
+	reactions = append(reactions, "1⃣")
+	reactions = append(reactions, "2⃣")
+	reactions = append(reactions, "3⃣")
+	reactions = append(reactions, "4⃣")
+	reactions = append(reactions, "5⃣")
+	reactions = append(reactions, "6⃣")
+
+	embed.Fields = fields
+
+	//_, _ = s.ChannelMessageSendEmbed(m.ChannelID, embed)
+
+	err = h.reactions.CreateEmbed(h.HandlePendingCreatedReaction, reactions, m.ChannelID, embed, recordname, s)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		return
+	}
+
+	return nil
+}
+
+
+
+func (h *InfoHandler) HandlePendingCreatedReaction(reaction string, payload string, s *discordgo.Session, m interface{}) {
+
+	return
 }
 
 func (h *InfoHandler) RenderInfoPage(recordname string, s *discordgo.Session, m *discordgo.MessageCreate) (err error){
@@ -216,13 +340,13 @@ func (h *InfoHandler) RenderInfoPage(recordname string, s *discordgo.Session, m 
 		return errors.New("Info page for \"" + recordname + "\" not found")
 	}
 
-	if record.IsElement {
+	if record.RecordType == "element" {
 		return h.RenderElementPage(record, s, m)
-	} else if record.IsLocation {
+	} else if record.RecordType == "location" {
 		return h.RenderLocationPage(record, s, m)
-	} else if record.IsResource {
+	} else if record.RecordType == "resource" {
 		return h.RenderResourcePage(record, s, m)
-	} else if record.IsSkill {
+	} else if record.RecordType == "skill" {
 		return h.RenderSkillPage(record, s, m)
 	}
 

@@ -96,6 +96,11 @@ func main() {
 	dg.AddHandler(reactionshandler.ReadReactionAdd)
 	dg.AddHandler(reactionshandler.ReadReactionRemove)
 
+	fmt.Println("Adding Info Reactions Handler")
+	inforeactionshandler := InfoReactionsHandler{dg: dg, logger: &logger, conf: &conf}
+	dg.AddHandler(inforeactionshandler.ReadReactionAdd)
+	dg.AddHandler(inforeactionshandler.ReadReactionRemove)
+
 	// Create our user handler
 	fmt.Println("Adding User Handler")
 	userhandler := UserHandler{conf: &conf, db: &dbhandler, logchan: logchannel}
@@ -148,7 +153,7 @@ func main() {
 	fmt.Println("\n|| Initializing Main Handler ||\n")
 	handler := PrimaryHandler{db: &dbhandler, conf: &conf, dg: dg, callback: &callbackhandler, perm: &permissionshandler,
 		command: &commandhandler, logchan: logchannel, bankhandler: &bankhandler, user: &userhandler, channel: &channelhandler,
-		reactions: &reactionshandler}
+		reactions: &reactionshandler, inforeactions: &inforeactionshandler}
 	err = handler.Init()
 	if err != nil {
 		fmt.Println("error in mainHandler.init", err)

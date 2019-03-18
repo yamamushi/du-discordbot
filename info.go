@@ -16,18 +16,49 @@ type InfoDBInterface struct {
 type InfoRecord struct {
 	Name        string `storm:"id",json:"userid"`
 	Description string `json:"description"`
-	IsLocation          bool `json:"islocation"`
-	IsResource         bool `json:"isresource"`
-	IsElement         bool `json:"iselement"`
-	IsSkill     bool `json:"isskill"`
-	ResourceList []string `json:"resourcelist"`
-	SkillList    []string `json:"skilllist"`
-	UserList     []string `json:"users"`
-	LastWho      time.Time `json:"lastwho"`
+	RecordType  string `json:"recordtype"`
 	ImageURL    string `json:"imageurl"`
 	Color       string `json:"color"`
+
+	Satellite   SatelliteRecord
+	Element     ElementRecord
+	Resource    ResourceRecord
+	Skill       SkillRecord
 }
 
+type SatelliteRecord struct {
+
+	DiscoveredBy string
+	SystemZone string
+	NotableElements string
+	Atmosphere string
+	Gravity    string
+	SurfaceArea string
+	SatelliteCount string
+	Satellites []SatelliteRecord
+	Biosphere string
+	Territories string
+	TerritoriesClaimed string
+	TerraNullius string
+
+	SatelliteType string `json:"satellitetype"`
+
+	UserList     []string `json:"users"`
+	LastWho      time.Time `json:"lastwho"`
+
+}
+
+type ElementRecord struct {
+
+}
+
+type ResourceRecord struct {
+
+}
+
+type SkillRecord struct {
+
+}
 
 
 // SaveRecordToDB function
