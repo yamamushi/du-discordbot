@@ -120,7 +120,8 @@ type recruitmentConfig struct {
 }
 
 type ReactionsConfig struct {
-	RactionsExpiration          time.Duration `toml:"reactions_timeout"`
+	ReactionsExpiration time.Duration `toml:"reactions_timeout"`
+	InfoReactionsExpiration          time.Duration `toml:"info_reactions_timeout"`
 }
 
 
