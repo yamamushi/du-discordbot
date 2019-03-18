@@ -105,7 +105,7 @@ func (h *ReactionsHandler) Cleaner(){
 		time.Sleep(3*time.Minute)
 		expirationTime, err := h.configdb.GetValue("reactions-expiration")
 		if err != nil {
-			expirationTime = int(h.conf.Reactions.RactionsExpiration)
+			expirationTime = int(h.conf.Reactions.ReactionsExpiration)
 		}
 
 		//h.querylocker.Lock()

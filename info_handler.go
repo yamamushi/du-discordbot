@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"gopkg.in/mgo.v2"
+	"reflect"
 	"strings"
 	"time"
 )
@@ -185,11 +186,18 @@ func (h  *InfoHandler) Edit(args []string, s *discordgo.Session, m *discordgo.Me
 		return errors.New("Info page for \"" + recordname + "\" not found")
 	}
 
-	err = h.EditMenu(recordname, *collection, s, m)
+	embed := &discordgo.MessageEmbed{}
+	embed.Title = "Info System Editor"
+
+	rootmessage, err := s.ChannelMessageSendEmbed(m.ChannelID, embed)
 	if err != nil {
 		return err
 	}
 
+	err = h.EditMenu(recordname, rootmessage.ID, m.ChannelID, m.Author.ID, s)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -227,7 +235,16 @@ func (h  *InfoHandler) New(args []string, s *discordgo.Session, m *discordgo.Mes
 		return err
 	}
 
-	err = h.EditMenu(recordname, *collection, s, m)
+
+	embed := &discordgo.MessageEmbed{}
+	embed.Title = "Info System Editor"
+
+	rootmessage, err := s.ChannelMessageSendEmbed(m.ChannelID, embed)
+	if err != nil {
+		return err
+	}
+
+	err = h.EditMenu(recordname, rootmessage.ID, m.ChannelID, m.Author.ID, s)
 	if err != nil {
 		return err
 	}
@@ -235,12 +252,24 @@ func (h  *InfoHandler) New(args []string, s *discordgo.Session, m *discordgo.Mes
 	return nil
 }
 
-func (h *InfoHandler) EditMenu(recordname string, collection mgo.Collection, s *discordgo.Session, m *discordgo.MessageCreate) (err error){
+func (h *InfoHandler) EditMenu(recordname string, messageID string, channelID string, userID string, s *discordgo.Session) (err error){
 
-
-	record, err := h.infodb.GetRecordFromDB(recordname, collection)
+	collection, session, err := h.GetMongoCollecton()
 	if err != nil {
 		return err
+	}
+	defer session.Close()
+
+	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
+	if err != nil {
+		return err
+	}
+
+	err = s.MessageReactionsRemoveAll(channelID, messageID)
+	if err != nil {
+		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
 	}
 
 
@@ -287,17 +316,19 @@ func (h *InfoHandler) EditMenu(recordname string, collection mgo.Collection, s *
 	optionsix.Inline = true
 	fields = append(fields, &optionsix)
 
-/*
-	if record.RecordType == "element" {
-		return h.RenderElementPage(record, s, m)
-	} else if record.RecordType == "location" {
-		return h.RenderLocationPage(record, s, m)
-	} else if record.RecordType == "resource" {
-		return h.RenderResourcePage(record, s, m)
-	} else if record.RecordType == "skill" {
-		return h.RenderSkillPage(record, s, m)
-	}
- */
+	embed.Fields = fields
+
+	/*
+		if record.RecordType == "element" {
+			return h.RenderElementPage(record, s, m)
+		} else if record.RecordType == "location" {
+			return h.RenderLocationPage(record, s, m)
+		} else if record.RecordType == "resource" {
+			return h.RenderResourcePage(record, s, m)
+		} else if record.RecordType == "skill" {
+			return h.RenderSkillPage(record, s, m)
+		}
+	 */
 
     var reactions []string
 	reactions = append(reactions, "1⃣")
@@ -306,24 +337,176 @@ func (h *InfoHandler) EditMenu(recordname string, collection mgo.Collection, s *
 	reactions = append(reactions, "4⃣")
 	reactions = append(reactions, "5⃣")
 	reactions = append(reactions, "6⃣")
-
-	embed.Fields = fields
-
-	//_, _ = s.ChannelMessageSendEmbed(m.ChannelID, embed)
-
-	err = h.reactions.CreateEmbed(h.HandlePendingCreatedReaction, reactions, m.ChannelID, embed, recordname, s)
-	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
-		return
+	for _, reaction := range reactions {
+		_ = s.MessageReactionAdd(channelID, messageID, reaction)
 	}
 
+	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
+	if err != nil {
+		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+	h.reactions.Watch(h.HandleEditorMainMenu, messageID, channelID, userID, recordname, s)
 	return nil
 }
 
 
 
-func (h *InfoHandler) HandlePendingCreatedReaction(reaction string, payload string, s *discordgo.Session, m interface{}) {
+func (h *InfoHandler) HandleEditorMainMenu(reaction string, recordname string, s *discordgo.Session, m interface{}) {
 
+	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
+	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("MessageID").String()
+
+	err := s.MessageReactionsRemoveAll(channelID, messageID)
+	if err != nil {
+		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+
+	collection, session, err := h.GetMongoCollecton()
+	if err != nil {
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+	defer session.Close()
+
+	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
+	if err != nil {
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+
+
+
+	if reaction == "1⃣" {
+		h.SetRecordTypeMenu(record, s, m)
+		return
+	}
+	if reaction == "2⃣" {
+	}
+	if reaction == "3⃣" {
+	}
+	if reaction == "4⃣" {
+	}
+	if reaction == "5⃣" {
+	}
+	if reaction == "6⃣" {
+	}
+
+	return
+}
+
+func (h *InfoHandler) SetRecordTypeMenu(record InfoRecord, s *discordgo.Session, m interface{}) {
+
+	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
+	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("MessageID").String()
+	userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
+
+	embed := &discordgo.MessageEmbed{}
+	embed.Title = "Info System Editor - Record Type Selection"
+	embed.Description = "Currently Editing \""+record.Name+"\""
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ImageURL}
+
+	fields := []*discordgo.MessageEmbedField{}
+
+	optionone := discordgo.MessageEmbedField{}
+	optionone.Name = "1⃣"
+	optionone.Value = "Satellite"
+	optionone.Inline = true
+	fields = append(fields, &optionone)
+
+	optiontwo := discordgo.MessageEmbedField{}
+	optiontwo.Name = "2⃣"
+	optiontwo.Value = "Element"
+	optiontwo.Inline = true
+	fields = append(fields, &optiontwo)
+
+	optionthree := discordgo.MessageEmbedField{}
+	optionthree.Name = "3⃣"
+	optionthree.Value = "Resource"
+	optionthree.Inline = true
+	fields = append(fields, &optionthree)
+
+	optionfour := discordgo.MessageEmbedField{}
+	optionfour.Name = "4⃣"
+	optionfour.Value = "Skill"
+	optionfour.Inline = true
+	fields = append(fields, &optionfour)
+
+
+	var reactions []string
+	reactions = append(reactions, "1⃣")
+	reactions = append(reactions, "2⃣")
+	reactions = append(reactions, "3⃣")
+	reactions = append(reactions, "4⃣")
+	embed.Fields = fields
+	for _, reaction := range reactions {
+		_ = s.MessageReactionAdd(channelID, messageID, reaction)
+	}
+
+
+	_, err := s.ChannelMessageEditEmbed(channelID, messageID, embed)
+	if err != nil {
+		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+	h.reactions.Watch(h.HandleSetRecordType, messageID, channelID, userID, record.Name, s)
+	return
+}
+
+func (h *InfoHandler) HandleSetRecordType(reaction string, recordname string, s *discordgo.Session, m interface{}) {
+
+	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
+	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("MessageID").String()
+	userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
+
+	err := s.MessageReactionsRemoveAll(channelID, messageID)
+	if err != nil {
+		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+
+	collection, session, err := h.GetMongoCollecton()
+	if err != nil {
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+	defer session.Close()
+
+	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
+	if err != nil {
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+
+	if reaction == "1⃣" {
+		record.RecordType = "satellite"
+	}
+	if reaction == "2⃣" {
+		record.RecordType = "element"
+	}
+	if reaction == "3⃣" {
+		record.RecordType = "resource"
+	}
+	if reaction == "4⃣" {
+		record.RecordType = "skill"
+	}
+
+	err = h.infodb.SaveRecordToDB(record, *collection)
+	if err != nil {
+		_, _ = s.ChannelMessageSend(channelID, "Error Saving Record: " + err.Error())
+		return
+	}
+
+	err = h.EditMenu(record.Name, messageID, channelID, userID, s)
+	if err != nil {
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
 	return
 }
 

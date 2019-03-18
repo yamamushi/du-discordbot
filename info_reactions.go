@@ -38,6 +38,7 @@ type WatchInfoReaction struct {
 	Reaction      string
 	ChannelID     string
 	MessageID     string
+	UserID        string
 	Handler       func(string, string, *discordgo.Session, interface{})
 	Created       time.Time
 	Args          string
@@ -51,7 +52,7 @@ func (h *InfoReactionsHandler) AddHandler(i interface{}) {
 }
 
 func (h *InfoReactionsHandler) Create(Handler func(string, string, *discordgo.Session, interface{}),
-	Reactions []string, TargetChannelID string, Output string, Args string,
+	Reactions []string, TargetChannelID string, UserID string, Output string, Args string,
 	s *discordgo.Session) (err error){
 
 	message, err := s.ChannelMessageSend(TargetChannelID, Output)
@@ -62,15 +63,15 @@ func (h *InfoReactionsHandler) Create(Handler func(string, string, *discordgo.Se
 	//fmt.Println("Channel: " + message.ChannelID)
 
 	for _, reaction := range Reactions {
-		s.MessageReactionAdd(message.ChannelID, message.ID, reaction)
+		_ = s.MessageReactionAdd(message.ChannelID, message.ID, reaction)
 	}
 
-	h.Watch(Handler, message.ID, TargetChannelID, Args, s)
+	h.Watch(Handler, message.ID, TargetChannelID, UserID, Args, s)
 	return nil
 }
 
 func (h *InfoReactionsHandler) CreateEmbed(Handler func(string, string, *discordgo.Session, interface{}),
-	Reactions []string, TargetChannelID string, Output *discordgo.MessageEmbed, Args string,
+	Reactions []string, TargetChannelID string, UserID string, Output *discordgo.MessageEmbed, Args string,
 	s *discordgo.Session) (err error){
 
 	message, err := s.ChannelMessageSendEmbed(TargetChannelID, Output)
@@ -81,21 +82,21 @@ func (h *InfoReactionsHandler) CreateEmbed(Handler func(string, string, *discord
 	//fmt.Println("Channel: " + message.ChannelID)
 
 	for _, reaction := range Reactions {
-		s.MessageReactionAdd(message.ChannelID, message.ID, reaction)
+		_ = s.MessageReactionAdd(message.ChannelID, message.ID, reaction)
 	}
 
-	h.Watch(Handler, message.ID, TargetChannelID, Args, s)
+	h.Watch(Handler, message.ID, TargetChannelID, UserID, Args, s)
 	return nil
 }
 
 // Watch function
 func (h *InfoReactionsHandler) Watch(Handler func(string, string, *discordgo.Session, interface{}),
-	MessageID string, TargetChannelID string,  Args string, s *discordgo.Session) {
+	MessageID string, TargetChannelID string, UserID string, Args string, s *discordgo.Session) {
 
 	h.querylocker.Lock()
 	defer h.querylocker.Unlock()
 
-	item := WatchReaction{ChannelID: TargetChannelID, MessageID: MessageID, Handler: Handler, Args: Args, Created: time.Now()}
+	item := WatchInfoReaction{ChannelID: TargetChannelID, MessageID: MessageID, UserID: UserID, Handler: Handler, Args: Args, Created: time.Now()}
 	h.WatchList.PushBack(item)
 
 }
@@ -103,9 +104,9 @@ func (h *InfoReactionsHandler) Watch(Handler func(string, string, *discordgo.Ses
 func (h *InfoReactionsHandler) Cleaner(){
 	for {
 		time.Sleep(3*time.Minute)
-		expirationTime, err := h.configdb.GetValue("reactions-expiration")
+		expirationTime, err := h.configdb.GetValue("info-reactions-expiration")
 		if err != nil {
-			expirationTime = int(h.conf.Reactions.RactionsExpiration)
+			expirationTime = int(h.conf.Reactions.InfoReactionsExpiration)
 		}
 
 		//h.querylocker.Lock()
@@ -123,7 +124,7 @@ func (h *InfoReactionsHandler) Cleaner(){
 }
 
 // UnWatch function
-func (h *InfoReactionsHandler) UnWatch(ChannelID string, MessageID string) {
+func (h *InfoReactionsHandler) UnWatch(ChannelID string, MessageID string, UserID string) {
 
 	h.querylocker.Lock()
 	defer h.querylocker.Unlock()
@@ -133,8 +134,9 @@ func (h *InfoReactionsHandler) UnWatch(ChannelID string, MessageID string) {
 		r := reflect.ValueOf(e.Value)
 		channel := reflect.Indirect(r).FieldByName("ChannelID")
 		messageid := reflect.Indirect(r).FieldByName("MessageID")
+		userid := reflect.Indirect(r).FieldByName("UserID")
 
-		if channel.String() == ChannelID && messageid.String() == MessageID {
+		if channel.String() == ChannelID && messageid.String() == MessageID && userid.String() == UserID {
 			h.WatchList.Remove(e)
 		}
 	}
@@ -155,8 +157,9 @@ func (h *InfoReactionsHandler) ReadReactionAdd(s *discordgo.Session, m *discordg
 		r := reflect.ValueOf(e.Value)
 		channelid := reflect.Indirect(r).FieldByName("ChannelID").String()
 		messageid := reflect.Indirect(r).FieldByName("MessageID").String()
+		userid := reflect.Indirect(r).FieldByName("UserID").String()
 
-		if m.MessageID == messageid && m.ChannelID == channelid {
+		if m.MessageID == messageid && m.ChannelID == channelid && m.UserID == userid{
 			// We get the handler interface from our "Handler" field
 			handler := reflect.Indirect(r).FieldByName("Handler")
 
@@ -193,8 +196,9 @@ func (h *InfoReactionsHandler) ReadReactionRemove(s *discordgo.Session, m *disco
 		r := reflect.ValueOf(e.Value)
 		channelid := reflect.Indirect(r).FieldByName("ChannelID").String()
 		messageid := reflect.Indirect(r).FieldByName("MessageID").String()
+		userid := reflect.Indirect(r).FieldByName("UserID").String()
 
-		if m.MessageID == messageid && m.ChannelID == channelid {
+		if m.MessageID == messageid && m.ChannelID == channelid && m.UserID == userid {
 			// We get the handler interface from our "Handler" field
 			handler := reflect.Indirect(r).FieldByName("Handler")
 
