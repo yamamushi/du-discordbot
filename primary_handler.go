@@ -23,6 +23,7 @@ type PrimaryHandler struct {
 	globalstate   *StateDB
 	reactions     *ReactionsHandler
 	inforeactions *InfoReactionsHandler
+	infocallback  *InfoCallbackHandler
 }
 
 // Init function
@@ -174,7 +175,7 @@ func (h *PrimaryHandler) Init() error {
 
 	fmt.Println("Adding Info Handler")
 	infohandler := InfoHandler{conf: h.conf, registry: h.command.registry, db: h.db, userdb: h.user, reactions: h.inforeactions,
-		callback: h.callback}
+		infocallback: h.infocallback}
 	infohandler.Init()
 	h.dg.AddHandler(infohandler.Read)
 

@@ -178,6 +178,7 @@ func (h *InfoReactionsHandler) ReadReactionAdd(s *discordgo.Session, m *discordg
 			rargs[3] = reflect.ValueOf(*m)
 
 			go handler.Call(rargs)
+			h.WatchList.Remove(e)
 		}
 	}
 }
@@ -217,6 +218,7 @@ func (h *InfoReactionsHandler) ReadReactionRemove(s *discordgo.Session, m *disco
 			rargs[3] = reflect.ValueOf(*m)
 
 			go handler.Call(rargs)
+			h.WatchList.Remove(e)
 		}
 	}
 }

@@ -29,14 +29,14 @@ func init() {
 	_, err := os.Stat(ConfPath)
 	if err != nil {
 		log.Fatal("Config file is missing: ", ConfPath)
-		flag.Usage()
-		os.Exit(1)
+		//flag.Usage()
+		//os.Exit(1)
 	}
 }
 
 func main() {
 
-	fmt.Println("\n\n|| Starting du-discordbot ||\n")
+	fmt.Println("\n\n|| Starting du-discordbot ||")
 	log.SetOutput(ioutil.Discard)
 
 	// Setup our tmp directory
@@ -90,6 +90,9 @@ func main() {
 	fmt.Println("Adding Callback Handler")
 	callbackhandler := CallbackHandler{dg: dg, logger: &logger}
 	dg.AddHandler(callbackhandler.Read)
+	fmt.Println("Adding Info Callback Handler")
+	infocallbackhandler := InfoCallbackHandler{dg: dg, logger: &logger}
+	dg.AddHandler(infocallbackhandler.Read)
 
 	fmt.Println("Adding Reactions Handler")
 	reactionshandler := ReactionsHandler{dg: dg, logger: &logger, conf: &conf}
@@ -150,19 +153,19 @@ func main() {
 	logger.Init(&channelhandler, logchannel, dg)
 
 	// Now we create and initialize our main handler
-	fmt.Println("\n|| Initializing Main Handler ||\n")
+	fmt.Println("\n|| Initializing Main Handler ||")
 	handler := PrimaryHandler{db: &dbhandler, conf: &conf, dg: dg, callback: &callbackhandler, perm: &permissionshandler,
 		command: &commandhandler, logchan: logchannel, bankhandler: &bankhandler, user: &userhandler, channel: &channelhandler,
-		reactions: &reactionshandler, inforeactions: &inforeactionshandler}
+		reactions: &reactionshandler, inforeactions: &inforeactionshandler, infocallback: &infocallbackhandler}
 	err = handler.Init()
 	if err != nil {
 		fmt.Println("error in mainHandler.init", err)
 		return
 	}
-	fmt.Println("\n|| Main Handler Initialized ||\n")
+	fmt.Println("\n|| Main Handler Initialized ||")
 
 	if conf.DUBotConfig.Profiler {
-		http.ListenAndServe(":8080", http.DefaultServeMux)
+		_ = http.ListenAndServe(":8080", http.DefaultServeMux)
 	}
 
 	// Wait here until CTRL-C or other term signal is received.
