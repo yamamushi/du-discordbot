@@ -33,7 +33,7 @@ func (h *InfoHandler) EditMenu(recordname string, messageID string, channelID st
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor"
 	embed.Description = "Currently Editing \"**"+strings.Title(record.Name)+"**\""
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ImageURL}
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
 	embed.Color = record.Color
 	if record.EditorID != "" {
 		user, err  := s.User(record.EditorID)
@@ -58,7 +58,7 @@ func (h *InfoHandler) EditMenu(recordname string, messageID string, channelID st
 
 	optionthree := discordgo.MessageEmbedField{}
 	optionthree.Name = "3⃣"
-	optionthree.Value = "Set the record image"
+	optionthree.Value = "Set the record thumbnail"
 	optionthree.Inline = true
 	fields = append(fields, &optionthree)
 
@@ -70,21 +70,27 @@ func (h *InfoHandler) EditMenu(recordname string, messageID string, channelID st
 
 	optionfive := discordgo.MessageEmbedField{}
 	optionfive.Name = "5⃣"
-	optionfive.Value = "Configure record properties"
+	optionfive.Value = "set the record image"
 	optionfive.Inline = true
 	fields = append(fields, &optionfive)
 
 	optionsix := discordgo.MessageEmbedField{}
 	optionsix.Name = "6⃣"
-	optionsix.Value = "Take Record Ownership"
+	optionsix.Value = "Configure record properties"
 	optionsix.Inline = true
 	fields = append(fields, &optionsix)
 
 	optionseven := discordgo.MessageEmbedField{}
 	optionseven.Name = "7⃣"
-	optionseven.Value = "Close this editing session"
+	optionseven.Value = "Take Record Ownership"
 	optionseven.Inline = true
 	fields = append(fields, &optionseven)
+
+	optioneight := discordgo.MessageEmbedField{}
+	optioneight.Name = "8⃣"
+	optioneight.Value = "Close this editing session"
+	optioneight.Inline = true
+	fields = append(fields, &optioneight)
 
 	embed.Fields = fields
 
@@ -96,6 +102,7 @@ func (h *InfoHandler) EditMenu(recordname string, messageID string, channelID st
 	reactions = append(reactions, "5⃣")
 	reactions = append(reactions, "6⃣")
 	reactions = append(reactions, "7⃣")
+	reactions = append(reactions, "8⃣")
 	for _, reaction := range reactions {
 		_ = s.MessageReactionAdd(channelID, messageID, reaction)
 	}
@@ -145,7 +152,7 @@ func (h *InfoHandler) HandleEditorMainMenu(reaction string, recordname string, s
 		return
 	}
 	if reaction == "3⃣" {
-		h.SetRecordImageURLMenu(record, s, m)
+		h.SetRecordThumbnailURLMenu(record, s, m)
 		return
 	}
 	if reaction == "4⃣" {
@@ -153,6 +160,10 @@ func (h *InfoHandler) HandleEditorMainMenu(reaction string, recordname string, s
 		return
 	}
 	if reaction == "5⃣" {
+		h.SetRecordImageURLMenu(record, s, m)
+		return
+	}
+	if reaction == "6⃣" {
 		if record.RecordType == "" {
 			errormessage, _ := s.ChannelMessageSend(channelID, "Error: Cannot set record properties without record type, please configure this first.")
 			time.Sleep(10*time.Second)
@@ -166,9 +177,8 @@ func (h *InfoHandler) HandleEditorMainMenu(reaction string, recordname string, s
 		} else {
 			return
 		}
-
 	}
-	if reaction == "6⃣" {
+	if reaction == "7⃣" {
 		record.EditorID = userID
 		err = h.infodb.SaveRecordToDB(record, *collection)
 		if err != nil {
@@ -178,10 +188,11 @@ func (h *InfoHandler) HandleEditorMainMenu(reaction string, recordname string, s
 		err = h.EditMenu(record.Name, messageID, channelID, userID, s)
 		if err != nil {
 			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
-
+			return
 		}
+		return
 	}
-	if reaction == "7⃣" {
+	if reaction == "8⃣" {
 		err = s.ChannelMessageDelete(channelID, messageID)
 		if err != nil {
 			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
@@ -205,7 +216,7 @@ func (h *InfoHandler) SetRecordTypeMenu(record InfoRecord, s *discordgo.Session,
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor - Record Type Selection"
 	embed.Description = "Currently Editing \"**"+strings.Title(record.Name)+"**\""
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ImageURL}
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
 	embed.Color = record.Color
 
 
@@ -339,7 +350,7 @@ func (h *InfoHandler) SetRecordDescriptionMenu(record InfoRecord, s *discordgo.S
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor - Record Description"
 	embed.Description = "Currently Editing: \"**"+strings.Title(record.Name)+"**\""
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ImageURL}
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
 	embed.Color = record.Color
 
 
@@ -421,7 +432,7 @@ func (h *InfoHandler) HandleSetRecordDescription(recordname string, userID strin
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor - Confirm Record Description"
 	embed.Description = "Confirm Description Selection For: \"**"+strings.Title(recordname)+"**\""
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ImageURL}
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
 	embed.Color = record.Color
 
 
@@ -529,6 +540,409 @@ func (h *InfoHandler) HandleSetRecordDescriptionConfirm(reaction string, args st
 }
 
 
+// Record Thumbnail URL
+
+func (h *InfoHandler) SetRecordThumbnailURLMenu(record InfoRecord, s *discordgo.Session, m interface{}) {
+
+	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
+	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("MessageID").String()
+	userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
+
+	err := s.MessageReactionsRemoveAll(channelID, messageID)
+	if err != nil {
+		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+
+	embed := &discordgo.MessageEmbed{}
+	embed.Title = "Info System Editor - Record Thumbnail URL"
+	embed.Description = "Currently Editing: \"**"+strings.Title(record.Name)+"**\""
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
+	embed.Color = record.Color
+
+
+	var fields []*discordgo.MessageEmbedField
+
+	optiontwo := discordgo.MessageEmbedField{}
+	optiontwo.Name = ":pencil:"
+	optiontwo.Value = "Enter a new url below or select ⬅ to return to the main menu"
+	optiontwo.Inline = false
+	fields = append(fields, &optiontwo)
+
+
+	var reactions []string
+	reactions = append(reactions, "⬅")
+
+	embed.Fields = fields
+	for _, reaction := range reactions {
+		_ = s.MessageReactionAdd(channelID, messageID, reaction)
+	}
+
+
+	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
+	if err != nil {
+		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+	h.infocallback.Watch(h.HandleSetRecordThumbnailURL, channelID, messageID, userID, record.Name, s)
+	h.reactions.Watch(h.HandleSetRecordThumbnailURLReactions, messageID, channelID, userID, record.Name, s)
+	return
+}
+
+func (h *InfoHandler) HandleSetRecordThumbnailURL(recordname string, userID string, imageurl string, s *discordgo.Session, m interface{}) {
+
+	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
+	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ID").String()
+	// we have a userID here because we are passing a discordgo.MessageCreate interface which buries the userID under Author.ID
+	//h.reactions.UnWatch(channelID, messageID, userID)
+
+	err := s.MessageReactionsRemoveAll(channelID, messageID)
+	if err != nil {
+		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+
+	collection, session, err := h.GetMongoCollecton()
+	if err != nil {
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+	defer session.Close()
+
+	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
+	if err != nil {
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+
+	// Handle invalid urls
+	_, err = url.ParseRequestURI(imageurl)
+	if err != nil {
+		errormessage, _ := s.ChannelMessageSend(channelID, "Provided url is invalid, please check your entry and try again:\n```" + imageurl+"```")
+		r := discordgo.MessageReaction{ChannelID:channelID, MessageID: messageID, UserID: userID}
+		h.SetRecordThumbnailURLMenu(record, s, r)
+		time.Sleep(15*time.Second)
+		_ = s.ChannelMessageDelete(channelID, errormessage.ID)
+		return
+	}
+
+	embed := &discordgo.MessageEmbed{}
+	embed.Title = "Info System Editor - Confirm Record Thumbnail URL"
+	embed.Description = "Confirm Thumbnail URL Selection For: \"**"+strings.Title(recordname)+"**\""
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:imageurl}
+	embed.Color = record.Color
+
+
+	var fields []*discordgo.MessageEmbedField
+
+	optionone := discordgo.MessageEmbedField{}
+	optionone.Name = "Selected Thumbnail URL"
+	optionone.Value = imageurl
+	optionone.Inline = false
+	fields = append(fields, &optionone)
+
+	optiontwo := discordgo.MessageEmbedField{}
+	optiontwo.Name = ":question:"
+	optiontwo.Value = "Select ✅ to confirm or ❎ to return to the Thumbnail URL menu"
+	optiontwo.Inline = false
+	fields = append(fields, &optiontwo)
+
+
+	var reactions []string
+	reactions = append(reactions, "✅")
+	reactions = append(reactions, "❎")
+
+	embed.Fields = fields
+	for _, reaction := range reactions {
+		_ = s.MessageReactionAdd(channelID, messageID, reaction)
+	}
+
+	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
+	if err != nil {
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+
+	payload := recordname + "|#|" + imageurl
+	h.reactions.Watch(h.HandleSetRecordThumbnailURLConfirm, messageID, channelID, userID, payload, s)
+	return
+
+}
+
+func (h *InfoHandler) HandleSetRecordThumbnailURLReactions(reaction string, recordname string, s *discordgo.Session, m interface{}) {
+	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
+	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("MessageID").String()
+	userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
+
+	if reaction == "⬅" {
+		h.infocallback.UnWatch(channelID, messageID, userID)
+		err := h.EditMenu(recordname, messageID, channelID, userID, s)
+		if err != nil {
+			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			return
+		}
+		return
+	}
+	// If we got an invalid or unexpected reaction, ignore it and watch again
+	h.reactions.Watch(h.HandleSetRecordThumbnailURLReactions, messageID, channelID, userID, recordname, s)
+	return
+
+}
+
+func (h *InfoHandler) HandleSetRecordThumbnailURLConfirm(reaction string, args string, s *discordgo.Session, m interface{}) {
+
+	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
+	//messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ID").String()
+	//userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
+
+	payload := strings.Split(args, "|#|")
+	if len(payload) < 2 || len(payload) > 2 {
+		_, _ = s.ChannelMessageSend(channelID, "Error: HandleSetRecordThumbnailURLConfirm payload invalid size - " + strconv.Itoa(len(payload)))
+		return
+	}
+	recordname := payload[0]
+	imageurl := payload[1]
+
+	collection, session, err := h.GetMongoCollecton()
+	if err != nil {
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+	defer session.Close()
+
+	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
+	if err != nil {
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+
+	if reaction == "✅" {
+
+		record.ThumbnailURL = imageurl
+		err = h.infodb.SaveRecordToDB(record, *collection)
+		if err != nil {
+			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			return
+		}
+		h.SetRecordThumbnailURLMenu(record, s, m)
+		return
+	} else {
+		// 	if reaction == "❎"
+		// Cancel and return to image url menu
+		h.SetRecordThumbnailURLMenu(record, s, m)
+		return
+	}
+}
+
+
+// Record Color
+
+func (h *InfoHandler) SetRecordColorMenu(record InfoRecord, s *discordgo.Session, m interface{}) {
+
+	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
+	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("MessageID").String()
+	userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
+
+	err := s.MessageReactionsRemoveAll(channelID, messageID)
+	if err != nil {
+		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+
+	embed := &discordgo.MessageEmbed{}
+	embed.Title = "Info System Editor - Record Color"
+	embed.Description = "Currently Editing: \"**"+strings.Title(record.Name)+"**\""
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
+	embed.Color = record.Color
+
+
+	var fields []*discordgo.MessageEmbedField
+
+	optiontwo := discordgo.MessageEmbedField{}
+	optiontwo.Name = ":pencil:"
+	optiontwo.Value = "Enter a new color code below or select ⬅ to return to the main menu"
+	optiontwo.Inline = false
+	fields = append(fields, &optiontwo)
+
+
+	var reactions []string
+	reactions = append(reactions, "⬅")
+
+	embed.Fields = fields
+	for _, reaction := range reactions {
+		_ = s.MessageReactionAdd(channelID, messageID, reaction)
+	}
+
+
+	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
+	if err != nil {
+		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+	h.infocallback.Watch(h.HandleSetRecordColor, channelID, messageID, userID, record.Name, s)
+	h.reactions.Watch(h.HandleSetRecordColorReactions, messageID, channelID, userID, record.Name, s)
+	return
+}
+
+func (h *InfoHandler) HandleSetRecordColor(recordname string, userID string, color string, s *discordgo.Session, m interface{}) {
+
+	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
+	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ID").String()
+	// we have a userID here because we are passing a discordgo.MessageCreate interface which buries the userID under Author.ID
+	//h.reactions.UnWatch(channelID, messageID, userID)
+
+	err := s.MessageReactionsRemoveAll(channelID, messageID)
+	if err != nil {
+		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+
+	collection, session, err := h.GetMongoCollecton()
+	if err != nil {
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+	defer session.Close()
+
+	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
+	if err != nil {
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+
+	// Handle invalid colors
+	colorcode, err := strconv.Atoi(color)
+	if err != nil || colorcode > 16777215 {
+		errormessage, _ := s.ChannelMessageSend(channelID,
+			"Provided color code is invalid, please check your entry and try again:\n```" + color+"```")
+		r := discordgo.MessageReaction{ChannelID:channelID, MessageID: messageID, UserID: userID}
+		h.SetRecordColorMenu(record, s, r)
+		time.Sleep(15*time.Second)
+		_ = s.ChannelMessageDelete(channelID, errormessage.ID)
+		return
+	}
+
+	embed := &discordgo.MessageEmbed{}
+	embed.Title = "Info System Editor - Confirm Record Color"
+	embed.Description = "Confirm Color Selection For: \"**"+strings.Title(recordname)+"**\""
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
+	embed.Color = colorcode
+
+	var fields []*discordgo.MessageEmbedField
+
+	optionone := discordgo.MessageEmbedField{}
+	optionone.Name = "Selected Color"
+	optionone.Value = color
+	optionone.Inline = false
+	fields = append(fields, &optionone)
+
+	optiontwo := discordgo.MessageEmbedField{}
+	optiontwo.Name = ":question:"
+	optiontwo.Value = "Select ✅ to confirm or ❎ to return to the Color menu"
+	optiontwo.Inline = false
+	fields = append(fields, &optiontwo)
+
+
+	var reactions []string
+	reactions = append(reactions, "✅")
+	reactions = append(reactions, "❎")
+
+	embed.Fields = fields
+	for _, reaction := range reactions {
+		_ = s.MessageReactionAdd(channelID, messageID, reaction)
+	}
+
+	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
+	if err != nil {
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+
+	payload := recordname + "|#|" + color
+	h.reactions.Watch(h.HandleSetRecordColorConfirm, messageID, channelID, userID, payload, s)
+	return
+
+}
+
+func (h *InfoHandler) HandleSetRecordColorReactions(reaction string, recordname string, s *discordgo.Session, m interface{}) {
+	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
+	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("MessageID").String()
+	userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
+
+	if reaction == "⬅" {
+		h.infocallback.UnWatch(channelID, messageID, userID)
+		err := h.EditMenu(recordname, messageID, channelID, userID, s)
+		if err != nil {
+			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			return
+		}
+		return
+	}
+	// If we got an invalid or unexpected reaction, ignore it and watch again
+	h.reactions.Watch(h.HandleSetRecordColorReactions, messageID, channelID, userID, recordname, s)
+	return
+
+}
+
+func (h *InfoHandler) HandleSetRecordColorConfirm(reaction string, args string, s *discordgo.Session, m interface{}) {
+
+	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
+	//messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ID").String()
+	//userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
+
+	payload := strings.Split(args, "|#|")
+	if len(payload) < 2 || len(payload) > 2 {
+		_, _ = s.ChannelMessageSend(channelID, "Error: HandleSetRecordColorConfirm payload invalid size - " + strconv.Itoa(len(payload)))
+		return
+	}
+	recordname := payload[0]
+	color := payload[1]
+
+	collection, session, err := h.GetMongoCollecton()
+	if err != nil {
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+	defer session.Close()
+
+	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
+	if err != nil {
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+
+	if reaction == "✅" {
+
+		// We check again for consistency
+		colorcode, err := strconv.Atoi(color)
+		if err != nil {
+			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			h.SetRecordThumbnailURLMenu(record, s, m)
+			return
+		}
+
+		record.Color = colorcode
+		err = h.infodb.SaveRecordToDB(record, *collection)
+		if err != nil {
+			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			return
+		}
+		h.SetRecordColorMenu(record, s, m)
+		return
+	} else {
+		// 	if reaction == "❎"
+		// Cancel and return to image url menu
+		h.SetRecordColorMenu(record, s, m)
+		return
+	}
+}
+
 // Record Image URL
 
 func (h *InfoHandler) SetRecordImageURLMenu(record InfoRecord, s *discordgo.Session, m interface{}) {
@@ -547,9 +961,9 @@ func (h *InfoHandler) SetRecordImageURLMenu(record InfoRecord, s *discordgo.Sess
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor - Record Image URL"
 	embed.Description = "Currently Editing: \"**"+strings.Title(record.Name)+"**\""
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ImageURL}
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
+	embed.Image = &discordgo.MessageEmbedImage{URL:record.ImageURL}
 	embed.Color = record.Color
-
 
 	var fields []*discordgo.MessageEmbedField
 
@@ -621,9 +1035,9 @@ func (h *InfoHandler) HandleSetRecordImageURL(recordname string, userID string, 
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor - Confirm Record Image URL"
 	embed.Description = "Confirm Image URL Selection For: \"**"+strings.Title(recordname)+"**\""
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:imageurl}
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
+	embed.Image = &discordgo.MessageEmbedImage{URL:imageurl}
 	embed.Color = record.Color
-
 
 	var fields []*discordgo.MessageEmbedField
 
@@ -725,213 +1139,6 @@ func (h *InfoHandler) HandleSetRecordImageURLConfirm(reaction string, args strin
 		return
 	}
 }
-
-
-// Record Color
-
-func (h *InfoHandler) SetRecordColorMenu(record InfoRecord, s *discordgo.Session, m interface{}) {
-
-	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
-	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("MessageID").String()
-	userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
-
-	err := s.MessageReactionsRemoveAll(channelID, messageID)
-	if err != nil {
-		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
-		return
-	}
-
-	embed := &discordgo.MessageEmbed{}
-	embed.Title = "Info System Editor - Record Color"
-	embed.Description = "Currently Editing: \"**"+strings.Title(record.Name)+"**\""
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ImageURL}
-	embed.Color = record.Color
-
-
-	var fields []*discordgo.MessageEmbedField
-
-	optiontwo := discordgo.MessageEmbedField{}
-	optiontwo.Name = ":pencil:"
-	optiontwo.Value = "Enter a new color code below or select ⬅ to return to the main menu"
-	optiontwo.Inline = false
-	fields = append(fields, &optiontwo)
-
-
-	var reactions []string
-	reactions = append(reactions, "⬅")
-
-	embed.Fields = fields
-	for _, reaction := range reactions {
-		_ = s.MessageReactionAdd(channelID, messageID, reaction)
-	}
-
-
-	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
-	if err != nil {
-		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
-		return
-	}
-	h.infocallback.Watch(h.HandleSetRecordColor, channelID, messageID, userID, record.Name, s)
-	h.reactions.Watch(h.HandleSetRecordColorReactions, messageID, channelID, userID, record.Name, s)
-	return
-}
-
-func (h *InfoHandler) HandleSetRecordColor(recordname string, userID string, color string, s *discordgo.Session, m interface{}) {
-
-	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
-	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ID").String()
-	// we have a userID here because we are passing a discordgo.MessageCreate interface which buries the userID under Author.ID
-	//h.reactions.UnWatch(channelID, messageID, userID)
-
-	err := s.MessageReactionsRemoveAll(channelID, messageID)
-	if err != nil {
-		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
-		return
-	}
-
-	collection, session, err := h.GetMongoCollecton()
-	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
-		return
-	}
-	defer session.Close()
-
-	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
-	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
-		return
-	}
-
-	// Handle invalid colors
-	colorcode, err := strconv.Atoi(color)
-	if err != nil || colorcode > 16777215 {
-		errormessage, _ := s.ChannelMessageSend(channelID,
-			"Provided color code is invalid, please check your entry and try again:\n```" + color+"```")
-		r := discordgo.MessageReaction{ChannelID:channelID, MessageID: messageID, UserID: userID}
-		h.SetRecordColorMenu(record, s, r)
-		time.Sleep(15*time.Second)
-		_ = s.ChannelMessageDelete(channelID, errormessage.ID)
-		return
-	}
-
-	embed := &discordgo.MessageEmbed{}
-	embed.Title = "Info System Editor - Confirm Record Color"
-	embed.Description = "Confirm Color Selection For: \"**"+strings.Title(recordname)+"**\""
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ImageURL}
-	embed.Color = colorcode
-
-	var fields []*discordgo.MessageEmbedField
-
-	optionone := discordgo.MessageEmbedField{}
-	optionone.Name = "Selected Image Color"
-	optionone.Value = color
-	optionone.Inline = false
-	fields = append(fields, &optionone)
-
-	optiontwo := discordgo.MessageEmbedField{}
-	optiontwo.Name = ":question:"
-	optiontwo.Value = "Select ✅ to confirm or ❎ to return to the Color menu"
-	optiontwo.Inline = false
-	fields = append(fields, &optiontwo)
-
-
-	var reactions []string
-	reactions = append(reactions, "✅")
-	reactions = append(reactions, "❎")
-
-	embed.Fields = fields
-	for _, reaction := range reactions {
-		_ = s.MessageReactionAdd(channelID, messageID, reaction)
-	}
-
-	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
-	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
-		return
-	}
-
-	payload := recordname + "|#|" + color
-	h.reactions.Watch(h.HandleSetRecordColorConfirm, messageID, channelID, userID, payload, s)
-	return
-
-}
-
-func (h *InfoHandler) HandleSetRecordColorReactions(reaction string, recordname string, s *discordgo.Session, m interface{}) {
-	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
-	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("MessageID").String()
-	userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
-
-	if reaction == "⬅" {
-		h.infocallback.UnWatch(channelID, messageID, userID)
-		err := h.EditMenu(recordname, messageID, channelID, userID, s)
-		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
-			return
-		}
-		return
-	}
-	// If we got an invalid or unexpected reaction, ignore it and watch again
-	h.reactions.Watch(h.HandleSetRecordColorReactions, messageID, channelID, userID, recordname, s)
-	return
-
-}
-
-func (h *InfoHandler) HandleSetRecordColorConfirm(reaction string, args string, s *discordgo.Session, m interface{}) {
-
-	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
-	//messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ID").String()
-	//userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
-
-	payload := strings.Split(args, "|#|")
-	if len(payload) < 2 || len(payload) > 2 {
-		_, _ = s.ChannelMessageSend(channelID, "Error: HandleSetRecordColorConfirm payload invalid size - " + strconv.Itoa(len(payload)))
-		return
-	}
-	recordname := payload[0]
-	color := payload[1]
-
-	collection, session, err := h.GetMongoCollecton()
-	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
-		return
-	}
-	defer session.Close()
-
-	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
-	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
-		return
-	}
-
-	if reaction == "✅" {
-
-		// We check again for consistency
-		colorcode, err := strconv.Atoi(color)
-		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
-			h.SetRecordImageURLMenu(record, s, m)
-			return
-		}
-
-		record.Color = colorcode
-		err = h.infodb.SaveRecordToDB(record, *collection)
-		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
-			return
-		}
-		h.SetRecordColorMenu(record, s, m)
-		return
-	} else {
-		// 	if reaction == "❎"
-		// Cancel and return to image url menu
-		h.SetRecordColorMenu(record, s, m)
-		return
-	}
-}
-
 
 // Record Properties (yuck)
 // This is going to be a nightmare of code...

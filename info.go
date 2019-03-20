@@ -17,6 +17,7 @@ type InfoRecord struct {
 	Name        string `storm:"id",json:"userid"`
 	Description string `json:"description"`
 	RecordType  string `json:"recordtype"`  // satellite/element/resource/skill
+	ThumbnailURL string `json:"thumbnailurl"`
 	ImageURL    string `json:"imageurl"`
 	Color       int `json:"color"`
 
@@ -40,7 +41,7 @@ type SatelliteRecord struct {
 
 	NotableElements []string
 
-	SatelliteCount int
+	//SatelliteCount int
 	Satellites []SatelliteRecord
 
 	TerraNullius string
@@ -50,6 +51,8 @@ type SatelliteRecord struct {
 	UserList     []string `json:"users"`
 	LastWho      time.Time `json:"lastwho"`
 }
+
+
 
 type ElementRecord struct {
 
