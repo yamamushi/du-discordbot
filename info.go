@@ -28,20 +28,22 @@ type InfoRecord struct {
 
 type SatelliteRecord struct {
 
+	SatelliteType string `json:"satellitetype"`
+
 	DiscoveredBy string
 	SystemZone string
 	NotableElements string
 	Atmosphere string
 	Gravity    string
 	SurfaceArea string
+
 	SatelliteCount string
 	Satellites []SatelliteRecord
 	Biosphere string
+
+	TerraNullius string
 	Territories string
 	TerritoriesClaimed string
-	TerraNullius string
-
-	SatelliteType string `json:"satellitetype"`
 
 	UserList     []string `json:"users"`
 	LastWho      time.Time `json:"lastwho"`
@@ -90,7 +92,7 @@ func (h *InfoDBInterface) GetRecordFromDB(name string, c mgo.Collection) (record
 }
 
 // BackerInterface function
-func (h *InfoDBInterface) GetAllBackers(c mgo.Collection) (records []InfoRecord, err error) {
+func (h *InfoDBInterface) GetAllInfoRecords(c mgo.Collection) (records []InfoRecord, err error) {
 	h.querylocker.Lock()
 	defer h.querylocker.Unlock()
 
