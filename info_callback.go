@@ -87,8 +87,8 @@ func (c *InfoCallbackHandler) Read(s *discordgo.Session, m *discordgo.MessageCre
 			rargs[3] = reflect.ValueOf(s)
 			rargs[4] = reflect.ValueOf(*m)
 
-			go handler.Call(rargs)
 			c.WatchList.Remove(e)
+			go handler.Call(rargs)
 		}
 	}
 }

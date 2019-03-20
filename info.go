@@ -16,7 +16,7 @@ type InfoDBInterface struct {
 type InfoRecord struct {
 	Name        string `storm:"id",json:"userid"`
 	Description string `json:"description"`
-	RecordType  string `json:"recordtype"`
+	RecordType  string `json:"recordtype"`  // satellite/element/resource/skill
 	ImageURL    string `json:"imageurl"`
 	Color       int `json:"color"`
 
@@ -29,7 +29,6 @@ type InfoRecord struct {
 }
 
 type SatelliteRecord struct {
-
 	SatelliteType string `json:"satellitetype"` // Planet/Moon
 
 	DiscoveredBy string
@@ -57,12 +56,27 @@ type ElementRecord struct {
 }
 
 type ResourceRecord struct {
+	ResourceType string `json:"resourcetype"` // ore / refined /
 
+	Recipe  RecipeRecord
+	Weight  string
+	ResourceTier string
 }
 
 type SkillRecord struct {
 
 }
+
+type RecipeRecord struct {
+	RecipeName  string
+	RecipeList  []RecipeItem
+}
+
+type RecipeItem struct {
+	ElementType string
+	Volume      string
+}
+
 
 
 // SaveRecordToDB function
@@ -99,5 +113,14 @@ func (h *InfoDBInterface) GetAllInfoRecords(c mgo.Collection) (records []InfoRec
 	defer h.querylocker.Unlock()
 
 	err = c.Find(bson.M{}).All(&records)
+	return records, err
+}
+
+// BackerInterface function
+func (h *InfoDBInterface) GetAllInfoResourceRecords(c mgo.Collection) (records []InfoRecord, err error) {
+	h.querylocker.Lock()
+	defer h.querylocker.Unlock()
+
+	err = c.Find(bson.M{"recordtype": "resource"}).All(&records)
 	return records, err
 }

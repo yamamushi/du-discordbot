@@ -529,3 +529,22 @@ func fmtDuration(d time.Duration) string {
 		return fmt.Sprintf("%02d hours", h)
 	}
 }
+
+func AppendStringIfMissing(slice []string, i string) []string {
+	for _, ele := range slice {
+		if ele == i {
+			return slice
+		}
+	}
+	return append(slice, i)
+}
+
+// Contains tells whether a contains x.
+func StringSliceContains(a []string, x string) bool {
+	for _, n := range a {
+		if x == n {
+			return true
+		}
+	}
+	return false
+}
