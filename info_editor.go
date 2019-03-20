@@ -189,10 +189,10 @@ func (h *InfoHandler) HandleEditorMainMenu(reaction string, recordname string, s
 		}
 		s.ChannelMessageSend(channelID, "Info Editor Session Closed")
 		return
-	} else {
-		h.reactions.Watch(h.HandleEditorMainMenu, messageID, channelID, userID, recordname, s)
-		return
 	}
+
+	h.reactions.Watch(h.HandleEditorMainMenu, messageID, channelID, userID, recordname, s)
+	return
 }
 
 // Record Type

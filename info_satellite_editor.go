@@ -373,22 +373,28 @@ func (h *InfoHandler) HandleSatelliteDetailsMenu(reaction string, recordname str
 	}
 	// Atmosphere
 	if reaction == "3⃣" {
+		h.SetSatelliteAtmosphereMenu(record, s, m)
 		return
 	}
 	// Gravity
 	if reaction == "4⃣" {
+		h.SetSatelliteGravityMenu(record, s, m)
 		return
 	}
 	// SurfaceArea
 	if reaction == "5⃣" {
+		h.SetSatelliteSurfaceAreaMenu(record, s, m)
+		return
 	}
 	// Biosphere
 	if reaction == "6⃣" {
-
-	} else {
-		h.reactions.Watch(h.HandleSatelliteDetailsMenu, messageID, channelID, userID, recordname, s)
+		h.SetSatelliteBiosphereMenu(record, s, m)
 		return
+
 	}
+
+	h.reactions.Watch(h.HandleSatelliteDetailsMenu, messageID, channelID, userID, recordname, s)
+	return
 }
 
 
@@ -737,11 +743,649 @@ func (h *InfoHandler) HandleSatelliteSystemZoneMenu(reaction string, recordname 
 // Atmosphere
 
 
+func (h *InfoHandler) SetSatelliteAtmosphereMenu(record InfoRecord, s *discordgo.Session, m interface{}) {
+
+	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
+	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("MessageID").String()
+	userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
+
+	err := s.MessageReactionsRemoveAll(channelID, messageID)
+	if err != nil {
+		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+
+	embed := &discordgo.MessageEmbed{}
+	embed.Title = "Info System Editor - Satellite Atmosphere :satellite:"
+	embed.Description = "Currently Editing: \"**"+strings.Title(record.Name)+"**\""
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ImageURL}
+	embed.Color = record.Color
+
+
+	var fields []*discordgo.MessageEmbedField
+
+	optionone := discordgo.MessageEmbedField{}
+	optionone.Name = ":bulb:"
+	optionone.Value = "Current Value: " + record.Satellite.Atmosphere
+	optionone.Inline = false
+	fields = append(fields, &optionone)
+
+	optiontwo := discordgo.MessageEmbedField{}
+	optiontwo.Name = ":pencil:"
+	optiontwo.Value = "Enter a new value or select ⬅ to return to the main menu"
+	optiontwo.Inline = false
+	fields = append(fields, &optiontwo)
+
+
+	var reactions []string
+	reactions = append(reactions, "⬅")
+
+	embed.Fields = fields
+	for _, reaction := range reactions {
+		_ = s.MessageReactionAdd(channelID, messageID, reaction)
+	}
+
+
+	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
+	if err != nil {
+		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+	h.infocallback.Watch(h.HandleSetSatelliteAtmosphere, channelID, messageID, userID, record.Name, s)
+	h.reactions.Watch(h.HandleSetSatelliteAtmosphereReactions, messageID, channelID, userID, record.Name, s)
+	return
+}
+
+func (h *InfoHandler) HandleSetSatelliteAtmosphere(recordname string, userID string, atmosphere string, s *discordgo.Session, m interface{}) {
+
+	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
+	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ID").String()
+	// we have a userID here because we are passing a discordgo.MessageCreate interface which buries the userID under Author.ID
+	//h.reactions.UnWatch(channelID, messageID, userID)
+
+	err := s.MessageReactionsRemoveAll(channelID, messageID)
+	if err != nil {
+		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+
+	collection, session, err := h.GetMongoCollecton()
+	if err != nil {
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+	defer session.Close()
+
+	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
+	if err != nil {
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+
+	// Handle invalid names
+	_, err = strconv.ParseFloat(atmosphere, 64)
+	if err != nil {
+		errormessage, _ := s.ChannelMessageSend(channelID, "Provided value was not a float," +
+			"please provide a correct value.")
+		r := &discordgo.MessageReaction{MessageID:messageID, ChannelID: channelID, UserID: userID}
+		h.SetSatelliteAtmosphereMenu(record, s, r)
+		time.Sleep(10*time.Second)
+		_ = s.ChannelMessageDelete(channelID, errormessage.ID)
+		return
+	}
+
+
+	embed := &discordgo.MessageEmbed{}
+	embed.Title = "Info System Editor - Confirm Satellite Atmosphere"
+	embed.Description = "Confirm Atmosphere Selection For: \"**"+strings.Title(recordname)+"**\""
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ImageURL}
+	embed.Color = record.Color
+
+
+	var fields []*discordgo.MessageEmbedField
+
+	optionone := discordgo.MessageEmbedField{}
+	optionone.Name = "Selected Atmosphere"
+	optionone.Value = atmosphere
+	optionone.Inline = false
+	fields = append(fields, &optionone)
+
+	optiontwo := discordgo.MessageEmbedField{}
+	optiontwo.Name = ":question:"
+	optiontwo.Value = "Select ✅ to confirm or ❎ to return to the Atmosphere menu"
+	optiontwo.Inline = false
+	fields = append(fields, &optiontwo)
+
+
+	var reactions []string
+	reactions = append(reactions, "✅")
+	reactions = append(reactions, "❎")
+
+	embed.Fields = fields
+	for _, reaction := range reactions {
+		_ = s.MessageReactionAdd(channelID, messageID, reaction)
+	}
+
+	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
+	if err != nil {
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+
+	payload := recordname + "|#|" + atmosphere
+	h.reactions.Watch(h.HandleSetSatelliteAtmosphereConfirm, messageID, channelID, userID, payload, s)
+	return
+
+}
+
+func (h *InfoHandler) HandleSetSatelliteAtmosphereReactions(reaction string, recordname string, s *discordgo.Session, m interface{}) {
+	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
+	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("MessageID").String()
+	userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
+
+	if reaction == "⬅" {
+		//h.infocallback.UnWatch(channelID, messageID, userID)
+		collection, session, err := h.GetMongoCollecton()
+		if err != nil {
+			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			return
+		}
+		defer session.Close()
+
+		record, err := h.infodb.GetRecordFromDB(recordname, *collection)
+		if err != nil {
+			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			return
+		}
+
+		h.SetSatelliteDetailsMenu(record, s, m)
+		return
+	}
+	// If we got an invalid or unexpected reaction, ignore it and watch again
+	h.reactions.Watch(h.HandleSetSatelliteAtmosphereReactions, messageID, channelID, userID, recordname, s)
+	return
+
+}
+
+func (h *InfoHandler) HandleSetSatelliteAtmosphereConfirm(reaction string, args string, s *discordgo.Session, m interface{}) {
+
+	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
+	//messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ID").String()
+	//userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
+
+	payload := strings.Split(args, "|#|")
+	if len(payload) < 2 || len(payload) > 2 {
+		_, _ = s.ChannelMessageSend(channelID, "Error: HandleSetRecordImageURLConfirm payload invalid size - " + strconv.Itoa(len(payload)))
+		return
+	}
+	recordname := payload[0]
+	atmosphere := payload[1]
+
+	collection, session, err := h.GetMongoCollecton()
+	if err != nil {
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+	defer session.Close()
+
+	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
+	if err != nil {
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+
+	if reaction == "✅" {
+
+		record.Satellite.Atmosphere = atmosphere
+		err = h.infodb.SaveRecordToDB(record, *collection)
+		if err != nil {
+			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			return
+		}
+		h.SetSatelliteAtmosphereMenu(record, s, m)
+		return
+	} else {
+		// 	if reaction == "❎"
+		// Cancel and return to image url menu
+
+		h.SetSatelliteAtmosphereMenu(record, s, m)
+		return
+	}
+}
+
+
 // Gravity
 
 
+func (h *InfoHandler) SetSatelliteGravityMenu(record InfoRecord, s *discordgo.Session, m interface{}) {
+
+	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
+	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("MessageID").String()
+	userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
+
+	err := s.MessageReactionsRemoveAll(channelID, messageID)
+	if err != nil {
+		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+
+	embed := &discordgo.MessageEmbed{}
+	embed.Title = "Info System Editor - Satellite Gravity :satellite:"
+	embed.Description = "Currently Editing: \"**"+strings.Title(record.Name)+"**\""
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ImageURL}
+	embed.Color = record.Color
+
+
+	var fields []*discordgo.MessageEmbedField
+
+	optionone := discordgo.MessageEmbedField{}
+	optionone.Name = ":bulb:"
+	optionone.Value = "Current Value: " + record.Satellite.Gravity
+	optionone.Inline = false
+	fields = append(fields, &optionone)
+
+	optiontwo := discordgo.MessageEmbedField{}
+	optiontwo.Name = ":pencil:"
+	optiontwo.Value = "Enter a new value or select ⬅ to return to the main menu"
+	optiontwo.Inline = false
+	fields = append(fields, &optiontwo)
+
+
+	var reactions []string
+	reactions = append(reactions, "⬅")
+
+	embed.Fields = fields
+	for _, reaction := range reactions {
+		_ = s.MessageReactionAdd(channelID, messageID, reaction)
+	}
+
+
+	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
+	if err != nil {
+		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+	h.infocallback.Watch(h.HandleSetSatelliteGravity, channelID, messageID, userID, record.Name, s)
+	h.reactions.Watch(h.HandleSetSatelliteGravityReactions, messageID, channelID, userID, record.Name, s)
+	return
+}
+
+func (h *InfoHandler) HandleSetSatelliteGravity(recordname string, userID string, gravity string, s *discordgo.Session, m interface{}) {
+
+	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
+	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ID").String()
+	// we have a userID here because we are passing a discordgo.MessageCreate interface which buries the userID under Author.ID
+	//h.reactions.UnWatch(channelID, messageID, userID)
+
+	err := s.MessageReactionsRemoveAll(channelID, messageID)
+	if err != nil {
+		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+
+	collection, session, err := h.GetMongoCollecton()
+	if err != nil {
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+	defer session.Close()
+
+	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
+	if err != nil {
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+
+	// Handle invalid names
+	_, err = strconv.ParseFloat(gravity, 64)
+	if err != nil {
+		errormessage, _ := s.ChannelMessageSend(channelID, "Provided value was not a float," +
+			"please provide a correct value.")
+		r := &discordgo.MessageReaction{MessageID:messageID, ChannelID: channelID, UserID: userID}
+		h.SetSatelliteGravityMenu(record, s, r)
+		time.Sleep(10*time.Second)
+		_ = s.ChannelMessageDelete(channelID, errormessage.ID)
+		return
+	}
+
+
+	embed := &discordgo.MessageEmbed{}
+	embed.Title = "Info System Editor - Confirm Satellite Gravity"
+	embed.Description = "Confirm Gravity Selection For: \"**"+strings.Title(recordname)+"**\""
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ImageURL}
+	embed.Color = record.Color
+
+
+	var fields []*discordgo.MessageEmbedField
+
+	optionone := discordgo.MessageEmbedField{}
+	optionone.Name = "Selected Gravity"
+	optionone.Value = gravity
+	optionone.Inline = false
+	fields = append(fields, &optionone)
+
+	optiontwo := discordgo.MessageEmbedField{}
+	optiontwo.Name = ":question:"
+	optiontwo.Value = "Select ✅ to confirm or ❎ to return to the Gravity menu"
+	optiontwo.Inline = false
+	fields = append(fields, &optiontwo)
+
+
+	var reactions []string
+	reactions = append(reactions, "✅")
+	reactions = append(reactions, "❎")
+
+	embed.Fields = fields
+	for _, reaction := range reactions {
+		_ = s.MessageReactionAdd(channelID, messageID, reaction)
+	}
+
+	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
+	if err != nil {
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+
+	payload := recordname + "|#|" + gravity
+	h.reactions.Watch(h.HandleSetSatelliteGravityConfirm, messageID, channelID, userID, payload, s)
+	return
+
+}
+
+func (h *InfoHandler) HandleSetSatelliteGravityReactions(reaction string, recordname string, s *discordgo.Session, m interface{}) {
+	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
+	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("MessageID").String()
+	userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
+
+	if reaction == "⬅" {
+		//h.infocallback.UnWatch(channelID, messageID, userID)
+		collection, session, err := h.GetMongoCollecton()
+		if err != nil {
+			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			return
+		}
+		defer session.Close()
+
+		record, err := h.infodb.GetRecordFromDB(recordname, *collection)
+		if err != nil {
+			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			return
+		}
+
+		h.SetSatelliteDetailsMenu(record, s, m)
+		return
+	}
+	// If we got an invalid or unexpected reaction, ignore it and watch again
+	h.reactions.Watch(h.HandleSetSatelliteGravityReactions, messageID, channelID, userID, recordname, s)
+	return
+
+}
+
+func (h *InfoHandler) HandleSetSatelliteGravityConfirm(reaction string, args string, s *discordgo.Session, m interface{}) {
+
+	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
+	//messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ID").String()
+	//userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
+
+	payload := strings.Split(args, "|#|")
+	if len(payload) < 2 || len(payload) > 2 {
+		_, _ = s.ChannelMessageSend(channelID, "Error: HandleSetSatelliteGravityConfirm payload invalid size - " + strconv.Itoa(len(payload)))
+		return
+	}
+	recordname := payload[0]
+	gravity := payload[1]
+
+	collection, session, err := h.GetMongoCollecton()
+	if err != nil {
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+	defer session.Close()
+
+	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
+	if err != nil {
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+
+	if reaction == "✅" {
+
+		record.Satellite.Gravity = gravity
+		err = h.infodb.SaveRecordToDB(record, *collection)
+		if err != nil {
+			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			return
+		}
+		h.SetSatelliteGravityMenu(record, s, m)
+		return
+	} else {
+		// 	if reaction == "❎"
+		// Cancel and return to image url menu
+
+		h.SetSatelliteGravityMenu(record, s, m)
+		return
+	}
+}
+
 // Surface Area
 
+func (h *InfoHandler) SetSatelliteSurfaceAreaMenu(record InfoRecord, s *discordgo.Session, m interface{}) {
+
+	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
+	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("MessageID").String()
+	userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
+
+	err := s.MessageReactionsRemoveAll(channelID, messageID)
+	if err != nil {
+		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+
+	embed := &discordgo.MessageEmbed{}
+	embed.Title = "Info System Editor - Satellite Surface Area :satellite:"
+	embed.Description = "Currently Editing: \"**"+strings.Title(record.Name)+"**\""
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ImageURL}
+	embed.Color = record.Color
+
+
+	var fields []*discordgo.MessageEmbedField
+
+	optionone := discordgo.MessageEmbedField{}
+	optionone.Name = ":bulb:"
+	optionone.Value = "Current Value: " + record.Satellite.SurfaceArea
+	optionone.Inline = false
+	fields = append(fields, &optionone)
+
+	optiontwo := discordgo.MessageEmbedField{}
+	optiontwo.Name = ":pencil:"
+	optiontwo.Value = "Enter a new value or select ⬅ to return to the main menu"
+	optiontwo.Inline = false
+	fields = append(fields, &optiontwo)
+
+
+	var reactions []string
+	reactions = append(reactions, "⬅")
+
+	embed.Fields = fields
+	for _, reaction := range reactions {
+		_ = s.MessageReactionAdd(channelID, messageID, reaction)
+	}
+
+
+	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
+	if err != nil {
+		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+	h.infocallback.Watch(h.HandleSetSatelliteSurfaceArea, channelID, messageID, userID, record.Name, s)
+	h.reactions.Watch(h.HandleSetSatelliteSurfaceAreaReactions, messageID, channelID, userID, record.Name, s)
+	return
+}
+
+func (h *InfoHandler) HandleSetSatelliteSurfaceArea(recordname string, userID string, surfacearea string, s *discordgo.Session, m interface{}) {
+
+	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
+	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ID").String()
+	// we have a userID here because we are passing a discordgo.MessageCreate interface which buries the userID under Author.ID
+	//h.reactions.UnWatch(channelID, messageID, userID)
+
+	err := s.MessageReactionsRemoveAll(channelID, messageID)
+	if err != nil {
+		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+
+	collection, session, err := h.GetMongoCollecton()
+	if err != nil {
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+	defer session.Close()
+
+	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
+	if err != nil {
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+
+	// Handle invalid names
+	_, err = strconv.ParseFloat(surfacearea, 64)
+	if err != nil {
+		errormessage, _ := s.ChannelMessageSend(channelID, "Provided value was not a float," +
+			"please provide a correct value.")
+		r := &discordgo.MessageReaction{MessageID:messageID, ChannelID: channelID, UserID: userID}
+		h.SetSatelliteSurfaceAreaMenu(record, s, r)
+		time.Sleep(10*time.Second)
+		_ = s.ChannelMessageDelete(channelID, errormessage.ID)
+		return
+	}
+
+
+	embed := &discordgo.MessageEmbed{}
+	embed.Title = "Info System Editor - Confirm Satellite Surface Area"
+	embed.Description = "Confirm Gravity Selection For: \"**"+strings.Title(recordname)+"**\""
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ImageURL}
+	embed.Color = record.Color
+
+
+	var fields []*discordgo.MessageEmbedField
+
+	optionone := discordgo.MessageEmbedField{}
+	optionone.Name = "Selected Surface Area"
+	optionone.Value = surfacearea
+	optionone.Inline = false
+	fields = append(fields, &optionone)
+
+	optiontwo := discordgo.MessageEmbedField{}
+	optiontwo.Name = ":question:"
+	optiontwo.Value = "Select ✅ to confirm or ❎ to return to the Surface Area menu"
+	optiontwo.Inline = false
+	fields = append(fields, &optiontwo)
+
+
+	var reactions []string
+	reactions = append(reactions, "✅")
+	reactions = append(reactions, "❎")
+
+	embed.Fields = fields
+	for _, reaction := range reactions {
+		_ = s.MessageReactionAdd(channelID, messageID, reaction)
+	}
+
+	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
+	if err != nil {
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+
+	payload := recordname + "|#|" + surfacearea
+	h.reactions.Watch(h.HandleSetSatelliteSurfaceAreaConfirm, messageID, channelID, userID, payload, s)
+	return
+
+}
+
+func (h *InfoHandler) HandleSetSatelliteSurfaceAreaReactions(reaction string, recordname string, s *discordgo.Session, m interface{}) {
+	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
+	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("MessageID").String()
+	userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
+
+	if reaction == "⬅" {
+		//h.infocallback.UnWatch(channelID, messageID, userID)
+		collection, session, err := h.GetMongoCollecton()
+		if err != nil {
+			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			return
+		}
+		defer session.Close()
+
+		record, err := h.infodb.GetRecordFromDB(recordname, *collection)
+		if err != nil {
+			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			return
+		}
+
+		h.SetSatelliteDetailsMenu(record, s, m)
+		return
+	}
+	// If we got an invalid or unexpected reaction, ignore it and watch again
+	h.reactions.Watch(h.HandleSetSatelliteSurfaceAreaReactions, messageID, channelID, userID, recordname, s)
+	return
+
+}
+
+func (h *InfoHandler) HandleSetSatelliteSurfaceAreaConfirm(reaction string, args string, s *discordgo.Session, m interface{}) {
+
+	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
+	//messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ID").String()
+	//userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
+
+	payload := strings.Split(args, "|#|")
+	if len(payload) < 2 || len(payload) > 2 {
+		_, _ = s.ChannelMessageSend(channelID,
+			"Error: HandleSetSatelliteSurfaceAreaConfirm payload invalid size - " + strconv.Itoa(len(payload)))
+		return
+	}
+	recordname := payload[0]
+	surfacearea := payload[1]
+
+	collection, session, err := h.GetMongoCollecton()
+	if err != nil {
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+	defer session.Close()
+
+	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
+	if err != nil {
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+
+	if reaction == "✅" {
+
+		record.Satellite.SurfaceArea = surfacearea
+		err = h.infodb.SaveRecordToDB(record, *collection)
+		if err != nil {
+			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			return
+		}
+		h.SetSatelliteSurfaceAreaMenu(record, s, m)
+		return
+	} else {
+		// 	if reaction == "❎"
+		h.SetSatelliteSurfaceAreaMenu(record, s, m)
+		return
+	}
+}
 
 // Biosphere
 
@@ -761,7 +1405,7 @@ func (h *InfoHandler) SetSatelliteBiosphereMenu(record InfoRecord, s *discordgo.
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor - Satellite System Zone :satellite:"
 	embed.Description = "Currently Editing: \"**"+strings.Title(record.Name)+"**\"" +
-		"\nCurrently: " + record.Satellite.SystemZone
+		"\nCurrently: " + record.Satellite.Biosphere
 	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ImageURL}
 	embed.Color = record.Color
 
