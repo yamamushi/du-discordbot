@@ -33,7 +33,7 @@ func (h *InfoHandler) SatellitePropertiesMenu(record InfoRecord, s *discordgo.Se
 
 	optionone := discordgo.MessageEmbedField{}
 	optionone.Name = "1⃣"
-	optionone.Value = "Configure Satellite Type - Current Value: " + record.Satellite.SatelliteType
+	optionone.Value = "Configure Satellite Type - Current Value: " + strings.Title(record.Satellite.SatelliteType)
 	optionone.Inline = true
 	fields = append(fields, &optionone)
 
@@ -147,6 +147,9 @@ func (h *InfoHandler) HandleSatellitePropertiesMenu(reaction string, recordname 
 	}
 }
 
+
+// Satellite Type
+
 func (h *InfoHandler) SetSatelliteTypeMenu(record InfoRecord, s *discordgo.Session, m interface{}) {
 
 	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
@@ -226,7 +229,7 @@ func (h *InfoHandler) HandleSetSatelliteType(reaction string, recordname string,
 		return
 	}
 	if reaction == "1⃣" {
-		record.Satellite.SatelliteType = "satellite"
+		record.Satellite.SatelliteType = "planet"
 	}
 	if reaction == "2⃣" {
 		record.Satellite.SatelliteType = "moon"
@@ -242,6 +245,8 @@ func (h *InfoHandler) HandleSetSatelliteType(reaction string, recordname string,
 	return
 }
 
+
+// Details Menu
 
 func (h *InfoHandler) SetSatelliteDetailsMenu(record InfoRecord, s *discordgo.Session, m interface{}) {
 
@@ -267,37 +272,37 @@ func (h *InfoHandler) SetSatelliteDetailsMenu(record InfoRecord, s *discordgo.Se
 
 	optionone := discordgo.MessageEmbedField{}
 	optionone.Name = "1⃣"
-	optionone.Value = "Discovered By: " + record.Satellite.DiscoveredBy
+	optionone.Value = "Discovered By: " + strings.Title(record.Satellite.DiscoveredBy)
 	optionone.Inline = true
 	fields = append(fields, &optionone)
 
 	optiontwo := discordgo.MessageEmbedField{}
 	optiontwo.Name = "2⃣"
-	optiontwo.Value = "System Zone: " + record.Satellite.SystemZone
+	optiontwo.Value = "System Zone: " + strings.Title(record.Satellite.SystemZone)
 	optiontwo.Inline = true
 	fields = append(fields, &optiontwo)
 
 	optionthree := discordgo.MessageEmbedField{}
 	optionthree.Name = "3⃣"
-	optionthree.Value = "Atmosphere: " + record.Satellite.Atmosphere
+	optionthree.Value = "Atmosphere: " + strings.Title(record.Satellite.Atmosphere)
 	optionthree.Inline = true
 	fields = append(fields, &optionthree)
 
 	optionfour := discordgo.MessageEmbedField{}
 	optionfour.Name = "4⃣"
-	optionfour.Value = "Gravity: " + record.Satellite.Gravity
+	optionfour.Value = "Gravity: " + strings.Title(record.Satellite.Gravity)
 	optionfour.Inline = true
 	fields = append(fields, &optionfour)
 
 	optionfive := discordgo.MessageEmbedField{}
 	optionfive.Name = "5⃣"
-	optionfive.Value = "Surface Area: " + record.Satellite.SurfaceArea
+	optionfive.Value = "Surface Area: " + strings.Title(record.Satellite.SurfaceArea)
 	optionfive.Inline = true
 	fields = append(fields, &optionfive)
 
 	optionsix := discordgo.MessageEmbedField{}
 	optionsix.Name = "6⃣"
-	optionsix.Value = "Biosphere: " + record.Satellite.Biosphere
+	optionsix.Value = "Biosphere: " + strings.Title(record.Satellite.Biosphere)
 	optionsix.Inline = true
 	fields = append(fields, &optionsix)
 
@@ -363,7 +368,7 @@ func (h *InfoHandler) HandleSatelliteDetailsMenu(reaction string, recordname str
 	}
 	// SystemZone
 	if reaction == "2⃣" {
-	//	h.SetSatelliteSystemZoneMenu(record, s, m)
+		h.SetSatelliteSystemZoneMenu(record, s, m)
 		return
 	}
 	// Atmosphere
@@ -605,6 +610,130 @@ func (h *InfoHandler) HandleSetSatelliteDiscoveredByConfirm(reaction string, arg
 // System Zone
 
 
+func (h *InfoHandler) SetSatelliteSystemZoneMenu(record InfoRecord, s *discordgo.Session, m interface{}) {
+
+	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
+	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("MessageID").String()
+	userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
+
+	err := s.MessageReactionsRemoveAll(channelID, messageID)
+	if err != nil {
+		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+
+	embed := &discordgo.MessageEmbed{}
+	embed.Title = "Info System Editor - Satellite System Zone :satellite:"
+	embed.Description = "Currently Editing: \"**"+strings.Title(record.Name)+"**\"" +
+		"\nCurrently: " + record.Satellite.SystemZone
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ImageURL}
+	embed.Color = record.Color
+
+
+	var fields []*discordgo.MessageEmbedField
+
+	optionone := discordgo.MessageEmbedField{}
+	optionone.Name = "1⃣"
+	optionone.Value = "Average"
+	optionone.Inline = true
+	fields = append(fields, &optionone)
+
+	optiontwo := discordgo.MessageEmbedField{}
+	optiontwo.Name = "2⃣"
+	optiontwo.Value = "Low"
+	optiontwo.Inline = true
+	fields = append(fields, &optiontwo)
+
+	optionthree := discordgo.MessageEmbedField{}
+	optionthree.Name = "3⃣"
+	optionthree.Value = "High"
+	optionthree.Inline = true
+	fields = append(fields, &optionthree)
+
+	optionfour := discordgo.MessageEmbedField{}
+	optionfour.Name = "4⃣"
+	optionfour.Value = "Clear"
+	optionfour.Inline = true
+	fields = append(fields, &optionfour)
+
+	embed.Fields = fields
+
+	var reactions []string
+	reactions = append(reactions, "⬅")
+	reactions = append(reactions, "1⃣")
+	reactions = append(reactions, "2⃣")
+	reactions = append(reactions, "3⃣")
+	reactions = append(reactions, "4⃣")
+	for _, reaction := range reactions {
+		_ = s.MessageReactionAdd(channelID, messageID, reaction)
+	}
+
+	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
+	if err != nil {
+		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+	h.reactions.Watch(h.HandleSatelliteSystemZoneMenu, messageID, channelID, userID, record.Name, s)
+	return
+}
+
+func (h *InfoHandler) HandleSatelliteSystemZoneMenu(reaction string, recordname string, s *discordgo.Session, m interface{}) {
+
+	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
+	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("MessageID").String()
+	userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
+	//h.reactions.UnWatch(channelID, messageID, userID)
+
+	err := s.MessageReactionsRemoveAll(channelID, messageID)
+	if err != nil {
+		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+
+	collection, session, err := h.GetMongoCollecton()
+	if err != nil {
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+	defer session.Close()
+
+	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
+	if err != nil {
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+
+	if reaction == "⬅" {
+		h.SetSatelliteDetailsMenu(record, s, m)
+		return
+	}
+	// DiscoveredBy
+	if reaction == "1⃣" {
+		record.Satellite.SystemZone = "average"
+	} else if reaction == "2⃣" {
+		record.Satellite.SystemZone = "low"
+	} else if reaction == "3⃣" {
+		record.Satellite.SystemZone = "high"
+	} else if reaction == "4⃣" {
+		record.Satellite.SystemZone = ""
+	} else {
+		h.reactions.Watch(h.HandleSatelliteDetailsMenu, messageID, channelID, userID, recordname, s)
+		return
+	}
+	err = h.infodb.SaveRecordToDB(record, *collection)
+	if err != nil {
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+
+	h.SetSatelliteDetailsMenu(record, s, m)
+	return
+}
+
+
 // Atmosphere
 
 
@@ -614,5 +743,128 @@ func (h *InfoHandler) HandleSetSatelliteDiscoveredByConfirm(reaction string, arg
 // Surface Area
 
 
-// Biosphere 
+// Biosphere
+
+func (h *InfoHandler) SetSatelliteBiosphereMenu(record InfoRecord, s *discordgo.Session, m interface{}) {
+
+	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
+	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("MessageID").String()
+	userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
+
+	err := s.MessageReactionsRemoveAll(channelID, messageID)
+	if err != nil {
+		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+
+	embed := &discordgo.MessageEmbed{}
+	embed.Title = "Info System Editor - Satellite System Zone :satellite:"
+	embed.Description = "Currently Editing: \"**"+strings.Title(record.Name)+"**\"" +
+		"\nCurrently: " + record.Satellite.SystemZone
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ImageURL}
+	embed.Color = record.Color
+
+
+	var fields []*discordgo.MessageEmbedField
+
+	optionone := discordgo.MessageEmbedField{}
+	optionone.Name = "1⃣"
+	optionone.Value = "Forest"
+	optionone.Inline = true
+	fields = append(fields, &optionone)
+
+	optiontwo := discordgo.MessageEmbedField{}
+	optiontwo.Name = "2⃣"
+	optiontwo.Value = "Ice"
+	optiontwo.Inline = true
+	fields = append(fields, &optiontwo)
+
+	optionthree := discordgo.MessageEmbedField{}
+	optionthree.Name = "3⃣"
+	optionthree.Value = "Desert"
+	optionthree.Inline = true
+	fields = append(fields, &optionthree)
+
+	optionfour := discordgo.MessageEmbedField{}
+	optionfour.Name = "4⃣"
+	optionfour.Value = "Clear"
+	optionfour.Inline = true
+	fields = append(fields, &optionfour)
+
+	embed.Fields = fields
+
+	var reactions []string
+	reactions = append(reactions, "⬅")
+	reactions = append(reactions, "1⃣")
+	reactions = append(reactions, "2⃣")
+	reactions = append(reactions, "3⃣")
+	reactions = append(reactions, "4⃣")
+	for _, reaction := range reactions {
+		_ = s.MessageReactionAdd(channelID, messageID, reaction)
+	}
+
+	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
+	if err != nil {
+		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+	h.reactions.Watch(h.HandleSatelliteBiosphereMenu, messageID, channelID, userID, record.Name, s)
+	return
+}
+
+func (h *InfoHandler) HandleSatelliteBiosphereMenu(reaction string, recordname string, s *discordgo.Session, m interface{}) {
+
+	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
+	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("MessageID").String()
+	userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
+	//h.reactions.UnWatch(channelID, messageID, userID)
+
+	err := s.MessageReactionsRemoveAll(channelID, messageID)
+	if err != nil {
+		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+
+	collection, session, err := h.GetMongoCollecton()
+	if err != nil {
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+	defer session.Close()
+
+	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
+	if err != nil {
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+
+	if reaction == "⬅" {
+		h.SetSatelliteDetailsMenu(record, s, m)
+		return
+	}
+	// DiscoveredBy
+	if reaction == "1⃣" {
+		record.Satellite.Biosphere = "forest"
+	} else if reaction == "2⃣" {
+		record.Satellite.SystemZone = "ice"
+	} else if reaction == "3⃣" {
+		record.Satellite.SystemZone = "desert"
+	} else if reaction == "4⃣" {
+		record.Satellite.Biosphere = ""
+	} else {
+		h.reactions.Watch(h.HandleSatelliteBiosphereMenu, messageID, channelID, userID, recordname, s)
+		return
+	}
+	err = h.infodb.SaveRecordToDB(record, *collection)
+	if err != nil {
+		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		return
+	}
+
+	h.SetSatelliteDetailsMenu(record, s, m)
+	return
+}
 

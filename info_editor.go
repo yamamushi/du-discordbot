@@ -35,6 +35,12 @@ func (h *InfoHandler) EditMenu(recordname string, messageID string, channelID st
 	embed.Description = "Currently Editing \"**"+strings.Title(record.Name)+"**\""
 	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ImageURL}
 	embed.Color = record.Color
+	if record.EditorID != "" {
+		user, err  := s.User(record.EditorID)
+		if err == nil {
+			embed.Footer = &discordgo.MessageEmbedFooter{Text: "Edited by: " + user.Username}
+		}
+	}
 
 	var fields []*discordgo.MessageEmbedField
 
@@ -70,9 +76,15 @@ func (h *InfoHandler) EditMenu(recordname string, messageID string, channelID st
 
 	optionsix := discordgo.MessageEmbedField{}
 	optionsix.Name = "6⃣"
-	optionsix.Value = "Close this editing session"
+	optionsix.Value = "Take Record Ownership"
 	optionsix.Inline = true
 	fields = append(fields, &optionsix)
+
+	optionseven := discordgo.MessageEmbedField{}
+	optionseven.Name = "7⃣"
+	optionseven.Value = "Close this editing session"
+	optionseven.Inline = true
+	fields = append(fields, &optionseven)
 
 	embed.Fields = fields
 
@@ -83,6 +95,7 @@ func (h *InfoHandler) EditMenu(recordname string, messageID string, channelID st
 	reactions = append(reactions, "4⃣")
 	reactions = append(reactions, "5⃣")
 	reactions = append(reactions, "6⃣")
+	reactions = append(reactions, "7⃣")
 	for _, reaction := range reactions {
 		_ = s.MessageReactionAdd(channelID, messageID, reaction)
 	}
@@ -156,6 +169,19 @@ func (h *InfoHandler) HandleEditorMainMenu(reaction string, recordname string, s
 
 	}
 	if reaction == "6⃣" {
+		record.EditorID = userID
+		err = h.infodb.SaveRecordToDB(record, *collection)
+		if err != nil {
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
+			return
+		}
+		err = h.EditMenu(record.Name, messageID, channelID, userID, s)
+		if err != nil {
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
+
+		}
+	}
+	if reaction == "7⃣" {
 		err = s.ChannelMessageDelete(channelID, messageID)
 		if err != nil {
 			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
@@ -397,6 +423,7 @@ func (h *InfoHandler) HandleSetRecordDescription(recordname string, userID strin
 	embed.Description = "Confirm Description Selection For: \"**"+strings.Title(recordname)+"**\""
 	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ImageURL}
 	embed.Color = record.Color
+
 
 
 	var fields []*discordgo.MessageEmbedField

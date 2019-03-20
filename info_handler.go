@@ -290,13 +290,6 @@ func (h *InfoHandler) RenderElementPage(record InfoRecord, s *discordgo.Session,
 	return nil
 }
 
-func (h *InfoHandler) RenderSatellitePage(record InfoRecord, s *discordgo.Session, m *discordgo.MessageCreate) (err error) {
-	embed := &discordgo.MessageEmbed{}
-	embed.Title = record.Name
-
-	_, _ = s.ChannelMessageSendEmbed(m.ChannelID, embed)
-	return nil
-}
 
 func (h *InfoHandler) RenderResourcePage(record InfoRecord, s *discordgo.Session, m *discordgo.MessageCreate) (err error) {
 	embed := &discordgo.MessageEmbed{}
