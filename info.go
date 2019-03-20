@@ -18,7 +18,7 @@ type InfoRecord struct {
 	Description string `json:"description"`
 	RecordType  string `json:"recordtype"`
 	ImageURL    string `json:"imageurl"`
-	Color       string `json:"color"`
+	Color       int `json:"color"`
 
 	Satellite   SatelliteRecord
 	Element     ElementRecord
