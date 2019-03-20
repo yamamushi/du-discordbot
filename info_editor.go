@@ -36,7 +36,6 @@ func (h *InfoHandler) EditMenu(recordname string, messageID string, channelID st
 	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ImageURL}
 	embed.Color = record.Color
 
-
 	var fields []*discordgo.MessageEmbedField
 
 	optionone := discordgo.MessageEmbedField{}
@@ -148,18 +147,13 @@ func (h *InfoHandler) HandleEditorMainMenu(reaction string, recordname string, s
 			h.SetRecordTypeMenu(record, s, m)
 			return
 		}
+		if record.RecordType == "satellite" {
+			h.SatellitePropertiesMenu(record, s, m)
+			return
+		} else {
+			return
+		}
 
-		/*
-			if record.RecordType == "element" {
-				return h.RenderElementPage(record, s, m)
-			} else if record.RecordType == "location" {
-				return h.RenderLocationPage(record, s, m)
-			} else if record.RecordType == "resource" {
-				return h.RenderResourcePage(record, s, m)
-			} else if record.RecordType == "skill" {
-				return h.RenderSkillPage(record, s, m)
-			}
-		*/
 	}
 	if reaction == "6⃣" {
 		err = s.ChannelMessageDelete(channelID, messageID)
@@ -366,7 +360,7 @@ func (h *InfoHandler) HandleSetRecordDescription(recordname string, userID strin
 	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
 	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ID").String()
 	// we have a userID here because we are passing a discordgo.MessageCreate interface which buries the userID under Author.ID
-	h.reactions.UnWatch(channelID, messageID, userID)
+	//h.reactions.UnWatch(channelID, messageID, userID)
 
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
@@ -564,7 +558,7 @@ func (h *InfoHandler) HandleSetRecordImageURL(recordname string, userID string, 
 	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
 	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ID").String()
 	// we have a userID here because we are passing a discordgo.MessageCreate interface which buries the userID under Author.ID
-	h.reactions.UnWatch(channelID, messageID, userID)
+	//h.reactions.UnWatch(channelID, messageID, userID)
 
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
@@ -600,7 +594,7 @@ func (h *InfoHandler) HandleSetRecordImageURL(recordname string, userID string, 
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor - Confirm Record Image URL"
 	embed.Description = "Confirm Image URL Selection For: \"**"+strings.Title(recordname)+"**\""
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ImageURL}
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:imageurl}
 	embed.Color = record.Color
 
 
@@ -762,7 +756,7 @@ func (h *InfoHandler) HandleSetRecordColor(recordname string, userID string, col
 	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
 	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ID").String()
 	// we have a userID here because we are passing a discordgo.MessageCreate interface which buries the userID under Author.ID
-	h.reactions.UnWatch(channelID, messageID, userID)
+	//h.reactions.UnWatch(channelID, messageID, userID)
 
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
@@ -914,163 +908,3 @@ func (h *InfoHandler) HandleSetRecordColorConfirm(reaction string, args string, 
 
 // Record Properties (yuck)
 // This is going to be a nightmare of code...
-
-// Satellites
-func (h *InfoHandler) SatellitePropertiesMenu(record InfoRecord, s *discordgo.Session, m interface{}) {
-
-	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
-	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("MessageID").String()
-	userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
-
-	err := s.MessageReactionsRemoveAll(channelID, messageID)
-	if err != nil {
-		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
-		return
-	}
-
-	embed := &discordgo.MessageEmbed{}
-	embed.Title = "Info System Editor - Satellite Properties :satellite:"
-	embed.Description = "Currently Editing: \"**"+strings.Title(record.Name)+"**\""
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ImageURL}
-	embed.Color = record.Color
-
-
-	var fields []*discordgo.MessageEmbedField
-
-	optionone := discordgo.MessageEmbedField{}
-	optionone.Name = "1⃣"
-	optionone.Value = "Set the record type"
-	optionone.Inline = true
-	fields = append(fields, &optionone)
-
-	optiontwo := discordgo.MessageEmbedField{}
-	optiontwo.Name = "2⃣"
-	optiontwo.Value = "Set the record description"
-	optiontwo.Inline = true
-	fields = append(fields, &optiontwo)
-
-	optionthree := discordgo.MessageEmbedField{}
-	optionthree.Name = "3⃣"
-	optionthree.Value = "Set the record image"
-	optionthree.Inline = true
-	fields = append(fields, &optionthree)
-
-	optionfour := discordgo.MessageEmbedField{}
-	optionfour.Name = "4⃣"
-	optionfour.Value = "Set the record color"
-	optionfour.Inline = true
-	fields = append(fields, &optionfour)
-
-	optionfive := discordgo.MessageEmbedField{}
-	optionfive.Name = "5⃣"
-	optionfive.Value = "Configure record properties"
-	optionfive.Inline = true
-	fields = append(fields, &optionfive)
-
-	optionsix := discordgo.MessageEmbedField{}
-	optionsix.Name = "6⃣"
-	optionsix.Value = "Close this editing session"
-	optionsix.Inline = true
-	fields = append(fields, &optionsix)
-
-	embed.Fields = fields
-
-	var reactions []string
-	reactions = append(reactions, "1⃣")
-	reactions = append(reactions, "2⃣")
-	reactions = append(reactions, "3⃣")
-	reactions = append(reactions, "4⃣")
-	reactions = append(reactions, "5⃣")
-	reactions = append(reactions, "6⃣")
-	for _, reaction := range reactions {
-		_ = s.MessageReactionAdd(channelID, messageID, reaction)
-	}
-
-	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
-	if err != nil {
-		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
-		return
-	}
-	h.reactions.Watch(h.HandleSatellitePropertiesMenu, messageID, channelID, userID, record.Name, s)
-	return 
-}
-
-
-func (h *InfoHandler) HandleSatellitePropertiesMenu(reaction string, recordname string, s *discordgo.Session, m interface{}) {
-
-	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
-	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("MessageID").String()
-	userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
-
-	err := s.MessageReactionsRemoveAll(channelID, messageID)
-	if err != nil {
-		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
-		return
-	}
-
-	collection, session, err := h.GetMongoCollecton()
-	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
-		return
-	}
-	defer session.Close()
-
-	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
-	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
-		return
-	}
-
-	if reaction == "1⃣" {
-		h.SetRecordTypeMenu(record, s, m)
-		return
-	}
-	if reaction == "2⃣" {
-		h.SetRecordDescriptionMenu(record, s, m)
-		return
-	}
-	if reaction == "3⃣" {
-		h.SetRecordImageURLMenu(record, s, m)
-		return
-	}
-	if reaction == "4⃣" {
-		h.SetRecordColorMenu(record, s, m)
-		return
-	}
-	if reaction == "5⃣" {
-		if record.RecordType == "" {
-			errormessage, _ := s.ChannelMessageSend(channelID, "Error: Cannot set record properties without record type, please configure this first.")
-			time.Sleep(10*time.Second)
-			_ = s.ChannelMessageDelete(channelID, errormessage.ID)
-			h.SetRecordTypeMenu(record, s, m)
-			return
-		}
-
-		/*
-			if record.RecordType == "element" {
-				return h.RenderElementPage(record, s, m)
-			} else if record.RecordType == "location" {
-				return h.RenderLocationPage(record, s, m)
-			} else if record.RecordType == "resource" {
-				return h.RenderResourcePage(record, s, m)
-			} else if record.RecordType == "skill" {
-				return h.RenderSkillPage(record, s, m)
-			}
-		*/
-	}
-	if reaction == "6⃣" {
-		err = s.ChannelMessageDelete(channelID, messageID)
-		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
-			return
-		}
-		s.ChannelMessageSend(channelID, "Info Editor Session Closed")
-		return
-	} else {
-		h.reactions.Watch(h.HandleEditorMainMenu, messageID, channelID, userID, recordname, s)
-		return
-	}
-}

@@ -24,30 +24,32 @@ type InfoRecord struct {
 	Element     ElementRecord
 	Resource    ResourceRecord
 	Skill       SkillRecord
+
+	EditorID    string `json:"editorid"`
 }
 
 type SatelliteRecord struct {
 
-	SatelliteType string `json:"satellitetype"`
+	SatelliteType string `json:"satellitetype"` // Planet/Moon
 
 	DiscoveredBy string
 	SystemZone string
-	NotableElements string
-	Atmosphere string
-	Gravity    string
-	SurfaceArea string
-
-	SatelliteCount string
-	Satellites []SatelliteRecord
+	Atmosphere string // float
+	Gravity    string // float
+	SurfaceArea string // float
 	Biosphere string
 
+	NotableElements []string
+
+	SatelliteCount int
+	Satellites []SatelliteRecord
+
 	TerraNullius string
-	Territories string
-	TerritoriesClaimed string
+	Territories int
+	TerritoriesClaimed int
 
 	UserList     []string `json:"users"`
 	LastWho      time.Time `json:"lastwho"`
-
 }
 
 type ElementRecord struct {
