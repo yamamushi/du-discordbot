@@ -254,8 +254,6 @@ func (h  *InfoHandler) New(args []string, s *discordgo.Session, m *discordgo.Mes
 }
 
 
-
-
 func (h *InfoHandler) RenderInfoPage(recordname string, s *discordgo.Session, m *discordgo.MessageCreate) (err error){
 
 	collection, session, err := h.GetMongoCollecton()
@@ -269,10 +267,16 @@ func (h *InfoHandler) RenderInfoPage(recordname string, s *discordgo.Session, m 
 		return errors.New("Info page for \"" + recordname + "\" not found")
 	}
 
+	embed := &discordgo.MessageEmbed{}
+	embed.Title = record.Name
+	rootmessage, _ := s.ChannelMessageSendEmbed(m.ChannelID, embed)
+
 	if record.RecordType == "element" {
 		return h.RenderElementPage(record, s, m)
 	} else if record.RecordType == "satellite" {
-		return h.RenderSatellitePage(record, s, m)
+		r := &discordgo.MessageReaction{MessageID:rootmessage.ID, ChannelID:rootmessage.ChannelID, UserID:m.Author.ID}
+		h.ViewSatelliteInfoMenu(record, s, r)
+		return nil
 	} else if record.RecordType == "resource" {
 		return h.RenderResourcePage(record, s, m)
 	} else if record.RecordType == "skill" {
@@ -289,7 +293,6 @@ func (h *InfoHandler) RenderElementPage(record InfoRecord, s *discordgo.Session,
 	_, _ = s.ChannelMessageSendEmbed(m.ChannelID, embed)
 	return nil
 }
-
 
 func (h *InfoHandler) RenderResourcePage(record InfoRecord, s *discordgo.Session, m *discordgo.MessageCreate) (err error) {
 	embed := &discordgo.MessageEmbed{}

@@ -16,7 +16,7 @@ type InfoDBInterface struct {
 type InfoRecord struct {
 	Name        string `storm:"id",json:"userid"`
 	Description string `json:"description"`
-	RecordType  string `json:"recordtype"`  // satellite/element/resource/skill
+	RecordType  string `json:"recordtype"`  // satellite/element/resource/skill/user/location
 	ThumbnailURL string `json:"thumbnailurl"`
 	ImageURL    string `json:"imageurl"`
 	Color       int `json:"color"`
@@ -25,6 +25,8 @@ type InfoRecord struct {
 	Element     ElementRecord
 	Resource    ResourceRecord
 	Skill       SkillRecord
+	User        UserRecord
+	Location    LocationRecord
 
 	EditorID    string `json:"editorid"`
 }
@@ -42,7 +44,8 @@ type SatelliteRecord struct {
 	NotableElements []string
 
 	//SatelliteCount int
-	Satellites []SatelliteRecord
+	Satellites []string
+	ParentSatellite string
 
 	TerraNullius string
 	Territories int
@@ -52,7 +55,13 @@ type SatelliteRecord struct {
 	LastWho      time.Time `json:"lastwho"`
 }
 
+type UserRecord struct {
 
+}
+
+type LocationRecord struct {
+
+}
 
 type ElementRecord struct {
 
@@ -64,6 +73,7 @@ type ResourceRecord struct {
 	Recipe  RecipeRecord
 	Weight  string
 	ResourceTier string
+	FoundOn []string
 }
 
 type SkillRecord struct {
@@ -125,5 +135,23 @@ func (h *InfoDBInterface) GetAllInfoResourceRecords(c mgo.Collection) (records [
 	defer h.querylocker.Unlock()
 
 	err = c.Find(bson.M{"recordtype": "resource"}).All(&records)
+	return records, err
+}
+
+// BackerInterface function
+func (h *InfoDBInterface) GetAllInfoSatelliteRecords(c mgo.Collection) (records []InfoRecord, err error) {
+	h.querylocker.Lock()
+	defer h.querylocker.Unlock()
+
+	err = c.Find(bson.M{"recordtype": "satellite"}).All(&records)
+	return records, err
+}
+
+// BackerInterface function
+func (h *InfoDBInterface) GetAllMoonRecords(c mgo.Collection) (records []InfoRecord, err error) {
+	h.querylocker.Lock()
+	defer h.querylocker.Unlock()
+
+	err = c.Find(bson.M{"satellite.satellitetype": "moon"}).All(&records)
 	return records, err
 }
