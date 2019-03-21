@@ -14,6 +14,8 @@ func (h *InfoHandler) ViewSatelliteInfoMenu(record InfoRecord, s *discordgo.Sess
 	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
 	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("MessageID").String()
 	userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
+	h.reactions.UnWatch(channelID, messageID, userID)
+	h.infocallback.UnWatch(channelID, messageID, userID)
 
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
@@ -255,6 +257,8 @@ func (h *InfoHandler) ViewSatelliteMoonsMenu(record InfoRecord, s *discordgo.Ses
 	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
 	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("MessageID").String()
 	userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
+	h.reactions.UnWatch(channelID, messageID, userID)
+	h.infocallback.UnWatch(channelID, messageID, userID)
 
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
@@ -366,6 +370,8 @@ func (h *InfoHandler) ViewSatelliteTerritoriesMenu(record InfoRecord, s *discord
 	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
 	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("MessageID").String()
 	userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
+	h.reactions.UnWatch(channelID, messageID, userID)
+	h.infocallback.UnWatch(channelID, messageID, userID)
 
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
@@ -459,6 +465,8 @@ func (h *InfoHandler) ViewSatelliteDetailsMenu(record InfoRecord, s *discordgo.S
 	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
 	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("MessageID").String()
 	userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
+	h.reactions.UnWatch(channelID, messageID, userID)
+	h.infocallback.UnWatch(channelID, messageID, userID)
 
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
@@ -551,8 +559,10 @@ func (h *InfoHandler) ViewSatelliteDetailsMenu(record InfoRecord, s *discordgo.S
 
 func (h *InfoHandler) HandleViewSatelliteDetailsMenu(reaction string, recordname string, s *discordgo.Session, m interface{}) {
 	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
-	//messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("MessageID").String()
-	//userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
+	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("MessageID").String()
+	userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
+	h.reactions.UnWatch(channelID, messageID, userID)
+	h.infocallback.UnWatch(channelID, messageID, userID)
 
 	//h.infocallback.UnWatch(channelID, messageID, userID)
 	collection, session, err := h.GetMongoCollecton()
@@ -585,6 +595,8 @@ func (h *InfoHandler) ViewSatelliteElementsMenu(record InfoRecord, s *discordgo.
 	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
 	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("MessageID").String()
 	userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
+	h.reactions.UnWatch(channelID, messageID, userID)
+	h.infocallback.UnWatch(channelID, messageID, userID)
 
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
@@ -640,9 +652,10 @@ func (h *InfoHandler) HandleViewSatelliteElementsMenu(reaction string, recordnam
 	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
 	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("MessageID").String()
 	userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
+	h.reactions.UnWatch(channelID, messageID, userID)
+	h.infocallback.UnWatch(channelID, messageID, userID)
 
 	if reaction == "⬅" {
-		h.infocallback.UnWatch(channelID, messageID, userID)
 		collection, session, err := h.GetMongoCollecton()
 		if err != nil {
 			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
@@ -700,6 +713,8 @@ func (h *InfoHandler) ViewSatelliteSetLocationMenu(record InfoRecord, s *discord
 	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
 	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("MessageID").String()
 	userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
+	h.reactions.UnWatch(channelID, messageID, userID)
+	h.infocallback.UnWatch(channelID, messageID, userID)
 
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
@@ -745,6 +760,8 @@ func (h *InfoHandler) HandleViewSatelliteSetLocationMenu(recordname string, user
 	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ID").String()
 	// we have a userID here because we are passing a discordgo.MessageCreate interface which buries the userID under Author.ID
 	h.reactions.UnWatch(channelID, messageID, userID)
+	h.infocallback.UnWatch(channelID, messageID, userID)
+
 
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
@@ -837,6 +854,8 @@ func (h *InfoHandler) HandleSetSatelliteSetLocationNoPositionConfirm(reaction st
 	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
 	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ID").String()
 	userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
+	h.reactions.UnWatch(channelID, messageID, userID)
+	h.infocallback.UnWatch(channelID, messageID, userID)
 
 	collection, session, err := h.GetMongoCollecton()
 	if err != nil {
@@ -863,8 +882,10 @@ func (h *InfoHandler) HandleSetSatelliteSetLocationNoPositionConfirm(reaction st
 func (h *InfoHandler) HandleSetSatelliteSetLocationConfirm(reaction string, args string, s *discordgo.Session, m interface{}) {
 
 	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
-	//messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ID").String()
+	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ID").String()
 	userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
+	h.reactions.UnWatch(channelID, messageID, userID)
+	h.infocallback.UnWatch(channelID, messageID, userID)
 
 	payload := strings.Split(args, "|#|")
 	if len(payload) < 2 || len(payload) > 2 {
@@ -904,9 +925,11 @@ func (h *InfoHandler) HandleSetSatelliteSetLocationConfirm(reaction string, args
 }
 
 func (h *InfoHandler) HandleRemoveSatelliteLocation(record InfoRecord, s *discordgo.Session, m interface{}) {
-
+	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ID").String()
 	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
 	userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
+	h.reactions.UnWatch(channelID, messageID, userID)
+	h.infocallback.UnWatch(channelID, messageID, userID)
 
 	err := h.SetUserLocation(userID, record.Name, "space")
 	if err != nil {

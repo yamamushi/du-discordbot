@@ -377,7 +377,7 @@ func (h *InfoHandler) SetUserLocation(userID string, location string, position s
 		userrecord.Position = "::pos{0,0,0,0,0}"
 		record.Satellite.UserList = AppendStringIfMissing(record.Satellite.UserList, userID)
 	}
-	
+
 
 	err = h.infodb.SaveRecordToDB(record, *collection)
 	if err != nil {

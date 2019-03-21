@@ -97,6 +97,7 @@ func (h *InfoHandler) HandleSatellitePropertiesMenu(reaction string, recordname 
 	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
 	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("MessageID").String()
 	userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
+	h.reactions.UnWatch(channelID, messageID, userID)
 
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
@@ -207,7 +208,9 @@ func (h *InfoHandler) HandleSetSatelliteType(reaction string, recordname string,
 
 	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
 	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("MessageID").String()
-	//userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
+	userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
+	h.reactions.UnWatch(channelID, messageID, userID)
+
 
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
@@ -2102,7 +2105,7 @@ func (h *InfoHandler) HandleSetSatelliteTerraNullius(recordname string, userID s
 		errormessage, _ := s.ChannelMessageSend(channelID, "Provided value was not a float," +
 			"please provide a correct value.")
 		r := &discordgo.MessageReaction{MessageID:messageID, ChannelID: channelID, UserID: userID}
-		h.SetSatelliteAtmosphereMenu(record, s, r)
+		h.SetSatelliteTerraNulliusMenu(record, s, r)
 		time.Sleep(10*time.Second)
 		_ = s.ChannelMessageDelete(channelID, errormessage.ID)
 		return
@@ -2158,7 +2161,7 @@ func (h *InfoHandler) HandleSetSatelliteTerraNulliusReactions(reaction string, r
 	userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
 
 	if reaction == "⬅" {
-		//h.infocallback.UnWatch(channelID, messageID, userID)
+		h.infocallback.UnWatch(channelID, messageID, userID)
 		collection, session, err := h.GetMongoCollecton()
 		if err != nil {
 			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
@@ -2184,8 +2187,10 @@ func (h *InfoHandler) HandleSetSatelliteTerraNulliusReactions(reaction string, r
 func (h *InfoHandler) HandleSetSatelliteTerraNulliusConfirm(reaction string, args string, s *discordgo.Session, m interface{}) {
 
 	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
-	//messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ID").String()
-	//userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
+	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ID").String()
+	userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
+	h.reactions.UnWatch(channelID, messageID, userID)
+
 
 	payload := strings.Split(args, "|#|")
 	if len(payload) < 2 || len(payload) > 2 {
@@ -2369,6 +2374,7 @@ func (h *InfoHandler) HandleSetSatelliteTerritoryCountReactions(reaction string,
 	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
 	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("MessageID").String()
 	userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
+	h.reactions.UnWatch(channelID, messageID, userID)
 
 	if reaction == "⬅" {
 		h.infocallback.UnWatch(channelID, messageID, userID)
@@ -2397,8 +2403,9 @@ func (h *InfoHandler) HandleSetSatelliteTerritoryCountReactions(reaction string,
 func (h *InfoHandler) HandleSetSatelliteTerritoryCountConfirm(reaction string, args string, s *discordgo.Session, m interface{}) {
 
 	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
-	//messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ID").String()
-	//userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
+	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ID").String()
+	userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
+	h.reactions.UnWatch(channelID, messageID, userID)
 
 	payload := strings.Split(args, "|#|")
 	if len(payload) < 2 || len(payload) > 2 {
@@ -2885,7 +2892,7 @@ func (h *InfoHandler) HandleSetSatelliteNewMoon(recordname string, userID string
 
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor - Confirm Satellite New Moon"
-	embed.Description = "Confirm Discovered By Selection For: \"**"+strings.Title(recordname)+"**\""
+	embed.Description = "Confirm Moon Selection For: \"**"+strings.Title(recordname)+"**\""
 	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
 	embed.Color = record.Color
 
@@ -2974,8 +2981,9 @@ func (h *InfoHandler) SetSatelliteNewMoonPrompt(record InfoRecord, moonname stri
 
 func (h *InfoHandler) HandleSetSatelliteNewMoonReactions(reaction string, args string, s *discordgo.Session, m interface{}) {
 	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
-	//messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("MessageID").String()
-	//userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
+	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("MessageID").String()
+	userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
+	h.reactions.UnWatch(channelID, messageID, userID)
 
 	payload := strings.Split(args, "|#|")
 	if len(payload) < 2 || len(payload) > 2 {
