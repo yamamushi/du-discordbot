@@ -309,3 +309,86 @@ func (h *InfoHandler) RenderSkillPage(record InfoRecord, s *discordgo.Session, m
 	_, _ = s.ChannelMessageSendEmbed(m.ChannelID, embed)
 	return nil
 }
+
+func (h *InfoHandler) ValidatePosition(position string) (bool) {
+
+	//::pos{0,2,0.7104,103.0054,-123.9859}
+
+	if strings.HasPrefix(position, "::pos{") {
+		position = strings.TrimPrefix(position, "::{")
+	} else {
+		return false
+	}
+
+	if strings.HasSuffix(position, "}") {
+		position = strings.TrimSuffix(position, "}")
+	} else {
+		return false
+	}
+
+	coords := strings.Split(position, ",")
+	if len(coords) != 5 {
+		return false
+	}
+
+	return true
+}
+
+func (h *InfoHandler) SetUserLocation(userID string, location string, position string)(err error){
+
+	if !h.ValidatePosition(position) && position != "confirm" && position != "space"{
+		return errors.New("Invalid position")
+	}
+
+	collection, session, err := h.GetMongoCollecton()
+	if err != nil {
+		return err
+	}
+	defer session.Close()
+
+	record, err := h.infodb.GetRecordFromDB(location, *collection)
+	if err != nil {
+		return err
+	}
+
+	userrecord, err := h.infodb.GetRecordFromDB(userID, *collection)
+	if err != nil {
+		err = h.infodb.SaveRecordToDB(InfoRecord{Name:userID, RecordType:"user", User:UserRecord{UserID:userID}}, *collection)
+		if err != nil {
+			return err
+		}
+		userrecord, err = h.infodb.GetRecordFromDB(userID, *collection)
+		if err != nil {
+			return err
+		}
+	}
+
+	userrecord.User.CurrentLocation = location
+	if position != "confirm" && position != "space" {
+		userrecord.Position = position
+		record.Satellite.UserList = AppendStringIfMissing(record.Satellite.UserList, userID)
+	}
+	if position == "space" {
+		userrecord.Position = "::pos{0,0,0,0,0}"
+		userrecord.User.CurrentLocation = "space"
+		record.Satellite.UserList = RemoveStringFromSlice(record.Satellite.UserList, userID)
+	}
+	if position == "confirm" {
+		userrecord.Position = "::pos{0,0,0,0,0}"
+		record.Satellite.UserList = AppendStringIfMissing(record.Satellite.UserList, userID)
+	}
+	
+
+	err = h.infodb.SaveRecordToDB(record, *collection)
+	if err != nil {
+		return err
+	}
+
+	err = h.infodb.SaveRecordToDB(userrecord, *collection)
+	if err != nil {
+		return err
+	}
+
+	return nil
+
+}

@@ -28,6 +28,7 @@ type InfoRecord struct {
 	User        UserRecord
 	Location    LocationRecord
 
+	Position    string
 	EditorID    string `json:"editorid"`
 }
 
@@ -57,13 +58,21 @@ type SatelliteRecord struct {
 
 type UserRecord struct {
 
+	UserID string
+
+	OwnedLocations []string
+	CurrentLocation string
 }
 
 type LocationRecord struct {
 
+	Description string
+
 }
 
 type ElementRecord struct {
+
+	Description string
 
 }
 
