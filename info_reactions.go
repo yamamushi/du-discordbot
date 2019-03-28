@@ -109,7 +109,7 @@ func (h *InfoReactionsHandler) Cleaner(){
 			expirationTime = int(h.conf.Reactions.InfoReactionsExpiration)
 		}
 
-		//h.querylocker.Lock()
+		h.querylocker.Lock()
 		//fmt.Print("Locked")
 		for e := h.WatchList.Front(); e != nil; e = e.Next() {
 			r := reflect.ValueOf(e.Value)
@@ -118,7 +118,7 @@ func (h *InfoReactionsHandler) Cleaner(){
 				h.WatchList.Remove(e)
 			}
 		}
-		//h.querylocker.Unlock()
+		h.querylocker.Unlock()
 		//fmt.Print("Unlocked")
 	}
 }

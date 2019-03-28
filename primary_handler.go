@@ -90,6 +90,8 @@ func (h *PrimaryHandler) Init() error {
 	h.dg.AddHandler(confighandler.Read)
 	h.reactions.configdb = confighandler.configdb
 	go h.reactions.Cleaner()
+	h.inforeactions.configdb = confighandler.configdb
+	go h.inforeactions.Cleaner()
 
 	fmt.Println("Adding Backer Handler")
 	backer := BackerHandler{db: h.db, callback: h.callback, conf: h.conf}

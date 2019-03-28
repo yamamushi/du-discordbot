@@ -204,7 +204,7 @@ func (h *RabbitHandler) Catch(s *discordgo.Session, m *discordgo.MessageCreate) 
 
 	record, err := h.backerdb.GetRecordFromDB(m.Author.ID, *c)
 	if err == nil {
-		if record.PreAlpha == "true" || record.ATV == "true" {
+		if record.PreAlpha == "true" || record.ATV == "true" || record.Alpha == "true"  {
 			response, err := s.ChannelMessageSend(m.ChannelID, "Sorry, you can only participate if you do not already have pre-alpha access.")
 			if err == nil {
 				time.Sleep(5 * time.Second)

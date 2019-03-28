@@ -322,6 +322,9 @@ func (h *ServerStatusHandler) FormatStatusEmbed(status ServerStatus,  s *discord
 	access.Name = "Access"
 	access.Value = strings.TrimPrefix(status.Access, "Access for ")
 	access.Value = strings.TrimSpace(access.Value)
+	if access.Value == "Pledge now and get access" {
+		access.Value = "[Pledge now and get access to the next test!](https://www.dualthegame.com/en/pledge)"
+	}
 	fields = append(fields, &access)
 
 

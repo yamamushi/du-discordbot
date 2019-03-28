@@ -272,6 +272,9 @@ func (h *ConfigHandler) ValidateConfigName(configname string) bool {
 	if configname == "reactions-expiration" {
 		return true
 	}
+	if configname == "info-reactions-expiration" {
+		return true
+	}
 	if configname == "rabbit-timer" {
 		return true
 	}
