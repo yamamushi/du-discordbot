@@ -290,6 +290,9 @@ func (h *ConfigHandler) ValidateConfigName(configname string) bool {
 	if configname == "rabbit-channel" {
 		return true
 	}
+	if configname == "gallery-channel" {
+		return true
+	}
 
 	return false
 }

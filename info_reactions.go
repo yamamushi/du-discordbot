@@ -113,7 +113,7 @@ func (h *InfoReactionsHandler) Cleaner(){
 		//fmt.Print("Locked")
 		for e := h.WatchList.Front(); e != nil; e = e.Next() {
 			r := reflect.ValueOf(e.Value)
-			reaction := r.Interface().(WatchReaction)
+			reaction := r.Interface().(WatchInfoReaction)
 			if time.Now().After(reaction.Created.Add(time.Duration(expirationTime)*time.Minute)) {
 				h.WatchList.Remove(e)
 			}

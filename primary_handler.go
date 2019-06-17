@@ -181,6 +181,12 @@ func (h *PrimaryHandler) Init() error {
 	infohandler.Init()
 	h.dg.AddHandler(infohandler.Read)
 
+	fmt.Println("Adding Gallery Manager")
+	gallerymanager := GalleryManager{conf: h.conf, registry: h.command.registry, db: h.db, userdb:h.user}
+	gallerymanager.Init()
+	h.dg.AddHandler(gallerymanager.Read)
+	h.dg.AddHandler(gallerymanager.Watch)
+
 	//fmt.Println("Adding Music Handler")
 	//musichandler := MusicHandler{db: h.db, user: h.user, registry: h.command.registry,
 	//	wallet: h.bankhandler.wallet, channel: h.channel, conf: h.conf}

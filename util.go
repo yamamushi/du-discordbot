@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
+	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -547,4 +549,26 @@ func StringSliceContains(a []string, x string) bool {
 		}
 	}
 	return false
+}
+
+func IsValidUrl(toTest string) bool {
+	_, err := url.ParseRequestURI(toTest)
+	if err != nil {
+		return false
+	} else {
+		return true
+	}
+}
+
+func IsReachableURL(toTest string) bool {
+	timeout := time.Duration(1 * time.Second)
+	client := http.Client{
+		Timeout: timeout,
+	}
+	_, err := client.Get(toTest)
+	if err != nil {
+		return false
+	} else {
+		return true
+	}
 }

@@ -75,6 +75,10 @@ func (h *InfoHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 func (h *InfoHandler) ParseCommand(commandlist []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	command, payload := SplitPayload(commandlist)
+	if len(payload) < 1 {
+		s.ChannelMessageSend(m.ChannelID, "Error: Command expects an argument")
+		return
+	}
 	for i, _ := range payload {
 		payload[i] = strings.ToLower(payload[i])
 	}

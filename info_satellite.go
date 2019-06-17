@@ -527,15 +527,19 @@ func (h *InfoHandler) ViewSatelliteDetailsMenu(record InfoRecord, s *discordgo.S
 	if record.Satellite.Biosphere != "" {
 		biosphere := discordgo.MessageEmbedField{}
 		biosphere.Name = "Biosphere"
+		record.Satellite.Biosphere = strings.ToLower(record.Satellite.Biosphere)
 		if record.Satellite.Biosphere == "ice" {
 			coldfaceemoji := html.UnescapeString("&#" + strconv.Itoa(129398) + ";")
 			biosphere.Value = coldfaceemoji + " Ice"
 		} else if record.Satellite.Biosphere == "desert" {
-			sunfaceemoji := html.UnescapeString("&#" + strconv.Itoa(127774) + ";")
+			sunfaceemoji := html.UnescapeString("&#" + strconv.Itoa(127964) + ";")
 			biosphere.Value = sunfaceemoji + " Desert"
 		} else if record.Satellite.Biosphere == "forest" {
 			treeemoji := html.UnescapeString("&#" + strconv.Itoa(127794) + ";")
 			biosphere.Value = treeemoji + " Forest"
+		} else if record.Satellite.Biosphere == "barren" {
+			climbingemoji := html.UnescapeString("&#" + strconv.Itoa(129495) + ";")
+			biosphere.Value = climbingemoji + " Barren"
 		}
 		biosphere.Inline = true
 		fields = append(fields, &biosphere)
