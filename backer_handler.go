@@ -43,6 +43,8 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
+	/*
+	// Already migrated, this is no longer necessary
 	if command == "migrateauth" {
 		if !user.Owner {
 			return
@@ -59,7 +61,7 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		s.ChannelMessageSend(m.ChannelID, "DB Migration [Under Construction]")
 		return
 	}
-
+*/
 	if command == "backerauth" || command == "atvauth" || command == "forumauth" {
 
 		if len(payload) > 0 {
@@ -197,7 +199,55 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		h.callback.Watch(h.ResetBackerConfirm, uuid, message, s, m)
 		return
 	}
-	if command == "forumrole" || command == "rerunforumrole" || command == "runroles" {
+	if command == "fixmyauth" || command == "fixmyprofile" || command == "updatemyauth" {
+
+		mongoDBDialInfo := &mgo.DialInfo{
+			Addrs:    []string{h.conf.DBConfig.MongoHost},
+			Timeout:  30 * time.Second,
+			Database: h.conf.DBConfig.MongoDB,
+			Username: h.conf.DBConfig.MongoUser,
+			Password: h.conf.DBConfig.MongoPass,
+		}
+
+		session, err := mgo.DialWithInfo(mongoDBDialInfo)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+			return
+		}
+		defer session.Close()
+
+		session.SetMode(mgo.Monotonic, true)
+
+		c := session.DB(h.conf.DBConfig.MongoDB).C(h.conf.DBConfig.BackerRecordColumn)
+
+		if !h.backerInterface.UserValidated(m.Author.ID, *c) {
+			s.ChannelMessageSend(m.ChannelID, "You have not linked your profile yet, please run ~forumauth before using this command")
+			return
+		}
+
+		err = h.ResetRoles(m.Author.ID, s, m)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Could not reset user roles: "+err.Error())
+			return
+		}
+
+		err = h.backerInterface.CheckStatus(m.Author.ID, *c)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Could not get user backer status: "+err.Error()+" , please contact a discord administrator")
+			return
+		}
+
+		err = h.UpdateRoles(s, m, m.Author.ID)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Could not update user roles: "+err.Error()+" , please contact a discord administrator")
+			return
+		}
+
+		s.ChannelMessageSend(m.ChannelID, "Roles for "+m.Author.Mention()+" updated.")
+		return
+
+	}
+	if command == "repairroles" || command == "fixroles" || command == "repairauth" {
 		if !user.Admin {
 			return
 		}
@@ -234,9 +284,21 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 			return
 		}
 
+		err = h.ResetRoles(m.Mentions[0].ID, s, m)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Could not reset user roles: "+err.Error())
+			return
+		}
+
+		err = h.backerInterface.CheckStatus(m.Mentions[0].ID, *c)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Could not get user backer status: "+err.Error())
+			return
+		}
+
 		err = h.UpdateRoles(s, m, m.Mentions[0].ID)
 		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, "Could not update user roles: "+err.Error()+" , please contact a discord administrator")
+			s.ChannelMessageSend(m.ChannelID, "Could not update user roles: "+err.Error())
 			return
 		}
 
@@ -475,23 +537,26 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		}
 
 		for _, record := range records {
-			if record.BackerStatus == "Silver Founder" || record.BackerStatus == "Bronze Founder" || record.BackerStatus == "Iron Founder" ||
-				record.BackerStatus == "Contributor" {
+			//if record.BackerStatus == "Silver Founder" || record.BackerStatus == "Bronze Founder" || record.BackerStatus == "Iron Founder" ||
+			//	record.BackerStatus == "Contributor" {
+			if record.Validated == 1 {
 				if record.Alpha != "true" {
-					if h.backerInterface.GetAlphaString(record) {
-						record.Alpha = "true"
-						record.PreAlpha = "false"
-						err = h.backerInterface.SaveRecordToDB(record, *c)
-						if err != nil {
-							s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
-							return
-						}
-						err = h.UpdateRoles(s, m, record.UserID)
-						if err != nil {
-							s.ChannelMessageSend(m.ChannelID, "Error repairing "+record.UserID+": " + err.Error())
-							return
-						}
+					err = h.ResetRoles(record.UserID, s, m)
+					if err != nil {
+						s.ChannelMessageSend(m.ChannelID, "Error repairing "+record.UserID+": " + err.Error())
+						return
 					}
+					err = h.backerInterface.CheckStatus(record.UserID, *c)
+					if err != nil {
+						s.ChannelMessageSend(m.ChannelID, "Error checking profile status: " + err.Error() + " - UserID: " + record.UserID)
+						return
+					}
+					err = h.UpdateRoles(s, m, record.UserID)
+					if err != nil {
+						s.ChannelMessageSend(m.ChannelID, "Error repairing "+record.UserID+": " + err.Error())
+						return
+					}
+					time.Sleep(time.Second*1)
 				}
 			}
 			/*
@@ -586,6 +651,133 @@ func (h *BackerHandler) ResetBackerConfirm(payload string, s *discordgo.Session,
 	return
 }
 
+// Same thing as ResetAuth, except this one doesn't remove their forum profile URL from their record
+func (h *BackerHandler) ResetRoles(userid string, s *discordgo.Session, m *discordgo.MessageCreate) (err error){
+
+	mongoDBDialInfo := &mgo.DialInfo{
+		Addrs:    []string{h.conf.DBConfig.MongoHost},
+		Timeout:  30 * time.Second,
+		Database: h.conf.DBConfig.MongoDB,
+		Username: h.conf.DBConfig.MongoUser,
+		Password: h.conf.DBConfig.MongoPass,
+	}
+
+	session, err := mgo.DialWithInfo(mongoDBDialInfo)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		return
+	}
+	defer session.Close()
+
+	session.SetMode(mgo.Monotonic, true)
+
+	c := session.DB(h.conf.DBConfig.MongoDB).C(h.conf.DBConfig.BackerRecordColumn)
+
+
+	atvStatus, err := h.backerInterface.GetATVStatus(userid, *c)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error retrieving ATV Status: "+err.Error())
+		return
+	}
+
+	prealphaStatus, err := h.backerInterface.GetPreAlphaStatus(userid, *c)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error retrieving PreAlpha Status: "+err.Error())
+		return
+	}
+
+	alphaStatus, err := h.backerInterface.GetAlphaStatus(userid, *c)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error retrieving Alpha Status: "+err.Error())
+		return
+	}
+
+
+	backerStatus, err := h.backerInterface.GetBackerStatus(userid, *c)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error retrieving Backer Status: "+err.Error())
+		return
+	}
+
+	err = h.backerInterface.ResetUserRoles(userid, *c)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Could not reset user roles: "+userid+" : "+err.Error())
+		return
+	}
+
+	if backerStatus == "Iron Founder" {
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.IronRoleID)
+
+	} else if backerStatus == "Contributor" {
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.ContributorRoleID)
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.AlphaAuthorizedRole)
+
+	} else if backerStatus == "Bronze Founder" {
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.BronzeRoleID)
+
+	} else if backerStatus == "Silver Founder" {
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.SilverRoleID)
+
+	} else if backerStatus == "Sponsor" {
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.SponsorRoleID)
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.AlphaAuthorizedRole)
+
+	} else if backerStatus == "Patron" {
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PatronRoleID)
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.AlphaAuthorizedRole)
+
+	} else if backerStatus == "Gold Founder" {
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.GoldRoleID)
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.AlphaAuthorizedRole)
+
+	} else if backerStatus == "Sapphire Founder" {
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.SapphireRoleID)
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.AlphaAuthorizedRole)
+
+	} else if backerStatus == "Ruby Founder" {
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.RubyRoleID)
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.AlphaAuthorizedRole)
+
+	} else if backerStatus == "Emerald Founder" {
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.EmeraldRoleID)
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.AlphaAuthorizedRole)
+
+	} else if backerStatus == "Diamond Founder" {
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.DiamondRoleID)
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.AlphaAuthorizedRole)
+
+	} else if backerStatus == "Kyrium Founder" {
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.KyriumRoleID)
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.AlphaAuthorizedRole)
+	}
+
+	if atvStatus == "true" {
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.ATVRoleID)
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.ATVForumLinkedRoleID)
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.AlphaAuthorizedRole)
+	}
+
+	if prealphaStatus == "true" {
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.PreAlphaForumLinkedRole)
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.AlphaAuthorizedRole)
+	}
+
+	if alphaStatus == "true" {
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.AlphaAuthorizedRole)
+	}
+
+	return nil
+}
+
+// This will reset a users forum profile link completely
 func (h *BackerHandler) ResetAuth(userid string, s *discordgo.Session, m *discordgo.MessageCreate) (err error){
 
 	mongoDBDialInfo := &mgo.DialInfo{
@@ -609,25 +801,29 @@ func (h *BackerHandler) ResetAuth(userid string, s *discordgo.Session, m *discor
 
 
 	atvStatus, err := h.backerInterface.GetATVStatus(userid, *c)
-	/*if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error retrieving ATV Status")
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error retrieving ATV Status: "+err.Error())
 		return
-	}*/
+	}
 
 	prealphaStatus, err := h.backerInterface.GetPreAlphaStatus(userid, *c)
-	/*if err != nil {
-		s.ChannelMessageSend(m.ChannelID, err.Error())
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error retrieving PreAlpha Status: "+err.Error())
 		return
-	}*/
+	}
 
 	alphaStatus, err := h.backerInterface.GetAlphaStatus(userid, *c)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error retrieving Alpha Status: "+err.Error())
+		return
+	}
 
 
 	backerStatus, err := h.backerInterface.GetBackerStatus(userid, *c)
-	/*if err != nil {
-		s.ChannelMessageSend(m.ChannelID, err.Error())
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error retrieving Backer Status: "+err.Error())
 		return
-	}*/
+	}
 
 	err = h.backerInterface.ResetUser(userid, *c)
 	if err != nil {
@@ -640,6 +836,7 @@ func (h *BackerHandler) ResetAuth(userid string, s *discordgo.Session, m *discor
 
 	} else if backerStatus == "Contributor" {
 		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.ContributorRoleID)
+		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.AlphaAuthorizedRole)
 
 	} else if backerStatus == "Bronze Founder" {
 		s.GuildMemberRoleRemove(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.BronzeRoleID)
@@ -753,6 +950,7 @@ func (h *BackerHandler) UpdateRoles(s *discordgo.Session, m *discordgo.MessageCr
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.IronRoleID)
 	} else if backerStatus == "Contributor" {
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.ContributorRoleID)
+		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.AlphaAuthorizedRole)
 	} else if backerStatus == "Bronze Founder" {
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.BronzeRoleID)
 	} else if backerStatus == "Silver Founder" {

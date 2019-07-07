@@ -307,7 +307,7 @@ func (h *BackerInterface) SetForumProfile(userid string, profileurl string, c mg
 func (h *BackerInterface) HashUserID(userid string) string {
 
 	hasher := sha256.New()
-	io.WriteString(hasher, userid)
+	_, _ = io.WriteString(hasher, userid)
 	sha256hash := base64.URLEncoding.EncodeToString(hasher.Sum(nil))
 	return sha256hash
 
@@ -327,6 +327,7 @@ func (h *BackerInterface) ResetUser(userid string, c mgo.Collection) error {
 	record.ATV = "false"
 	record.ForumProfile = ""
 	record.PreAlpha = "false"
+	record.Alpha = "false"
 
 	err = h.SaveRecordToDB(record, c)
 	if err != nil {
@@ -336,6 +337,31 @@ func (h *BackerInterface) ResetUser(userid string, c mgo.Collection) error {
 	//fmt.Println(record.Validated)
 	return nil
 }
+
+// Same thing as ResetUser but this doesn't overwrite the ForumProfile field or backer status
+func (h *BackerInterface) ResetUserRoles(userid string, c mgo.Collection) error {
+
+	/* if !h.UserHasRecord(userid){
+		return errors.New("Error: No User Record Exists!")
+	} */
+
+	record, err := h.GetRecordFromDB(userid, c)
+	if err != nil {
+		return err
+	}
+	record.ATV = "false"
+	record.PreAlpha = "false"
+	record.Alpha = "false"
+
+	err = h.SaveRecordToDB(record, c)
+	if err != nil {
+		return err
+	}
+
+	//fmt.Println(record.Validated)
+	return nil
+}
+
 
 func (h *BackerInterface) ForumAuth(url string, userid string, c mgo.Collection) (err error) {
 
@@ -600,11 +626,29 @@ func (h *BackerInterface) GetAlphaString(record BackerRecord) (status bool) {
 					pad_contents := pad.FindAll("div", "class", "ipsType_break ipsContained")
 					if len(pad_titles) > 0 {
 						for _, title := range pad_titles {
+							if title.Text() == "Alpha" {
+								if len(pad_contents) > 0 {
+									//fmt.Println(pad_contents[0].Text())
+									alphastatus := strings.ToLower(pad_contents[0].Text())
+									if alphastatus == "yes" || alphastatus == "1" {
+										return true
+									}
+								}
+							}
 							if title.Text() == "Alpha 1" {
 								if len(pad_contents) > 0 {
 									//fmt.Println(pad_contents[0].Text())
-									alpha1status := strings.ToLower(pad_contents[0].Text())
-									if alpha1status == "yes" || alpha1status == "1" {
+									alphastatus := strings.ToLower(pad_contents[0].Text())
+									if alphastatus == "yes" || alphastatus == "1" {
+										return true
+									}
+								}
+							}
+							if title.Text() == "Alpha 2" {
+								if len(pad_contents) > 0 {
+									//fmt.Println(pad_contents[0].Text())
+									alphastatus := strings.ToLower(pad_contents[0].Text())
+									if alphastatus == "yes" || alphastatus == "1" {
 										return true
 									}
 								}
