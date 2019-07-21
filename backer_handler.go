@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/bwmarrin/discordgo"
 	"gopkg.in/mgo.v2"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -199,7 +200,7 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		h.callback.Watch(h.ResetBackerConfirm, uuid, message, s, m)
 		return
 	}
-	if command == "fixmyauth" || command == "fixmyprofile" || command == "updatemyauth" {
+	if command == "fixmyauth" || command == "fixmyroles" {
 
 		mongoDBDialInfo := &mgo.DialInfo{
 			Addrs:    []string{h.conf.DBConfig.MongoHost},
@@ -247,7 +248,7 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 
 	}
-	if command == "repairroles" || command == "fixroles" || command == "repairauth" {
+	if command == "updateroles" || command == "fixroles" || command == "repairauth" {
 		if !user.Admin {
 			return
 		}
@@ -507,7 +508,8 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 	if command == "repairbackers" {
-		if !user.Admin {
+		if !user.Owner {
+			s.ChannelMessageSend(m.ChannelID, "You are not authorized to use this command.")
 			return
 		}
 
@@ -535,28 +537,35 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 			s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
 			return
 		}
+		recordCount := len(records)
+		estTime := (recordCount * 30)/60
+
+		s.ChannelMessageSend(m.ChannelID, "Role repair has started, records to process: " + strconv.Itoa(recordCount) + " Estimated time to completion: " + strconv.Itoa(estTime) + " minutes.")
+		startTime := time.Now()
+		time.Sleep(time.Second*5)
 
 		for _, record := range records {
-			//if record.BackerStatus == "Silver Founder" || record.BackerStatus == "Bronze Founder" || record.BackerStatus == "Iron Founder" ||
-			//	record.BackerStatus == "Contributor" {
-			if record.Validated == 1 {
-				if record.Alpha != "true" {
-					err = h.ResetRoles(record.UserID, s, m)
-					if err != nil {
-						s.ChannelMessageSend(m.ChannelID, "Error repairing "+record.UserID+": " + err.Error())
-						return
+			if record.BackerStatus != "Kyrium Founder" && record.BackerStatus != "Diamond Founder" && record.BackerStatus != "Emerald Founder" && record.BackerStatus != "Ruby Founder" && record.BackerStatus != "Sapphire Founder" &&
+				record.BackerStatus != "Gold Founder" && record.BackerStatus != "Patron" && record.BackerStatus != "Sponsor" {
+				if record.Validated == 1 {
+					if strings.ToLower(record.Alpha) != "true" {
+						err = h.ResetRoles(record.UserID, s, m)
+						if err != nil {
+							s.ChannelMessageSend(m.ChannelID, "Error resetting roles: "+record.UserID+" - "+err.Error())
+							return
+						}
+						err = h.backerInterface.CheckStatus(record.UserID, *c)
+						if err != nil {
+							s.ChannelMessageSend(m.ChannelID, "Error checking profile status: "+err.Error()+" - UserID: "+record.UserID)
+							return
+						}
+						err = h.UpdateRoles(s, m, record.UserID)
+						if err != nil {
+							s.ChannelMessageSend(m.ChannelID, "Error updating roles: "+record.UserID+" - "+err.Error())
+							return
+						}
+						time.Sleep(time.Second * 2)
 					}
-					err = h.backerInterface.CheckStatus(record.UserID, *c)
-					if err != nil {
-						s.ChannelMessageSend(m.ChannelID, "Error checking profile status: " + err.Error() + " - UserID: " + record.UserID)
-						return
-					}
-					err = h.UpdateRoles(s, m, record.UserID)
-					if err != nil {
-						s.ChannelMessageSend(m.ChannelID, "Error repairing "+record.UserID+": " + err.Error())
-						return
-					}
-					time.Sleep(time.Second*1)
 				}
 			}
 			/*
@@ -583,7 +592,8 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 			}
 			*/
 		}
-		s.ChannelMessageSend(m.ChannelID, "Records repaired")
+		elapsedTime := time.Since(startTime)
+		s.ChannelMessageSend(m.ChannelID, "Role repair has completed, process took " + elapsedTime.String())
 		return
 	}
 }
@@ -951,10 +961,13 @@ func (h *BackerHandler) UpdateRoles(s *discordgo.Session, m *discordgo.MessageCr
 	} else if backerStatus == "Contributor" {
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.ContributorRoleID)
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.AlphaAuthorizedRole)
+		notify = true
 	} else if backerStatus == "Bronze Founder" {
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.BronzeRoleID)
 	} else if backerStatus == "Silver Founder" {
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.SilverRoleID)
+		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.AlphaAuthorizedRole)
+		notify = true
 	} else if backerStatus == "Sponsor" {
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.SponsorRoleID)
 		s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.AlphaAuthorizedRole)
@@ -1017,6 +1030,11 @@ func (h *BackerHandler) UpdateRoles(s *discordgo.Session, m *discordgo.MessageCr
 
 	s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, userid, h.conf.RolesConfig.ForumLinkedRoleID)
 	if notify {
+		err = h.backerInterface.SetAlphaStatus(userid, "true", *c)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error updating roles (setting Alpha Status): " + err.Error())
+			return err
+		}
 		h.NotifyNDAChannelOnAuth(s, userid)
 	}
 	return nil

@@ -117,7 +117,8 @@ func CleanChannel(mention string) string {
 
 	mention = strings.TrimPrefix(mention, "<#")
 	mention = strings.TrimSuffix(mention, ">")
-	return mention
+	mentionSplit := strings.Split(mention, "-")
+	return mentionSplit[0]
 
 }
 

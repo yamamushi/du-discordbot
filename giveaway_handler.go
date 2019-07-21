@@ -1,14 +1,14 @@
 package main
 
 import (
-	"github.com/bwmarrin/discordgo"
-	"strings"
-	"fmt"
-	"time"
 	"encoding/json"
-	"strconv"
 	"errors"
+	"fmt"
+	"github.com/bwmarrin/discordgo"
 	"math/rand"
+	"strconv"
+	"strings"
+	"time"
 )
 
 // NotificationsHandler struct
@@ -390,6 +390,29 @@ func (h *GiveawayHandler) EnterGiveaway(payload []string, s *discordgo.Session, 
 					return
 				}
 			}
+
+			if giveawayrecord.Restricted {
+				discordmember, err := s.GuildMember(h.conf.DiscordConfig.GuildID, m.Author.ID)
+				if err != nil {
+					s.ChannelMessageSend(m.ChannelID, "Error validating user discord record: " + err.Error())
+					return
+				}
+
+				userroles := discordmember.Roles
+				for _, role := range userroles {
+					rolename, err := getRoleNameByID(role, h.conf.DiscordConfig.GuildID, s)
+					if err != nil {
+						s.ChannelMessageSend(m.ChannelID, "Error validating roles: " + err.Error())
+						return
+					}
+
+					if rolename == "Alpha Authorized" || rolename == "ATV Authorized" || rolename == "Pre Alpha Authorized"{
+						s.ChannelMessageSend(m.ChannelID, "You are not allowed to enter this giveaway, as it is only for users who do not currently have Alpha access." )
+						return
+					}
+				}
+			}
+
 
 			newentry := GiveawayEntry{}
 			newentry.Date = time.Now()

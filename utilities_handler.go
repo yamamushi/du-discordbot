@@ -1,19 +1,19 @@
 package main
 
 import (
-		"errors"
-		"github.com/bwmarrin/discordgo"
-			"net/http"
-	//"strconv"
-	"strings"
-	"time"
-	"strconv"
-	"os"
-	"io"
-	"io/ioutil"
+	"errors"
+	"github.com/bwmarrin/discordgo"
+	"net/http"
 	"encoding/json"
 	"fmt"
 	"github.com/lunixbochs/vtclean"
+	"io"
+	"io/ioutil"
+	"os"
+	"strconv"
+	//"strconv"
+	"strings"
+	"time"
 )
 
 // UtilitiesHandler struct
@@ -161,12 +161,15 @@ func (h *UtilitiesHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate
 // UnfoldURL function
 func (h *UtilitiesHandler) Say(channelID string, message string, s *discordgo.Session, m *discordgo.MessageCreate) {
 	channelID = CleanChannel(channelID)
-
 	if strings.Contains(strings.ToLower(message), "🐰" ) || strings.Contains(strings.ToLower(message), "🐇" ) {
 		s.ChannelMessageSend(m.ChannelID, "https://www.tenor.co/zBGa.gif")
 		return
 	}
-	s.ChannelMessageSend(channelID, message)
+	_, err := s.ChannelMessageSend(channelID, message)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error: " +err.Error())
+		return
+	}
 	s.ChannelMessageSend(m.ChannelID, "Message sent to <#" + channelID + ">")
 	return
 }

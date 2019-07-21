@@ -22,6 +22,7 @@ type GiveawayRecord struct {
 	CreatedDate    time.Time
 	Duration time.Duration
 	Active bool
+	Restricted bool
 }
 
 // GiveawayEntry struct

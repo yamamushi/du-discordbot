@@ -560,12 +560,22 @@ func (h *StatsHandler) NDAPieChart(s *discordgo.Session, m *discordgo.MessageCre
 	SapphireBacker := 0
 	GoldBacker := 0
 	PatronBacker := 0
+	SponsorBacker := 0
+	ContributorBacker := 0
 	BackerCount := 0
 	//ATVMember := 0
 
 	for _, member := range members {
 		for _, roleID := range member.Roles {
 			backer := false
+			if roleID == h.conf.RolesConfig.ContributorRoleID {
+				ContributorBacker = ContributorBacker+1
+				backer = true
+			}
+			if roleID == h.conf.RolesConfig.SponsorRoleID {
+				SponsorBacker = SponsorBacker+1
+				backer = true
+			}
 			if roleID == h.conf.RolesConfig.PatronRoleID {
 				PatronBacker = PatronBacker+1
 				backer = true
@@ -599,6 +609,8 @@ func (h *StatsHandler) NDAPieChart(s *discordgo.Session, m *discordgo.MessageCre
 			}
 		}
 	}
+	ContributorStyle := chart.Style{FillColor:drawing.Color{R:252, G:62, B:99, A: 255}}
+	SponsorStyle := chart.Style{FillColor:drawing.Color{R:143, G:143, B:143, A: 255}}
 	PatronStyle := chart.Style{FillColor:drawing.Color{R:214, G:187, B:32, A: 255}}
 	GoldStyle := chart.Style{FillColor:drawing.Color{R:217, G:176, B:80, A: 255}}
 	SapphireStyle := chart.Style{FillColor:drawing.Color{R:0, G:102, B:255, A: 255}}
@@ -609,6 +621,8 @@ func (h *StatsHandler) NDAPieChart(s *discordgo.Session, m *discordgo.MessageCre
 
 
 	pieValues := []chart.Value{
+		{Value: float64(ContributorBacker), Label: "Patron - "+strconv.Itoa(ContributorBacker), Style: ContributorStyle},
+		{Value: float64(SponsorBacker), Label: "Patron - "+strconv.Itoa(SponsorBacker), Style: SponsorStyle},
 		{Value: float64(PatronBacker), Label: "Patron - "+strconv.Itoa(PatronBacker), Style: PatronStyle},
 		//{Value: float64(ATVMember), Label: "ATV"+strconv.Itoa(PatronBacker)},
 		{Value: float64(GoldBacker), Label: "Gold - "+strconv.Itoa(GoldBacker), Style: GoldStyle},
