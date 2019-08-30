@@ -356,6 +356,21 @@ func (h *ServerStatusHandler) FormatStatusEmbed(status ServerStatus,  s *discord
 
 	//output += "\n```\n"
 
-	s.ChannelMessageSendEmbed(m.ChannelID, &output )
+	sentEmbed, err := s.ChannelMessageSendEmbed(m.ChannelID, &output )
+	if err != nil {
+		return
+	}
+
+	if m.ChannelID != "477247944249049089" {
+		time.Sleep(time.Second*30)
+		err = s.ChannelMessageDelete(m.ChannelID, sentEmbed.ID)
+		if err != nil {
+			return
+		}
+		err = s.ChannelMessageDelete(m.ChannelID, m.ID)
+		if err != nil {
+			return
+		}
+	}
 	return
 }
