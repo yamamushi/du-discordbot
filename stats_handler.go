@@ -751,12 +751,12 @@ func (h *StatsHandler) UserCountChart(days int, s *discordgo.Session, m *discord
 
 	style := chart.Style{}
 	style.FillColor = drawing.Color{131, 135, 142, 0}
-	style.Show = true
+	//style.Show = true
 	style.StrokeColor = chart.GetDefaultColor(0).WithAlpha(64)
 	style.FillColor = chart.GetDefaultColor(0).WithAlpha(64)
 	graph := chart.Chart{
-		Title:      "Total User Count",
-		Background: chart.StyleShow(),
+		Title: "Total User Count",
+		//Background: chart.StyleShow(),
 		Series: []chart.Series{
 			chart.TimeSeries{
 				XValues: dateValues,
@@ -764,14 +764,14 @@ func (h *StatsHandler) UserCountChart(days int, s *discordgo.Session, m *discord
 			},
 		},
 		XAxis: chart.XAxis{
-			Name:           "Dates",
-			NameStyle:      chart.StyleShow(),
+			Name: "Dates",
+			//NameStyle:      chart.StyleShow(),
 			Style:          style,
 			ValueFormatter: chart.TimeHourValueFormatter,
 		},
 		YAxis: chart.YAxis{
-			Name:           "Users",
-			NameStyle:      chart.StyleShow(),
+			Name: "Users",
+			//NameStyle:      chart.StyleShow(),
 			Style:          style,
 			ValueFormatter: h.FloatNormalize,
 		},
@@ -816,12 +816,12 @@ func (h *StatsHandler) DailyActiveChart(days int, s *discordgo.Session, m *disco
 
 	style := chart.Style{}
 	style.FillColor = drawing.Color{131, 135, 142, 0}
-	style.Show = true
+	//style.Show = true
 	style.StrokeColor = chart.GetDefaultColor(0).WithAlpha(64)
 	style.FillColor = chart.GetDefaultColor(0).WithAlpha(64)
 	graph := chart.Chart{
-		Title:      "Total User Count",
-		Background: chart.StyleShow(),
+		Title: "Total User Count",
+		//Background: chart.StyleShow(),
 		Series: []chart.Series{
 			chart.TimeSeries{
 				XValues: dateValues,
@@ -829,14 +829,14 @@ func (h *StatsHandler) DailyActiveChart(days int, s *discordgo.Session, m *disco
 			},
 		},
 		XAxis: chart.XAxis{
-			Name:           "Dates",
-			NameStyle:      chart.StyleShow(),
+			Name: "Dates",
+			//NameStyle:      chart.StyleShow(),
 			Style:          style,
 			ValueFormatter: chart.TimeHourValueFormatter,
 		},
 		YAxis: chart.YAxis{
-			Name:           "Users",
-			NameStyle:      chart.StyleShow(),
+			Name: "Users",
+			//NameStyle:      chart.StyleShow(),
 			Style:          style,
 			ValueFormatter: h.FloatNormalize,
 		},
@@ -877,12 +877,12 @@ func (h *StatsHandler) DailyVoiceChart(days int, s *discordgo.Session, m *discor
 
 	style := chart.Style{}
 	style.FillColor = drawing.Color{131, 135, 142, 0}
-	style.Show = true
+	//style.Show = true
 	style.StrokeColor = chart.GetDefaultColor(0).WithAlpha(64)
 	style.FillColor = chart.GetDefaultColor(0).WithAlpha(64)
 	graph := chart.Chart{
-		Title:      "Total User Count",
-		Background: chart.StyleShow(),
+		Title: "Total User Count",
+		//Background: chart.StyleShow(),
 		Series: []chart.Series{
 			chart.TimeSeries{
 				XValues: dateValues,
@@ -890,14 +890,14 @@ func (h *StatsHandler) DailyVoiceChart(days int, s *discordgo.Session, m *discor
 			},
 		},
 		XAxis: chart.XAxis{
-			Name:           "Dates",
-			NameStyle:      chart.StyleShow(),
+			Name: "Dates",
+			//NameStyle:      chart.StyleShow(),
 			Style:          style,
 			ValueFormatter: chart.TimeHourValueFormatter,
 		},
 		YAxis: chart.YAxis{
-			Name:           "Users",
-			NameStyle:      chart.StyleShow(),
+			Name: "Users",
+			//NameStyle:      chart.StyleShow(),
 			Style:          style,
 			ValueFormatter: h.FloatNormalize,
 		},
@@ -938,12 +938,12 @@ func (h *StatsHandler) DailyOnlineChart(days int, s *discordgo.Session, m *disco
 
 	style := chart.Style{}
 	style.FillColor = drawing.Color{131, 135, 142, 0}
-	style.Show = true
+	//style.Show = true
 	style.StrokeColor = chart.GetDefaultColor(0).WithAlpha(64)
 	style.FillColor = chart.GetDefaultColor(0).WithAlpha(64)
 	graph := chart.Chart{
-		Title:      "Total User Count",
-		Background: chart.StyleShow(),
+		Title: "Total User Count",
+		//Background: chart.StyleShow(),
 		Series: []chart.Series{
 			chart.TimeSeries{
 				XValues: dateValues,
@@ -951,14 +951,14 @@ func (h *StatsHandler) DailyOnlineChart(days int, s *discordgo.Session, m *disco
 			},
 		},
 		XAxis: chart.XAxis{
-			Name:           "Dates",
-			NameStyle:      chart.StyleShow(),
+			Name: "Dates",
+			//NameStyle:      chart.StyleShow(),
 			Style:          style,
 			ValueFormatter: chart.TimeHourValueFormatter,
 		},
 		YAxis: chart.YAxis{
-			Name:           "Users",
-			NameStyle:      chart.StyleShow(),
+			Name: "Users",
+			//NameStyle:      chart.StyleShow(),
 			Style:          style,
 			ValueFormatter: h.FloatNormalize,
 		},
@@ -999,12 +999,12 @@ func (h *StatsHandler) DailyIdleChart(days int, s *discordgo.Session, m *discord
 
 	style := chart.Style{}
 	style.FillColor = drawing.Color{131, 135, 142, 0}
-	style.Show = true
+	//style.Show = true
 	style.StrokeColor = chart.GetDefaultColor(0).WithAlpha(64)
 	style.FillColor = chart.GetDefaultColor(0).WithAlpha(64)
 	graph := chart.Chart{
-		Title:      "Total User Count",
-		Background: chart.StyleShow(),
+		Title: "Total User Count",
+		//Background: chart.StyleShow(),
 		Series: []chart.Series{
 			chart.TimeSeries{
 				XValues: dateValues,
@@ -1012,14 +1012,14 @@ func (h *StatsHandler) DailyIdleChart(days int, s *discordgo.Session, m *discord
 			},
 		},
 		XAxis: chart.XAxis{
-			Name:           "Dates",
-			NameStyle:      chart.StyleShow(),
+			Name: "Dates",
+			//NameStyle:      chart.StyleShow(),
 			Style:          style,
 			ValueFormatter: chart.TimeHourValueFormatter,
 		},
 		YAxis: chart.YAxis{
-			Name:           "Users",
-			NameStyle:      chart.StyleShow(),
+			Name: "Users",
+			//NameStyle:      chart.StyleShow(),
 			Style:          style,
 			ValueFormatter: h.FloatNormalize,
 		},
