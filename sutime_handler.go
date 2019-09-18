@@ -17,12 +17,10 @@ type SUTimeHandler struct {
 	userdb   *UserHandler
 }
 
-
 // Init function
 func (h *SUTimeHandler) Init() {
 	h.RegisterCommands()
 }
-
 
 // RegisterCommands function
 func (h *SUTimeHandler) RegisterCommands() (err error) {
@@ -65,28 +63,25 @@ func (h *SUTimeHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 }
 
-
-
 // ParseCommand function
 func (h *SUTimeHandler) ParseCommand(commandlist []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	command, payload := SplitPayload(commandlist)
 
 	if len(payload) == 0 || len(payload) < 2 {
-		_, _ = s.ChannelMessageSend(m.ChannelID, command + " expects two arguments: <su> <speed>")
+		_, _ = s.ChannelMessageSend(m.ChannelID, command+" expects two arguments: <su> <speed>")
 		return
 	}
-
 
 	speedFloat := 0.0
 	payload[1] = strings.ToLower(payload[1])
 	speedFloat, err := strconv.ParseFloat(payload[1], 64)
 	if err != nil {
-		if strings.HasSuffix(payload[1], "k"){
+		if strings.HasSuffix(payload[1], "k") {
 			payload[1] = strings.TrimSuffix(payload[1], "k")
 			speedFloat, err = strconv.ParseFloat(payload[1], 64)
 			if err != nil {
-				_, _ = s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+				_, _ = s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 				return
 			}
 			speedFloat = speedFloat * 1000
@@ -97,16 +92,16 @@ func (h *SUTimeHandler) ParseCommand(commandlist []string, s *discordgo.Session,
 
 	distanceFloat, err := strconv.ParseFloat(payload[0], 64)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 		return
 	}
 
 	estimate, err := h.CalculateTime(distanceFloat, speedFloat)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 		return
 	}
-	_, _ = s.ChannelMessageSend(m.ChannelID, "Estimated travel time: " + estimate)
+	_, _ = s.ChannelMessageSend(m.ChannelID, "Estimated travel time: "+estimate)
 	return
 }
 

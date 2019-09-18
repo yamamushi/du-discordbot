@@ -18,12 +18,12 @@ type User struct {
 
 	HistoricalAutoRoles []string
 	LatestRoleTimeout   time.Duration
-	CurrentAutoRoleID     string
-	CurrentAutoRoleName   string
+	CurrentAutoRoleID   string
+	CurrentAutoRoleName string
 	DisableAutoRole     bool
 
-	RabbitCount      int
-	RabbitWinner     bool
+	RabbitCount  int
+	RabbitWinner bool
 
 	RecruitmentLimit int
 	RecruitmentCount int

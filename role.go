@@ -2,9 +2,9 @@ package main
 
 import (
 	"errors"
+	"sort"
 	"sync"
 	"time"
-	"sort"
 )
 
 // RoleDB struct
@@ -15,27 +15,26 @@ type RoleDB struct {
 
 // RoleRecord struct
 type RoleRecord struct {
-	ID          string `storm:"id" json:"id"`
-	DiscordID   string
-	Name        string `json:"name"`
-	NewName     string `json:"newname"`
-	Managed     bool   `json:"managed"`
-	Mentionable bool   `json:"mentionable"`
-	Hoist       bool   `json:"hoist"`
-	Color       int    `json:"color"`
-	Position    int    `json:"position"`
-	Timeout     string `json:"Timeout"`
+	ID              string `storm:"id" json:"id"`
+	DiscordID       string
+	Name            string `json:"name"`
+	NewName         string `json:"newname"`
+	Managed         bool   `json:"managed"`
+	Mentionable     bool   `json:"mentionable"`
+	Hoist           bool   `json:"hoist"`
+	Color           int    `json:"color"`
+	Position        int    `json:"position"`
+	Timeout         string `json:"Timeout"`
 	TimeoutDuration time.Duration
-	MemberList  []string
+	MemberList      []string
 }
 
 type RoleQueued struct {
-	ID          string `storm:"id"`
-	Remove      bool
-	UserID      string
-	RoleID      string
+	ID     string `storm:"id"`
+	Remove bool
+	UserID string
+	RoleID string
 }
-
 
 // AddGiveawayToDB function
 func (h *RoleDB) AddRoleRecordToDB(record RoleRecord) (err error) {
@@ -108,7 +107,7 @@ func (h *RoleDB) GetAllRolesDB() (RecordList []RoleRecord, err error) {
 
 func (h *RoleDB) SortRolesList(recordlist []RoleRecord) (list []RoleRecord) {
 
-	sort.Slice(recordlist[:], func(i, j int) bool {return recordlist[i].TimeoutDuration > recordlist[j].TimeoutDuration})
+	sort.Slice(recordlist[:], func(i, j int) bool { return recordlist[i].TimeoutDuration > recordlist[j].TimeoutDuration })
 	return recordlist
 }
 
@@ -125,10 +124,6 @@ func (h *RoleDB) UpdateRoleRecord(record RoleRecord) (err error) {
 	err = db.Save(&record)
 	return err
 }
-
-
-
-
 
 // Queued Roles
 

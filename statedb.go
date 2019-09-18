@@ -1,8 +1,8 @@
 package main
 
 import (
-	"sync"
 	"errors"
+	"sync"
 	"time"
 )
 
@@ -14,13 +14,13 @@ type StateDB struct {
 
 // StateRecord struct
 type StateRecord struct {
-	ID      string `storm:"id"`
-	LastRecruitmentIDPosted  string
-	RabbitLoose bool
-	LastRabbit  time.Time
+	ID                      string `storm:"id"`
+	LastRecruitmentIDPosted string
+	RabbitLoose             bool
+	LastRabbit              time.Time
 }
 
-func (h *StateDB) GetState()(state StateRecord, err error) {
+func (h *StateDB) GetState() (state StateRecord, err error) {
 	statedb, err := h.GetAllStateDB()
 	if len(statedb) < 1 {
 
@@ -28,7 +28,7 @@ func (h *StateDB) GetState()(state StateRecord, err error) {
 		if err != nil {
 			return state, err
 		}
-		state := StateRecord{ID:uuid}
+		state := StateRecord{ID: uuid}
 		err = h.AddStateRecordToDB(state)
 		if err != nil {
 			return state, err
@@ -39,7 +39,7 @@ func (h *StateDB) GetState()(state StateRecord, err error) {
 	return statedb[0], nil
 }
 
-func (h *StateDB) SetState(state StateRecord)(err error) {
+func (h *StateDB) SetState(state StateRecord) (err error) {
 	statedb, err := h.GetAllStateDB()
 	if len(statedb) < 1 {
 		err = h.AddStateRecordToDB(state)
@@ -129,7 +129,6 @@ func (h *StateDB) GetAllStateDB() (RecordList []StateRecord, err error) {
 
 	return RecordList, nil
 }
-
 
 func (h *StateDB) UpdateStateRecord(record StateRecord) (err error) {
 	h.querylocker.Lock()

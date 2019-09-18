@@ -45,28 +45,28 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	/*
-	// Already migrated, this is no longer necessary
-	if command == "migrateauth" {
-		if !user.Owner {
-			return
-		}
+		// Already migrated, this is no longer necessary
+		if command == "migrateauth" {
+			if !user.Owner {
+				return
+			}
 
-		s.ChannelMessageSend(m.ChannelID, "DB Migration Started - This may take a while!")
-		time.Sleep(5*time.Second)
-		err = h.MigrateDB()
-		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+			s.ChannelMessageSend(m.ChannelID, "DB Migration Started - This may take a while!")
+			time.Sleep(5*time.Second)
+			err = h.MigrateDB()
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+				return
+			}
+			//s.ChannelMessageSend(m.ChannelID, "DB Migration Successful")
+			s.ChannelMessageSend(m.ChannelID, "DB Migration [Under Construction]")
 			return
 		}
-		//s.ChannelMessageSend(m.ChannelID, "DB Migration Successful")
-		s.ChannelMessageSend(m.ChannelID, "DB Migration [Under Construction]")
-		return
-	}
-*/
+	*/
 	if command == "backerauth" || command == "atvauth" || command == "forumauth" {
 
 		if len(payload) > 0 {
-			if strings.ToLower(payload[0]) == "help"{
+			if strings.ToLower(payload[0]) == "help" {
 				s.ChannelMessageSend(m.ChannelID, ":bulb: Forum Auth Tutorial - https://www.youtube.com/watch?v=tPZuxhz6KeE")
 				return
 			}
@@ -93,7 +93,7 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		output += "\n:bulb: If your forum account needs moderator approval, post an introduction message in the Arkship Pub " +
 			"subforum so everyone knows you're a real person."
 
-			output += "\n\n:two: Once you have posted your discordauth key, please reply to this message with the " +
+		output += "\n\n:two: Once you have posted your discordauth key, please reply to this message with the " +
 			"following **command** to complete the validation process:\n"
 		output += "```"
 		output += "~linkprofile <url of your forum profile>"
@@ -104,7 +104,7 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 		_, err = s.ChannelMessageSend(userprivatechannel.ID, output)
 		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+			s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 			return
 		}
 		return
@@ -132,7 +132,7 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 		session, err := mgo.DialWithInfo(mongoDBDialInfo)
 		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+			s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 			return
 		}
 		defer session.Close()
@@ -212,7 +212,7 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 		session, err := mgo.DialWithInfo(mongoDBDialInfo)
 		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+			s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 			return
 		}
 		defer session.Close()
@@ -271,7 +271,7 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 		session, err := mgo.DialWithInfo(mongoDBDialInfo)
 		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+			s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 			return
 		}
 		defer session.Close()
@@ -307,7 +307,7 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 	if command == "adminlink" {
-		if !user.Admin{
+		if !user.Admin {
 			return
 		}
 		if len(m.Mentions) < 1 {
@@ -329,7 +329,7 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 		session, err := mgo.DialWithInfo(mongoDBDialInfo)
 		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+			s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 			return
 		}
 		defer session.Close()
@@ -392,7 +392,7 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 		session, err := mgo.DialWithInfo(mongoDBDialInfo)
 		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+			s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 			return
 		}
 		defer session.Close()
@@ -443,7 +443,7 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 		session, err := mgo.DialWithInfo(mongoDBDialInfo)
 		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+			s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 			return
 		}
 		defer session.Close()
@@ -499,7 +499,7 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 		output := ":bulb: Backer Roles for this server: \n```"
 		for _, role := range s.State.Guilds[0].Roles {
-			if strings.Contains(role.Name, "Founder") || strings.Contains(role.Name, "Supporter") || strings.Contains(role.Name, "Authorized"){
+			if strings.Contains(role.Name, "Founder") || strings.Contains(role.Name, "Supporter") || strings.Contains(role.Name, "Authorized") {
 				output = output + "\n" + role.Name + " : " + role.ID
 			}
 		}
@@ -523,7 +523,7 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 		session, err := mgo.DialWithInfo(mongoDBDialInfo)
 		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+			s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 			return
 		}
 		defer session.Close()
@@ -534,15 +534,15 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 		records, err := h.backerInterface.GetAllBackers(*c)
 		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+			s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 			return
 		}
 		recordCount := len(records)
-		estTime := (recordCount * 30)/60
+		estTime := (recordCount * 30) / 60
 
-		s.ChannelMessageSend(m.ChannelID, "Role repair has started, records to process: " + strconv.Itoa(recordCount) + " Estimated time to completion: " + strconv.Itoa(estTime) + " minutes.")
+		s.ChannelMessageSend(m.ChannelID, "Role repair has started, records to process: "+strconv.Itoa(recordCount)+" Estimated time to completion: "+strconv.Itoa(estTime)+" minutes.")
 		startTime := time.Now()
-		time.Sleep(time.Second*5)
+		time.Sleep(time.Second * 5)
 
 		for _, record := range records {
 			if record.BackerStatus != "Kyrium Founder" && record.BackerStatus != "Diamond Founder" && record.BackerStatus != "Emerald Founder" && record.BackerStatus != "Ruby Founder" && record.BackerStatus != "Sapphire Founder" &&
@@ -569,36 +569,36 @@ func (h *BackerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 				}
 			}
 			/*
-			if record.BackerStatus == "Gold Founder" || record.BackerStatus == "Sapphire Founder" || record.BackerStatus == "Ruby Founder" ||
-				record.BackerStatus == "Emerald Founder" || record.BackerStatus == "Diamond Founder" || record.BackerStatus == "Kyrium Founder" ||
-				record.BackerStatus == "Patron" || record.ATV == "true" {
-				record.PreAlpha = "true"
-				err = h.backerInterface.SaveRecordToDB(record, *c)
-				if err != nil {
-					s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
-					return
+				if record.BackerStatus == "Gold Founder" || record.BackerStatus == "Sapphire Founder" || record.BackerStatus == "Ruby Founder" ||
+					record.BackerStatus == "Emerald Founder" || record.BackerStatus == "Diamond Founder" || record.BackerStatus == "Kyrium Founder" ||
+					record.BackerStatus == "Patron" || record.ATV == "true" {
+					record.PreAlpha = "true"
+					err = h.backerInterface.SaveRecordToDB(record, *c)
+					if err != nil {
+						s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+						return
+					}
 				}
-			}
-			if record.BackerStatus == "Gold Founder" || record.BackerStatus == "Sapphire Founder" || record.BackerStatus == "Ruby Founder" ||
-				record.BackerStatus == "Emerald Founder" || record.BackerStatus == "Diamond Founder" || record.BackerStatus == "Kyrium Founder" ||
-				record.BackerStatus == "Patron" || record.BackerStatus == "Sponsor" || record.ATV == "true" {
-				record.Alpha = "true"
-				err = h.backerInterface.SaveRecordToDB(record, *c)
-				if err != nil {
-					s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
-					return
+				if record.BackerStatus == "Gold Founder" || record.BackerStatus == "Sapphire Founder" || record.BackerStatus == "Ruby Founder" ||
+					record.BackerStatus == "Emerald Founder" || record.BackerStatus == "Diamond Founder" || record.BackerStatus == "Kyrium Founder" ||
+					record.BackerStatus == "Patron" || record.BackerStatus == "Sponsor" || record.ATV == "true" {
+					record.Alpha = "true"
+					err = h.backerInterface.SaveRecordToDB(record, *c)
+					if err != nil {
+						s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+						return
+					}
+					s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, record.UserID, h.conf.RolesConfig.AlphaAuthorizedRole)
 				}
-				s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, record.UserID, h.conf.RolesConfig.AlphaAuthorizedRole)
-			}
 			*/
 		}
 		elapsedTime := time.Since(startTime)
-		s.ChannelMessageSend(m.ChannelID, "Role repair has completed, process took " + elapsedTime.String())
+		s.ChannelMessageSend(m.ChannelID, "Role repair has completed, process took "+elapsedTime.String())
 		return
 	}
 }
 
-func (h *BackerHandler) MigrateDB() (err error){
+func (h *BackerHandler) MigrateDB() (err error) {
 
 	mongoDBDialInfo := &mgo.DialInfo{
 		Addrs:    []string{h.conf.DBConfig.MongoHost},
@@ -649,7 +649,7 @@ func (h *BackerHandler) ResetBackerConfirm(payload string, s *discordgo.Session,
 
 		err := h.ResetAuth(userid, s, m)
 		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, "Error resetting auth: " + err.Error())
+			s.ChannelMessageSend(m.ChannelID, "Error resetting auth: "+err.Error())
 			return
 		}
 
@@ -662,7 +662,7 @@ func (h *BackerHandler) ResetBackerConfirm(payload string, s *discordgo.Session,
 }
 
 // Same thing as ResetAuth, except this one doesn't remove their forum profile URL from their record
-func (h *BackerHandler) ResetRoles(userid string, s *discordgo.Session, m *discordgo.MessageCreate) (err error){
+func (h *BackerHandler) ResetRoles(userid string, s *discordgo.Session, m *discordgo.MessageCreate) (err error) {
 
 	mongoDBDialInfo := &mgo.DialInfo{
 		Addrs:    []string{h.conf.DBConfig.MongoHost},
@@ -674,7 +674,7 @@ func (h *BackerHandler) ResetRoles(userid string, s *discordgo.Session, m *disco
 
 	session, err := mgo.DialWithInfo(mongoDBDialInfo)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 		return
 	}
 	defer session.Close()
@@ -682,7 +682,6 @@ func (h *BackerHandler) ResetRoles(userid string, s *discordgo.Session, m *disco
 	session.SetMode(mgo.Monotonic, true)
 
 	c := session.DB(h.conf.DBConfig.MongoDB).C(h.conf.DBConfig.BackerRecordColumn)
-
 
 	atvStatus, err := h.backerInterface.GetATVStatus(userid, *c)
 	if err != nil {
@@ -701,7 +700,6 @@ func (h *BackerHandler) ResetRoles(userid string, s *discordgo.Session, m *disco
 		s.ChannelMessageSend(m.ChannelID, "Error retrieving Alpha Status: "+err.Error())
 		return
 	}
-
 
 	backerStatus, err := h.backerInterface.GetBackerStatus(userid, *c)
 	if err != nil {
@@ -788,7 +786,7 @@ func (h *BackerHandler) ResetRoles(userid string, s *discordgo.Session, m *disco
 }
 
 // This will reset a users forum profile link completely
-func (h *BackerHandler) ResetAuth(userid string, s *discordgo.Session, m *discordgo.MessageCreate) (err error){
+func (h *BackerHandler) ResetAuth(userid string, s *discordgo.Session, m *discordgo.MessageCreate) (err error) {
 
 	mongoDBDialInfo := &mgo.DialInfo{
 		Addrs:    []string{h.conf.DBConfig.MongoHost},
@@ -800,7 +798,7 @@ func (h *BackerHandler) ResetAuth(userid string, s *discordgo.Session, m *discor
 
 	session, err := mgo.DialWithInfo(mongoDBDialInfo)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 		return
 	}
 	defer session.Close()
@@ -808,7 +806,6 @@ func (h *BackerHandler) ResetAuth(userid string, s *discordgo.Session, m *discor
 	session.SetMode(mgo.Monotonic, true)
 
 	c := session.DB(h.conf.DBConfig.MongoDB).C(h.conf.DBConfig.BackerRecordColumn)
-
 
 	atvStatus, err := h.backerInterface.GetATVStatus(userid, *c)
 	if err != nil {
@@ -827,7 +824,6 @@ func (h *BackerHandler) ResetAuth(userid string, s *discordgo.Session, m *discor
 		s.ChannelMessageSend(m.ChannelID, "Error retrieving Alpha Status: "+err.Error())
 		return
 	}
-
 
 	backerStatus, err := h.backerInterface.GetBackerStatus(userid, *c)
 	if err != nil {
@@ -926,7 +922,7 @@ func (h *BackerHandler) UpdateRoles(s *discordgo.Session, m *discordgo.MessageCr
 
 	session, err := mgo.DialWithInfo(mongoDBDialInfo)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 		return
 	}
 	defer session.Close()
@@ -1032,7 +1028,7 @@ func (h *BackerHandler) UpdateRoles(s *discordgo.Session, m *discordgo.MessageCr
 	if notify {
 		err = h.backerInterface.SetAlphaStatus(userid, "true", *c)
 		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, "Error updating roles (setting Alpha Status): " + err.Error())
+			s.ChannelMessageSend(m.ChannelID, "Error updating roles (setting Alpha Status): "+err.Error())
 			return err
 		}
 		h.NotifyNDAChannelOnAuth(s, userid)
@@ -1040,15 +1036,14 @@ func (h *BackerHandler) UpdateRoles(s *discordgo.Session, m *discordgo.MessageCr
 	return nil
 }
 
-
-func (h *BackerHandler) NotifyNDAChannelOnAuth(s *discordgo.Session, userid string){
+func (h *BackerHandler) NotifyNDAChannelOnAuth(s *discordgo.Session, userid string) {
 
 	user, err := s.User(userid)
 	if err != nil {
 		return
 	}
 
-	s.ChannelMessageSend(h.conf.RolesConfig.NDAChannelID, user.Mention() + " has been authorized as having Alpha " +
-							"access, and can now use the NDA Discord channels. Congrats!")
+	s.ChannelMessageSend(h.conf.RolesConfig.NDAChannelID, user.Mention()+" has been authorized as having Alpha "+
+		"access, and can now use the NDA Discord channels. Congrats!")
 	return
 }

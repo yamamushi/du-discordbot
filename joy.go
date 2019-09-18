@@ -84,7 +84,6 @@ func (h *JoyDB) GetAllJoyDB() (RecordList []JoyRecord, err error) {
 	return RecordList, nil
 }
 
-
 func (h *JoyDB) UpdateJoyRecord(record JoyRecord) (err error) {
 	h.querylocker.Lock()
 	defer h.querylocker.Unlock()
@@ -98,4 +97,3 @@ func (h *JoyDB) UpdateJoyRecord(record JoyRecord) (err error) {
 	err = db.Save(&record)
 	return err
 }
-

@@ -8,16 +8,16 @@ import (
 
 // Config struct
 type Config struct {
-	DiscordConfig discordConfig  `toml:"discord"`
-	DBConfig      databaseConfig `toml:"database"`
-	DUBotConfig   dubotConfig    `toml:"du-bot"`
-	BankConfig    bankConfig     `toml:"bank"`
-	CasinoConfig  casinoConfig   `toml:"casino"`
-	RolesConfig   rolesConfig    `toml:"roles"`
-	APIConfig     apiConfig      `toml:"api"`
-	Recruitment   recruitmentConfig      `toml:"recruitment"`
+	DiscordConfig discordConfig     `toml:"discord"`
+	DBConfig      databaseConfig    `toml:"database"`
+	DUBotConfig   dubotConfig       `toml:"du-bot"`
+	BankConfig    bankConfig        `toml:"bank"`
+	CasinoConfig  casinoConfig      `toml:"casino"`
+	RolesConfig   rolesConfig       `toml:"roles"`
+	APIConfig     apiConfig         `toml:"api"`
+	Recruitment   recruitmentConfig `toml:"recruitment"`
 	Reactions     ReactionsConfig   `toml:"reactions"`
-	Rabbit        RabbitConfig   `toml:"rabbit"`
+	Rabbit        RabbitConfig      `toml:"rabbit"`
 }
 
 // discordConfig struct
@@ -30,13 +30,13 @@ type discordConfig struct {
 
 // databaseConfig struct
 type databaseConfig struct {
-	DBFile string `toml:"filename"`
-	MongoHost string `toml:"mongohost"`
-	MongoDB string  `toml:"mongodb"`
+	DBFile             string `toml:"filename"`
+	MongoHost          string `toml:"mongohost"`
+	MongoDB            string `toml:"mongodb"`
 	BackerRecordColumn string `toml:"backerrecordcolumn"`
-	InfoRecordColumn string `toml:"inforecordcolumn"`
-	MongoUser string    `toml:"mongouser"`
-	MongoPass string    `toml:"mongopass"`
+	InfoRecordColumn   string `toml:"inforecordcolumn"`
+	MongoUser          string `toml:"mongouser"`
+	MongoPass          string `toml:"mongopass"`
 }
 
 // dubotConfig struct
@@ -81,57 +81,53 @@ type casinoConfig struct {
 type rolesConfig struct {
 	RoleTimer               time.Duration `toml:"roles_timer"`
 	RoleUpdaterTimer        time.Duration `toml:"roles_updater_timer"`
-	PatronRoleID            string `toml:"patron_role"`
-	SponsorRoleID           string `toml:"sponsor_role"`
-	ContributorRoleID       string `toml:"contributor_role"`
-	ATVRoleID               string `toml:"atv_role"`
-	IronRoleID              string `toml:"iron_role"`
-	BronzeRoleID            string `toml:"bronze_role"`
-	SilverRoleID            string `toml:"silver_role"`
-	GoldRoleID              string `toml:"gold_role"`
-	SapphireRoleID          string `toml:"sapphire_role"`
-	RubyRoleID              string `toml:"ruby_role"`
-	EmeraldRoleID           string `toml:"emerald_role"`
-	DiamondRoleID           string `toml:"diamond_role"`
-	KyriumRoleID            string `toml:"kyrium_role"`
-	ForumLinkedRoleID       string `toml:"forumlinked_role"`
-	ATVForumLinkedRoleID    string `toml:"atvforumlinked_role"`
-	PreAlphaForumLinkedRole string `toml:"prealpha_role"`
-	KickstarterRole         string `toml:"kickstarter_role"`
-	AlphaAuthorizedRole     string `toml:"alpha_role"`
+	PatronRoleID            string        `toml:"patron_role"`
+	SponsorRoleID           string        `toml:"sponsor_role"`
+	ContributorRoleID       string        `toml:"contributor_role"`
+	ATVRoleID               string        `toml:"atv_role"`
+	IronRoleID              string        `toml:"iron_role"`
+	BronzeRoleID            string        `toml:"bronze_role"`
+	SilverRoleID            string        `toml:"silver_role"`
+	GoldRoleID              string        `toml:"gold_role"`
+	SapphireRoleID          string        `toml:"sapphire_role"`
+	RubyRoleID              string        `toml:"ruby_role"`
+	EmeraldRoleID           string        `toml:"emerald_role"`
+	DiamondRoleID           string        `toml:"diamond_role"`
+	KyriumRoleID            string        `toml:"kyrium_role"`
+	ForumLinkedRoleID       string        `toml:"forumlinked_role"`
+	ATVForumLinkedRoleID    string        `toml:"atvforumlinked_role"`
+	PreAlphaForumLinkedRole string        `toml:"prealpha_role"`
+	KickstarterRole         string        `toml:"kickstarter_role"`
+	AlphaAuthorizedRole     string        `toml:"alpha_role"`
 
-	NDAChannelID            string `toml:"nda_channel_id"`
+	NDAChannelID string `toml:"nda_channel_id"`
 }
 
 type apiConfig struct {
-	Strawpoll           string `toml:"strawpoll_api"`
-	WordnikKey          string `toml:"wordnick_key"`
-	OpenWeatherKey      string `toml:"openweather_key"`
-
+	Strawpoll      string `toml:"strawpoll_api"`
+	WordnikKey     string `toml:"wordnick_key"`
+	OpenWeatherKey string `toml:"openweather_key"`
 }
 
 type recruitmentConfig struct {
-	RecruitmentChannel           string `toml:"recruitment_channel"`
-	RecruitmentTimeout           time.Duration `toml:"recruitment_timeout"`
-	RecruitmentExpiration        time.Duration `toml:"recruitment_expiration_timeout"`
-	RecruitmentReminder          time.Duration `toml:"recruitment_reminder_timeout"`
-	RecruitmentShuffleCount      int `toml:"recruitment_shuffle_count"`
-	RecruitmentWaitOnStartup     bool `toml:"recruitment_wait_on_startup"`
+	RecruitmentChannel       string        `toml:"recruitment_channel"`
+	RecruitmentTimeout       time.Duration `toml:"recruitment_timeout"`
+	RecruitmentExpiration    time.Duration `toml:"recruitment_expiration_timeout"`
+	RecruitmentReminder      time.Duration `toml:"recruitment_reminder_timeout"`
+	RecruitmentShuffleCount  int           `toml:"recruitment_shuffle_count"`
+	RecruitmentWaitOnStartup bool          `toml:"recruitment_wait_on_startup"`
 }
 
 type ReactionsConfig struct {
-	ReactionsExpiration time.Duration `toml:"reactions_timeout"`
-	InfoReactionsExpiration          time.Duration `toml:"info_reactions_timeout"`
+	ReactionsExpiration     time.Duration `toml:"reactions_timeout"`
+	InfoReactionsExpiration time.Duration `toml:"info_reactions_timeout"`
 }
 
-
 type RabbitConfig struct {
-
-	RabbitRandomWeight  int `toml:"rabbit_random"`
-	RabbitCount         int `toml:"rabbit_count"`
-	RabbitTimer         time.Duration `toml:"rabbit_timer"`
-	RabbitExpiration         time.Duration `toml:"rabbit_expiration"`
-
+	RabbitRandomWeight int           `toml:"rabbit_random"`
+	RabbitCount        int           `toml:"rabbit_count"`
+	RabbitTimer        time.Duration `toml:"rabbit_timer"`
+	RabbitExpiration   time.Duration `toml:"rabbit_expiration"`
 }
 
 // ReadConfig function

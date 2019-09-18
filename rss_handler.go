@@ -125,7 +125,7 @@ func (h *RSSHandler) ParseCommand(command []string, s *discordgo.Session, m *dis
 
 	if command[1] == "list" && len(command) == 2 {
 		formatted := h.GetRSSList(m.ChannelID)
-		s.ChannelMessageSend(m.ChannelID, "RSS Feeds for this channel: " +formatted)
+		s.ChannelMessageSend(m.ChannelID, "RSS Feeds for this channel: "+formatted)
 		return
 	}
 

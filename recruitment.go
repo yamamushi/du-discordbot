@@ -1,9 +1,9 @@
 package main
 
 import (
+	"errors"
 	"sync"
 	"time"
-	"errors"
 )
 
 // GiveawayDB struct
@@ -14,25 +14,24 @@ type RecruitmentDB struct {
 
 // GiveawayRecord struct
 type RecruitmentRecord struct {
-	ID      string `storm:"id"`
-	OwnerID  string
-	OrgName  string
-	Description string
-	LastRun  time.Time
-	LastValidated time.Time
+	ID                     string `storm:"id"`
+	OwnerID                string
+	OrgName                string
+	Description            string
+	LastRun                time.Time
+	LastValidated          time.Time
 	ValidationReminderSent bool
-	Created  time.Time
-	ApprovedDate time.Time
-	Approved bool
-	Approver string
+	Created                time.Time
+	ApprovedDate           time.Time
+	Approved               bool
+	Approver               string
 }
 
 // We store our records in the list so that bot reboots don't break displaying them
 type RecruitmentDisplayRecord struct {
-	ID      string `storm:"id"`
+	ID            string `storm:"id"`
 	RecruitmentID string
 }
-
 
 // AddRecruitmentRecordToDB function
 func (h *RecruitmentDB) AddRecruitmentRecordToDB(record RecruitmentRecord) (err error) {
@@ -101,7 +100,6 @@ func (h *RecruitmentDB) GetAllRecruitmentDB() (RecordList []RecruitmentRecord, e
 	return RecordList, nil
 }
 
-
 func (h *RecruitmentDB) UpdateRecruitmentRecord(record RecruitmentRecord) (err error) {
 	h.querylocker.Lock()
 	defer h.querylocker.Unlock()
@@ -116,10 +114,7 @@ func (h *RecruitmentDB) UpdateRecruitmentRecord(record RecruitmentRecord) (err e
 	return err
 }
 
-
-
 // Display Records
-
 
 // AddRecruitmentRecordToDB function
 func (h *RecruitmentDB) AddRecruitmentDisplayRecordToDB(record RecruitmentDisplayRecord) (err error) {
@@ -188,7 +183,6 @@ func (h *RecruitmentDB) GetAllRecruitmentDisplayDB() (RecordList []RecruitmentDi
 	return RecordList, nil
 }
 
-
 func (h *RecruitmentDB) UpdateRecruitmentDisplayRecord(record RecruitmentDisplayRecord) (err error) {
 	h.querylocker.Lock()
 	defer h.querylocker.Unlock()
@@ -202,4 +196,3 @@ func (h *RecruitmentDB) UpdateRecruitmentDisplayRecord(record RecruitmentDisplay
 	err = db.Save(&record)
 	return err
 }
-

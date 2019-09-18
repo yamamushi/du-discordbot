@@ -11,18 +11,18 @@ type StatsDB struct {
 }
 
 type StatRecord struct {
-	Date string `json:"date" storm:"id"`
-	TotalUsers int `json:"totalusers"`
-	OnlineUsers int `json:"onlineusers"`
-	IdleUsers int `json:"idleusers"`
-	DNDUsers int `json:"dndusers"`
-	InvisibleUsers int `json:"invisibleusers"`
-	GamingUsers int `json:"gamingusers"`
-	VoiceUsers int `json:"voiceusers"`
-	MessageCount int `json:"messagecount"`
-	Engagement int `json:"engagement"`
-	EngagementDaily int `json:"engagementdaily"`
-	ActiveUserCount int `json:"activeusercount"`
+	Date            string `json:"date" storm:"id"`
+	TotalUsers      int    `json:"totalusers"`
+	OnlineUsers     int    `json:"onlineusers"`
+	IdleUsers       int    `json:"idleusers"`
+	DNDUsers        int    `json:"dndusers"`
+	InvisibleUsers  int    `json:"invisibleusers"`
+	GamingUsers     int    `json:"gamingusers"`
+	VoiceUsers      int    `json:"voiceusers"`
+	MessageCount    int    `json:"messagecount"`
+	Engagement      int    `json:"engagement"`
+	EngagementDaily int    `json:"engagementdaily"`
+	ActiveUserCount int    `json:"activeusercount"`
 }
 
 // AddStatToDB function
@@ -55,7 +55,7 @@ func (h *StatsDB) RemoveStatFromDB(stat StatRecord) (err error) {
 	return err
 }
 
-func (h *StatsDB) GetFullDB() (stats []StatRecord, err error){
+func (h *StatsDB) GetFullDB() (stats []StatRecord, err error) {
 	h.querylocker.Lock()
 	defer h.querylocker.Unlock()
 

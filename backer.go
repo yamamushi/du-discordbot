@@ -16,9 +16,9 @@ import (
 )
 
 type BackerInterface struct {
-	db *DBHandler
+	db          *DBHandler
 	querylocker sync.Mutex
-	conf *Config
+	conf        *Config
 }
 
 type BackerRecord struct {
@@ -361,7 +361,6 @@ func (h *BackerInterface) ResetUserRoles(userid string, c mgo.Collection) error 
 	//fmt.Println(record.Validated)
 	return nil
 }
-
 
 func (h *BackerInterface) ForumAuth(url string, userid string, c mgo.Collection) (err error) {
 

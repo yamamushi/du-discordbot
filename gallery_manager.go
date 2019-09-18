@@ -8,19 +8,17 @@ import (
 )
 
 type GalleryManager struct {
-
-	conf        *Config
-	registry    *CommandRegistry
-	db          *DBHandler
-	gallery     *GalleryDB
-	userdb      *UserHandler
+	conf     *Config
+	registry *CommandRegistry
+	db       *DBHandler
+	gallery  *GalleryDB
+	userdb   *UserHandler
 }
-
 
 // Init function
 func (h *GalleryManager) Init() {
 	_ = h.RegisterCommands()
-	h.gallery = &GalleryDB{db:h.db}
+	h.gallery = &GalleryDB{db: h.db}
 }
 
 // RegisterCommands function
@@ -64,7 +62,6 @@ func (h *GalleryManager) Read(s *discordgo.Session, m *discordgo.MessageCreate) 
 	}
 }
 
-
 // ParseCommand function
 func (h *GalleryManager) ParseCommand(commandlist []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
@@ -79,15 +76,14 @@ func (h *GalleryManager) ParseCommand(commandlist []string, s *discordgo.Session
 
 	// Allow text from a user
 	if payload[0] == "help" {
-		help := "Gallery Manager ```"+
-			"whitelist: <channel> <user>\n"+
-			"blacklist: <channel> <user>\n"+
-			"enable: <channel>\n"+
+		help := "Gallery Manager ```" +
+			"whitelist: <channel> <user>\n" +
+			"blacklist: <channel> <user>\n" +
+			"enable: <channel>\n" +
 			"disable: <channel>```"
 		s.ChannelMessageSend(m.ChannelID, help)
 		return
 	}
-
 
 	// Allow text from a user
 	if payload[0] == "whitelist" {
@@ -116,10 +112,10 @@ func (h *GalleryManager) ParseCommand(commandlist []string, s *discordgo.Session
 		config.Whitelist = AppendStringIfMissing(config.Whitelist, m.Mentions[0].ID)
 		err = h.gallery.UpdateConfig(config)
 		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, "Error: Error saving config to DB: " + err.Error())
+			s.ChannelMessageSend(m.ChannelID, "Error: Error saving config to DB: "+err.Error())
 			return
 		}
-		s.ChannelMessageSend(m.ChannelID, m.Mentions[0].Mention()+" was whitelisted in " + payload[1])
+		s.ChannelMessageSend(m.ChannelID, m.Mentions[0].Mention()+" was whitelisted in "+payload[1])
 		return
 	}
 
@@ -150,10 +146,10 @@ func (h *GalleryManager) ParseCommand(commandlist []string, s *discordgo.Session
 		config.Whitelist = RemoveStringFromSlice(config.Whitelist, m.Mentions[0].ID)
 		err = h.gallery.UpdateConfig(config)
 		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, "Error: Error saving config to DB: " + err.Error())
+			s.ChannelMessageSend(m.ChannelID, "Error: Error saving config to DB: "+err.Error())
 			return
 		}
-		s.ChannelMessageSend(m.ChannelID, m.Mentions[0].Mention()+" was removed from the whitelist in " + payload[1])
+		s.ChannelMessageSend(m.ChannelID, m.Mentions[0].Mention()+" was removed from the whitelist in "+payload[1])
 		return
 	}
 
@@ -172,22 +168,22 @@ func (h *GalleryManager) ParseCommand(commandlist []string, s *discordgo.Session
 
 		config, err := h.gallery.GetConfigFromDB(channelid)
 		if err != nil {
-			config = GalleryConfig{ChannelID:channelid, Enabled:true}
+			config = GalleryConfig{ChannelID: channelid, Enabled: true}
 			err = h.gallery.AddConfigToDB(config)
 			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, "Error: Error saving config to DB: " + err.Error())
+				s.ChannelMessageSend(m.ChannelID, "Error: Error saving config to DB: "+err.Error())
 				return
 			}
-			s.ChannelMessageSend(m.ChannelID, "Gallery enabled for " + payload[1])
+			s.ChannelMessageSend(m.ChannelID, "Gallery enabled for "+payload[1])
 			return
 		}
 		config.Enabled = true
 		err = h.gallery.UpdateConfig(config)
 		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, "Error: Error saving config to DB: " + err.Error())
+			s.ChannelMessageSend(m.ChannelID, "Error: Error saving config to DB: "+err.Error())
 			return
 		}
-		s.ChannelMessageSend(m.ChannelID, "Gallery enabled for " + payload[1])
+		s.ChannelMessageSend(m.ChannelID, "Gallery enabled for "+payload[1])
 		return
 	}
 
@@ -206,27 +202,27 @@ func (h *GalleryManager) ParseCommand(commandlist []string, s *discordgo.Session
 
 		config, err := h.gallery.GetConfigFromDB(channelid)
 		if err != nil {
-			config = GalleryConfig{ChannelID:channelid, Enabled:false}
+			config = GalleryConfig{ChannelID: channelid, Enabled: false}
 			err = h.gallery.AddConfigToDB(config)
 			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, "Error: Error saving config to DB: " + err.Error())
+				s.ChannelMessageSend(m.ChannelID, "Error: Error saving config to DB: "+err.Error())
 				return
 			}
-			s.ChannelMessageSend(m.ChannelID, "Gallery enabled for " + payload[1])
+			s.ChannelMessageSend(m.ChannelID, "Gallery enabled for "+payload[1])
 			return
 		}
 		config.Enabled = false
 		err = h.gallery.UpdateConfig(config)
 		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, "Error: Error saving config to DB: " + err.Error())
+			s.ChannelMessageSend(m.ChannelID, "Error: Error saving config to DB: "+err.Error())
 			return
 		}
-		s.ChannelMessageSend(m.ChannelID, "Gallery disabled for " + payload[1])
+		s.ChannelMessageSend(m.ChannelID, "Gallery disabled for "+payload[1])
 		return
 	}
 }
 
-func (h *GalleryManager) Watch(s *discordgo.Session, m *discordgo.MessageCreate){
+func (h *GalleryManager) Watch(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	// Ignore all messages created by the bot itself
 	if m.Author.ID == s.State.User.ID {
@@ -266,7 +262,7 @@ func (h *GalleryManager) Watch(s *discordgo.Session, m *discordgo.MessageCreate)
 
 	content := strings.Split(m.Message.Content, " ")
 	for _, word := range content {
-		if IsValidUrl(word){
+		if IsValidUrl(word) {
 			if IsReachableURL(word) {
 				allowedmessage = true
 				break
@@ -304,7 +300,7 @@ func (h *GalleryManager) Watch(s *discordgo.Session, m *discordgo.MessageCreate)
 		_ = s.ChannelMessageDelete(m.ChannelID, m.ID)
 		privatechannel, err := s.UserChannelCreate(m.Author.ID)
 		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, m.Author.Mention() + " - Your message was removed automatically. Posting text-only messages is disabled in the gallery.")
+			s.ChannelMessageSend(m.ChannelID, m.Author.Mention()+" - Your message was removed automatically. Posting text-only messages is disabled in the gallery.")
 			return
 		}
 		s.ChannelMessageSend(privatechannel.ID, "This is a notification that one of your messages was removed automatically. Text-only messages are disabled in the gallery.")

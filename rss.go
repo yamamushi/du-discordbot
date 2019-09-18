@@ -400,7 +400,7 @@ func (h *RSS) GetLatestItem(url string, channel string) (rssitem RSSItem, err er
 					return rssitem, err
 				}
 				pubtwo := strings.Split(feed.Items[1].Published, "+")
-				secondItemPubDate, err := time.Parse( "Mon _2 Jan 2006 15:04:05", strings.Replace(strings.TrimSpace(pubtwo[0]), ",", "", -1))
+				secondItemPubDate, err := time.Parse("Mon _2 Jan 2006 15:04:05", strings.Replace(strings.TrimSpace(pubtwo[0]), ",", "", -1))
 				if err != nil {
 					return rssitem, err
 				}

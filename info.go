@@ -8,98 +8,90 @@ import (
 )
 
 type InfoDBInterface struct {
-	db *DBHandler
+	db          *DBHandler
 	querylocker sync.Mutex
-	conf *Config
+	conf        *Config
 }
 
 type InfoRecord struct {
-	Name        string `storm:"id",json:"userid"`
-	Description string `json:"description"`
-	RecordType  string `json:"recordtype"`  // satellite/element/resource/skill/user/location
+	Name         string `storm:"id",json:"userid"`
+	Description  string `json:"description"`
+	RecordType   string `json:"recordtype"` // satellite/element/resource/skill/user/location
 	ThumbnailURL string `json:"thumbnailurl"`
-	ImageURL    string `json:"imageurl"`
-	Color       int `json:"color"`
+	ImageURL     string `json:"imageurl"`
+	Color        int    `json:"color"`
 
-	Satellite   SatelliteRecord
-	Element     ElementRecord
-	Resource    ResourceRecord
-	Skill       SkillRecord
-	User        UserRecord
-	Location    LocationRecord
+	Satellite SatelliteRecord
+	Element   ElementRecord
+	Resource  ResourceRecord
+	Skill     SkillRecord
+	User      UserRecord
+	Location  LocationRecord
 
-	Position    string
-	EditorID    string `json:"editorid"`
+	Position string
+	EditorID string `json:"editorid"`
 }
 
 type SatelliteRecord struct {
 	SatelliteType string `json:"satellitetype"` // Planet/Moon
 
 	DiscoveredBy string
-	SystemZone string
-	Atmosphere string // float
-	Gravity    string // float
-	SurfaceArea string // float
-	Biosphere string
+	SystemZone   string
+	Atmosphere   string // float
+	Gravity      string // float
+	SurfaceArea  string // float
+	Biosphere    string
 
 	NotableElements []string
 
 	//SatelliteCount int
-	Satellites []string
+	Satellites      []string
 	ParentSatellite string
 
-	TerraNullius string
-	Territories int
+	TerraNullius       string
+	Territories        int
 	TerritoriesClaimed int
 
-	UserList     []string `json:"users"`
-	LastWho      time.Time `json:"lastwho"`
+	UserList []string  `json:"users"`
+	LastWho  time.Time `json:"lastwho"`
 }
 
 type UserRecord struct {
-
 	UserID string
 
-	OwnedLocations []string
+	OwnedLocations  []string
 	CurrentLocation string
 }
 
 type LocationRecord struct {
-
 	Description string
-
 }
 
 type ElementRecord struct {
-
 	Description string
-
 }
 
 type ResourceRecord struct {
 	ResourceType string `json:"resourcetype"` // ore / refined /
 
-	Recipe  RecipeRecord
-	Weight  string
+	Recipe       RecipeRecord
+	Weight       string
 	ResourceTier string
-	FoundOn []string
+	FoundOn      []string
 }
 
 type SkillRecord struct {
-
 }
 
 type RecipeRecord struct {
-	RecipeName  string
-	RecipeList  []RecipeItem
+	RecipeName string
+	RecipeList []RecipeItem
 }
 
 type RecipeItem struct {
 	ElementType string
 	Volume      string
 }
-
-
 
 // SaveRecordToDB function
 func (h *InfoDBInterface) SaveRecordToDB(record InfoRecord, c mgo.Collection) (err error) {

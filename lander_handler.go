@@ -3,15 +3,14 @@ package main
 import (
 	"github.com/bwmarrin/discordgo"
 	//"time"
-	"time"
 	"fmt"
+	"time"
 )
 
 type LanderHandler struct {
 	configdb *ConfigDB
-	user *UserHandler
+	user     *UserHandler
 }
-
 
 // Read function
 // This handler will wait when a new user joins, and automatically assign roles to users who have not yet authenticated properly
@@ -27,7 +26,7 @@ func (h *LanderHandler) Read(s *discordgo.Session, m *discordgo.GuildMemberAdd) 
 	serverinfoID, err := getChannelIDByName(s, s.State.Guilds[0].ID, "server-information")
 
 	s.ChannelMessageSend(landingZoneID, "Welcome to the Official **Dual Universe** Discord Server "+
-		m.User.Mention()+ ":bulb: Please take a moment to read <#"+ serverinfoID+ ">. You will be granted access automatically"+
+		m.User.Mention()+":bulb: Please take a moment to read <#"+serverinfoID+">. You will be granted access automatically"+
 		" to the rest of the Discord Server in approximately 2 minutes (This is just the lobby, there are other channels here).")
 
 	h.user.CheckUser(m.User.ID)
@@ -80,7 +79,6 @@ func (h *LanderHandler) ReadRemove(s *discordgo.Session, m *discordgo.GuildMembe
 	//member, _ := s.GuildMember(s.State.Guilds[0].ID, m.User.ID)
 	//s.State.MemberRemove(member)
 
-
 	// Wipe our autoroles so that when the user rejoins they start at Guest again
 	userrecord, _ := h.user.GetUser(m.User.ID)
 	userrecord.LatestRoleTimeout = 0
@@ -93,4 +91,3 @@ func (h *LanderHandler) ReadRemove(s *discordgo.Session, m *discordgo.GuildMembe
 	//s.ChannelMessageSend(generalChannelID, "<@"+m.User.ID+"> has left the server.")
 	return
 }
-

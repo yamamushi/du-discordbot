@@ -1,12 +1,12 @@
 package main
 
 import (
-	"github.com/bwmarrin/discordgo"
-	"strings"
 	"fmt"
-		"sync"
-	"time"
+	"github.com/bwmarrin/discordgo"
 	"strconv"
+	"strings"
+	"sync"
+	"time"
 )
 
 // AdminHandler struct
@@ -14,14 +14,13 @@ type AdminHandler struct {
 	conf *Config
 	db   *DBHandler
 
-	registry *CommandRegistry
-	reactions *ReactionsHandler
-	querylocker  sync.RWMutex
-	configdb     *ConfigDB
-	userdb    *UserHandler
+	registry    *CommandRegistry
+	reactions   *ReactionsHandler
+	querylocker sync.RWMutex
+	configdb    *ConfigDB
+	userdb      *UserHandler
 	globalstate *StateDB
 }
-
 
 // Init function
 func (h *AdminHandler) Init() {
@@ -35,7 +34,6 @@ func (h *AdminHandler) RegisterCommands() (err error) {
 	return nil
 
 }
-
 
 func (h *AdminHandler) Flush(s *discordgo.Session, m *discordgo.MessageCreate) {
 	cp := h.conf.DUBotConfig.CP
@@ -58,7 +56,7 @@ func (h *AdminHandler) Flush(s *discordgo.Session, m *discordgo.MessageCreate) {
 			if len(message) < 2 {
 				response, err := s.ChannelMessageSend(m.ChannelID, ":rotating_light: Expected a value for flush!")
 				if err == nil {
-					time.Sleep(3*time.Second)
+					time.Sleep(3 * time.Second)
 					s.ChannelMessageDelete(m.ChannelID, response.ID)
 					s.ChannelMessageDelete(m.ChannelID, m.ID)
 				}
@@ -77,7 +75,7 @@ func (h *AdminHandler) FlushChannel(amount string, s *discordgo.Session, m *disc
 	if err != nil {
 		response, err := s.ChannelMessageSend(m.ChannelID, ":rotating_light: Error getting channel: "+err.Error())
 		if err == nil {
-			time.Sleep(3*time.Second)
+			time.Sleep(3 * time.Second)
 			s.ChannelMessageDelete(m.ChannelID, response.ID)
 			s.ChannelMessageDelete(m.ChannelID, m.ID)
 		}
@@ -88,7 +86,7 @@ func (h *AdminHandler) FlushChannel(amount string, s *discordgo.Session, m *disc
 	if err != nil {
 		response, err := s.ChannelMessageSend(m.ChannelID, ":rotating_light: Error with count: "+err.Error())
 		if err == nil {
-			time.Sleep(3*time.Second)
+			time.Sleep(3 * time.Second)
 			s.ChannelMessageDelete(m.ChannelID, response.ID)
 			s.ChannelMessageDelete(m.ChannelID, m.ID)
 		}
@@ -99,7 +97,7 @@ func (h *AdminHandler) FlushChannel(amount string, s *discordgo.Session, m *disc
 	if err != nil {
 		response, err := s.ChannelMessageSend(m.ChannelID, ":rotating_light: Error flushing channel: "+err.Error())
 		if err == nil {
-			time.Sleep(3*time.Second)
+			time.Sleep(3 * time.Second)
 			s.ChannelMessageDelete(m.ChannelID, response.ID)
 			s.ChannelMessageDelete(m.ChannelID, m.ID)
 		}
@@ -120,7 +118,6 @@ func (h *AdminHandler) FlushChannel(amount string, s *discordgo.Session, m *disc
 	}
 	return
 }
-
 
 // Read function
 func (h *AdminHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -179,13 +176,10 @@ func (h *AdminHandler) ParseCommand(commandlist []string, s *discordgo.Session, 
 	return
 }
 
-
-
 func (h *AdminHandler) HelpOutput(s *discordgo.Session, m *discordgo.MessageCreate) {
 	s.ChannelMessageSend(m.ChannelID, "The administrative interface is managed through a ui. Click on the reaction emojis to navigate.")
 	return
 }
-
 
 func (h *AdminHandler) DefaultEmbed() (embed *discordgo.MessageEmbed) {
 
@@ -197,15 +191,15 @@ func (h *AdminHandler) DefaultEmbed() (embed *discordgo.MessageEmbed) {
 	//loc, _ := time.LoadLocation("America/Chicago")
 	//embed.Timestamp = time.Now().In(loc).Format("Mon Jan _2 03:04 MST 2006")
 
-	embed.Footer = &discordgo.MessageEmbedFooter{Text:"Dual Universe Bot",
-	IconURL:"https://cdn.discordapp.com/attachments/418457755276410880/473080359219625989/Server_Logo.jpg"}
+	embed.Footer = &discordgo.MessageEmbedFooter{Text: "Dual Universe Bot",
+		IconURL: "https://cdn.discordapp.com/attachments/418457755276410880/473080359219625989/Server_Logo.jpg"}
 
-	embed.Author = &discordgo.MessageEmbedAuthor{Name:"Admin Interface"}
+	embed.Author = &discordgo.MessageEmbedAuthor{Name: "Admin Interface"}
 
 	return embed
 }
 
-func (h *AdminHandler) MainMenu() (embed *discordgo.MessageEmbed){
+func (h *AdminHandler) MainMenu() (embed *discordgo.MessageEmbed) {
 	embed = h.DefaultEmbed()
 
 	embed.Title = "Main Menu"
@@ -215,44 +209,30 @@ func (h *AdminHandler) MainMenu() (embed *discordgo.MessageEmbed){
 	embed.Description = "Welcome to the Dual Universe Bot Admin Interface. Please select an option from the menu below.\n\n" + time.Now().In(loc).Format("Mon Jan _2 03:04 MST 2006")
 
 	/*
-	var reactions []string
-	reactions = append(reactions, "0⃣")
-	reactions = append(reactions, "1⃣")
-	reactions = append(reactions, "2⃣")
-	reactions = append(reactions, "3⃣")
-	reactions = append(reactions, "4⃣")
-	reactions = append(reactions, "5⃣")
-	reactions = append(reactions, "6⃣")
-	reactions = append(reactions, "7⃣")
-	reactions = append(reactions, "8⃣")
-	reactions = append(reactions, "9⃣")
-	reactions = append(reactions, "➡")
-	reactions = append(reactions, "⬅")
+		var reactions []string
+		reactions = append(reactions, "0⃣")
+		reactions = append(reactions, "1⃣")
+		reactions = append(reactions, "2⃣")
+		reactions = append(reactions, "3⃣")
+		reactions = append(reactions, "4⃣")
+		reactions = append(reactions, "5⃣")
+		reactions = append(reactions, "6⃣")
+		reactions = append(reactions, "7⃣")
+		reactions = append(reactions, "8⃣")
+		reactions = append(reactions, "9⃣")
+		reactions = append(reactions, "➡")
+		reactions = append(reactions, "⬅")
 
-	for _, reaction := range reactions {
-		s.MessageReactionRemove(channelID, messageID, reaction, s.State.User.ID)
-	}
-*/
+		for _, reaction := range reactions {
+			s.MessageReactionRemove(channelID, messageID, reaction, s.State.User.ID)
+		}
+	*/
 
 	var fields []*discordgo.MessageEmbedField
 
 	configs := &discordgo.MessageEmbedField{Name: "0⃣", Value: "Configs", Inline: true}
 	fields = append(fields, configs)
 
-
-
-
 	embed.Fields = fields
 	return embed
 }
-
-
-
-
-
-
-
-
-
-
-

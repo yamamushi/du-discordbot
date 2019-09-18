@@ -10,22 +10,19 @@ import (
 )
 
 type InfoHandler struct {
-
-	conf        *Config
-	registry    *CommandRegistry
-	db          *DBHandler
-	userdb      *UserHandler
-	infodb      *InfoDBInterface
-	reactions   *InfoReactionsHandler
-	infocallback    *InfoCallbackHandler
-
+	conf         *Config
+	registry     *CommandRegistry
+	db           *DBHandler
+	userdb       *UserHandler
+	infodb       *InfoDBInterface
+	reactions    *InfoReactionsHandler
+	infocallback *InfoCallbackHandler
 }
-
 
 // Init function
 func (h *InfoHandler) Init() {
 	_ = h.RegisterCommands()
-	h.infodb = &InfoDBInterface{db:h.db, conf:h.conf}
+	h.infodb = &InfoDBInterface{db: h.db, conf: h.conf}
 }
 
 // RegisterCommands function
@@ -70,7 +67,6 @@ func (h *InfoHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// Else
 }
 
-
 // ParseCommand function
 func (h *InfoHandler) ParseCommand(commandlist []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
@@ -97,7 +93,7 @@ func (h *InfoHandler) ParseCommand(commandlist []string, s *discordgo.Session, m
 		}
 		err := h.Edit(payload, s, m)
 		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+			s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 			return
 		}
 		return
@@ -109,7 +105,7 @@ func (h *InfoHandler) ParseCommand(commandlist []string, s *discordgo.Session, m
 		}
 		err := h.New(payload, s, m)
 		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+			s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 			return
 		}
 		return
@@ -119,7 +115,7 @@ func (h *InfoHandler) ParseCommand(commandlist []string, s *discordgo.Session, m
 
 	err := h.RenderInfoPage(recordname, s, m)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 		return
 	}
 }
@@ -165,7 +161,7 @@ func (h *InfoHandler) HelpOutput(s *discordgo.Session, m *discordgo.MessageCreat
 
 }
 
-func (h  *InfoHandler) Edit(args []string, s *discordgo.Session, m *discordgo.MessageCreate) (err error) {
+func (h *InfoHandler) Edit(args []string, s *discordgo.Session, m *discordgo.MessageCreate) (err error) {
 
 	user, err := h.userdb.GetUser(m.Author.ID)
 	if err != nil {
@@ -207,7 +203,7 @@ func (h  *InfoHandler) Edit(args []string, s *discordgo.Session, m *discordgo.Me
 	return nil
 }
 
-func (h  *InfoHandler) New(args []string, s *discordgo.Session, m *discordgo.MessageCreate) (err error) {
+func (h *InfoHandler) New(args []string, s *discordgo.Session, m *discordgo.MessageCreate) (err error) {
 
 	user, err := h.userdb.GetUser(m.Author.ID)
 	if err != nil {
@@ -228,18 +224,16 @@ func (h  *InfoHandler) New(args []string, s *discordgo.Session, m *discordgo.Mes
 	// Remove first element from argument list (which is "edit" here)
 	args = append(args[:0], args[1:]...)
 
-
 	recordname := strings.Join(args, " ")
 	_, err = h.infodb.GetRecordFromDB(recordname, *collection)
 	if err == nil {
-		return errors.New("Record \"**"+ strings.ToTitle(recordname) + "**\" already exists")
+		return errors.New("Record \"**" + strings.ToTitle(recordname) + "**\" already exists")
 	}
 
 	err = h.infodb.NewInfoRecord(recordname, *collection)
 	if err != nil {
 		return err
 	}
-
 
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor"
@@ -257,8 +251,7 @@ func (h  *InfoHandler) New(args []string, s *discordgo.Session, m *discordgo.Mes
 	return nil
 }
 
-
-func (h *InfoHandler) RenderInfoPage(recordname string, s *discordgo.Session, m *discordgo.MessageCreate) (err error){
+func (h *InfoHandler) RenderInfoPage(recordname string, s *discordgo.Session, m *discordgo.MessageCreate) (err error) {
 
 	collection, session, err := h.GetMongoCollecton()
 	if err != nil {
@@ -278,7 +271,7 @@ func (h *InfoHandler) RenderInfoPage(recordname string, s *discordgo.Session, m 
 	if record.RecordType == "element" {
 		return h.RenderElementPage(record, s, m)
 	} else if record.RecordType == "satellite" {
-		r := &discordgo.MessageReaction{MessageID:rootmessage.ID, ChannelID:rootmessage.ChannelID, UserID:m.Author.ID}
+		r := &discordgo.MessageReaction{MessageID: rootmessage.ID, ChannelID: rootmessage.ChannelID, UserID: m.Author.ID}
 		h.ViewSatelliteInfoMenu(record, s, r)
 		return nil
 	} else if record.RecordType == "resource" {
@@ -314,7 +307,7 @@ func (h *InfoHandler) RenderSkillPage(record InfoRecord, s *discordgo.Session, m
 	return nil
 }
 
-func (h *InfoHandler) ValidatePosition(position string) (bool) {
+func (h *InfoHandler) ValidatePosition(position string) bool {
 
 	//::pos{0,2,0.7104,103.0054,-123.9859}
 
@@ -338,9 +331,9 @@ func (h *InfoHandler) ValidatePosition(position string) (bool) {
 	return true
 }
 
-func (h *InfoHandler) SetUserLocation(userID string, location string, position string)(err error){
+func (h *InfoHandler) SetUserLocation(userID string, location string, position string) (err error) {
 
-	if !h.ValidatePosition(position) && position != "confirm" && position != "space"{
+	if !h.ValidatePosition(position) && position != "confirm" && position != "space" {
 		return errors.New("Invalid position")
 	}
 
@@ -357,7 +350,7 @@ func (h *InfoHandler) SetUserLocation(userID string, location string, position s
 
 	userrecord, err := h.infodb.GetRecordFromDB(userID, *collection)
 	if err != nil {
-		err = h.infodb.SaveRecordToDB(InfoRecord{Name:userID, RecordType:"user", User:UserRecord{UserID:userID}}, *collection)
+		err = h.infodb.SaveRecordToDB(InfoRecord{Name: userID, RecordType: "user", User: UserRecord{UserID: userID}}, *collection)
 		if err != nil {
 			return err
 		}
@@ -381,7 +374,6 @@ func (h *InfoHandler) SetUserLocation(userID string, location string, position s
 		userrecord.Position = "::pos{0,0,0,0,0}"
 		record.Satellite.UserList = AppendStringIfMissing(record.Satellite.UserList, userID)
 	}
-
 
 	err = h.infodb.SaveRecordToDB(record, *collection)
 	if err != nil {

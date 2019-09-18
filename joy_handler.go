@@ -20,7 +20,6 @@ func (h *JoyHandler) Init() {
 	h.joydb = &JoyDB{db: h.db}
 }
 
-
 // RegisterCommands function
 func (h *JoyHandler) RegisterCommands() (err error) {
 	h.registry.Register("joy", "Bring :joy: to the world", "joy")
@@ -62,7 +61,7 @@ func (h *JoyHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 }
 
-func (h *JoyHandler) React( s *discordgo.Session, m *discordgo.MessageCreate) {
+func (h *JoyHandler) React(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if m.Author.ID == s.State.User.ID {
 		return
@@ -80,7 +79,7 @@ func (h *JoyHandler) React( s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 	// Check message has joy
-	if strings.Contains(m.Content, "😂"){
+	if strings.Contains(m.Content, "😂") {
 		s.MessageReactionAdd(m.ChannelID, m.Message.ID, "😂")
 		return
 	}
@@ -116,7 +115,7 @@ func (h *JoyHandler) ParseCommand(command []string, s *discordgo.Session, m *dis
 	}
 }
 
-func (h *JoyHandler) EnableJoyUser( command []string, s *discordgo.Session, m *discordgo.MessageCreate) {
+func (h *JoyHandler) EnableJoyUser(command []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if len(m.Mentions) < 1 {
 		s.ChannelMessageSend(m.ChannelID, "This command requires a user mention")
@@ -132,17 +131,17 @@ func (h *JoyHandler) EnableJoyUser( command []string, s *discordgo.Session, m *d
 			s.ChannelMessageSend(m.ChannelID, err.Error())
 			return
 		}
-		s.ChannelMessageSend(m.ChannelID, "Enabled for " + m.Mentions[0].Mention())
+		s.ChannelMessageSend(m.ChannelID, "Enabled for "+m.Mentions[0].Mention())
 		return
 	}
 
 	record.Enabled = true
 	h.joydb.UpdateJoyRecord(record)
-	s.ChannelMessageSend(m.ChannelID, "Enabled for " + m.Mentions[0].Mention())
+	s.ChannelMessageSend(m.ChannelID, "Enabled for "+m.Mentions[0].Mention())
 	return
 }
 
-func (h *JoyHandler) DisableJoyUser( command []string, s *discordgo.Session, m *discordgo.MessageCreate) {
+func (h *JoyHandler) DisableJoyUser(command []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 	if len(m.Mentions) < 1 {
 		s.ChannelMessageSend(m.ChannelID, "This command requires a user mention")
 		return
@@ -157,17 +156,17 @@ func (h *JoyHandler) DisableJoyUser( command []string, s *discordgo.Session, m *
 			s.ChannelMessageSend(m.ChannelID, err.Error())
 			return
 		}
-		s.ChannelMessageSend(m.ChannelID, "Disabled for " + m.Mentions[0].Mention())
+		s.ChannelMessageSend(m.ChannelID, "Disabled for "+m.Mentions[0].Mention())
 		return
 	}
 
 	record.Enabled = false
 	h.joydb.UpdateJoyRecord(record)
-	s.ChannelMessageSend(m.ChannelID, "Disabled for " + m.Mentions[0].Mention())
+	s.ChannelMessageSend(m.ChannelID, "Disabled for "+m.Mentions[0].Mention())
 	return
 }
 
-func (h *JoyHandler) CheckUser( userID string ) bool {
+func (h *JoyHandler) CheckUser(userID string) bool {
 	record, err := h.joydb.GetJoyIDFromDB(userID)
 	if err != nil {
 		return false

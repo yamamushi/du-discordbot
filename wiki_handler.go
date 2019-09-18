@@ -1,28 +1,26 @@
 package main
 
 import (
-	"github.com/bwmarrin/discordgo"
-	"strings"
+	"encoding/json"
 	"fmt"
+	"github.com/bwmarrin/discordgo"
 	"net/http"
-		"encoding/json"
-	"time"
-	"strconv"
 	"reflect"
-	)
+	"strconv"
+	"strings"
+	"time"
+)
 
 type WikiHandler struct {
-	conf     *Config
-	registry *CommandRegistry
-	db       *DBHandler
-	callback *CallbackHandler
+	conf      *Config
+	registry  *CommandRegistry
+	db        *DBHandler
+	callback  *CallbackHandler
 	reactions *ReactionsHandler
 
 	userdb   *UserHandler
 	configdb *ConfigDB
-
 }
-
 
 type WikiSearchResult struct {
 	Batchcomplete string `json:"batchcomplete"`
@@ -45,12 +43,10 @@ type WikiSearchResult struct {
 	} `json:"query"`
 }
 
-
 // Init function
 func (h *WikiHandler) Init() {
 	h.RegisterCommands()
 }
-
 
 // RegisterCommands function
 func (h *WikiHandler) RegisterCommands() (err error) {
@@ -93,15 +89,13 @@ func (h *WikiHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 }
 
-
-
 // ParseCommand function
 func (h *WikiHandler) ParseCommand(commandlist []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	command, payload := SplitPayload(commandlist)
 
 	if len(payload) == 0 {
-		s.ChannelMessageSend(m.ChannelID, "Command " + command + " expects an argument, see help for usage.")
+		s.ChannelMessageSend(m.ChannelID, "Command "+command+" expects an argument, see help for usage.")
 		return
 	}
 	if payload[0] == "!help" {
@@ -113,7 +107,7 @@ func (h *WikiHandler) ParseCommand(commandlist []string, s *discordgo.Session, m
 	for i, word := range payload {
 		if i == 0 {
 			searchquery = word
-		}  else {
+		} else {
 			searchquery = searchquery + "+" + word
 		}
 	}
@@ -122,7 +116,7 @@ func (h *WikiHandler) ParseCommand(commandlist []string, s *discordgo.Session, m
 	return
 }
 
-func (h *WikiHandler) HelpOutput(s *discordgo.Session, m *discordgo.MessageCreate){
+func (h *WikiHandler) HelpOutput(s *discordgo.Session, m *discordgo.MessageCreate) {
 	output := "Command usage for wiki: \n"
 	output = output + "```\n"
 	output = output + "This command interacts with the Official Dual Universe wiki at https://dualuniverse.gamepedia.com/" +
@@ -135,7 +129,7 @@ func (h *WikiHandler) ParseSearch(content string, s *discordgo.Session, m *disco
 
 	jsonresponse, err := h.GetQueryJson(content, 0)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 		return
 	}
 
@@ -145,7 +139,7 @@ func (h *WikiHandler) ParseSearch(content string, s *discordgo.Session, m *disco
 	}
 
 	if len(jsonresponse.Query.Search) == 1 {
-		output := ":bulb: " + "https://dualuniverse.gamepedia.com/"+strings.Replace(jsonresponse.Query.Search[0].Title, " ", "_", -1)
+		output := ":bulb: " + "https://dualuniverse.gamepedia.com/" + strings.Replace(jsonresponse.Query.Search[0].Title, " ", "_", -1)
 		s.ChannelMessageSend(m.ChannelID, output)
 		return
 	}
@@ -155,7 +149,7 @@ func (h *WikiHandler) ParseSearch(content string, s *discordgo.Session, m *disco
 	output := ":bulb: Pages with content matching your query: \n```\n"
 	//output = output + "(Page " + strconv.Itoa(1) + ")\n"
 	for i, searchresult := range jsonresponse.Query.Search {
-		if  i < 10 {
+		if i < 10 {
 			output = output + strconv.Itoa(i) + ") " + searchresult.Title + "\n"
 		}
 		if i == 0 {
@@ -192,10 +186,9 @@ func (h *WikiHandler) ParseSearch(content string, s *discordgo.Session, m *disco
 	}
 	output = output + "\n```\n"
 
-
 	marshalled, err := json.Marshal(jsonresponse)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 		return
 	}
 
@@ -204,7 +197,7 @@ func (h *WikiHandler) ParseSearch(content string, s *discordgo.Session, m *disco
 	err = h.reactions.Create(h.HandlePendingCreatedReaction, reactions, m.ChannelID, output, packed, s)
 
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 		return
 	}
 }
@@ -233,7 +226,7 @@ func (h *WikiHandler) GetQueryJson(search string, offset int) (result WikiSearch
 	return result, nil
 }
 
-func (h *WikiHandler) HandlePendingCreatedReaction(reaction string, payload string, s *discordgo.Session, m interface{}){
+func (h *WikiHandler) HandlePendingCreatedReaction(reaction string, payload string, s *discordgo.Session, m interface{}) {
 
 	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
 	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("MessageID").String()
@@ -252,14 +245,14 @@ func (h *WikiHandler) HandlePendingCreatedReaction(reaction string, payload stri
 	err := json.Unmarshal([]byte(combined), &unmarshalledjson)
 	if err != nil {
 		fmt.Println(combined)
-		s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	if reaction == "➡" {
 		jsonresponse, err := h.GetQueryJson(query, unmarshalledjson.Continue.Sroffset+10)
 		if err != nil {
-			s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 
@@ -271,13 +264,13 @@ func (h *WikiHandler) HandlePendingCreatedReaction(reaction string, payload stri
 			}
 		}
 		output = output + "\n```\n"
-		sentmsg, err := s.ChannelMessageEdit(channelID,messageID,output)
+		sentmsg, err := s.ChannelMessageEdit(channelID, messageID, output)
 		if err != nil {
 			fmt.Println(sentmsg.ID + " " + err.Error())
 		}
 		err = s.MessageReactionAdd(channelID, messageID, "⬅")
 		if err != nil {
-			s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 		return
@@ -289,7 +282,7 @@ func (h *WikiHandler) HandlePendingCreatedReaction(reaction string, payload stri
 
 		jsonresponse, err := h.GetQueryJson(query, unmarshalledjson.Continue.Sroffset-10)
 		if err != nil {
-			s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 
@@ -301,7 +294,7 @@ func (h *WikiHandler) HandlePendingCreatedReaction(reaction string, payload stri
 			}
 		}
 		output = output + "\n```\n"
-		s.ChannelMessageEdit(channelID,messageID,output)
+		s.ChannelMessageEdit(channelID, messageID, output)
 		return
 	}
 	if reaction == "0⃣" {
@@ -338,47 +331,47 @@ func (h *WikiHandler) HandlePendingCreatedReaction(reaction string, payload stri
 	return
 }
 
-func (h *WikiHandler) SendResult(result WikiSearchResult, selection int, channelID string, messageID string, s *discordgo.Session){
+func (h *WikiHandler) SendResult(result WikiSearchResult, selection int, channelID string, messageID string, s *discordgo.Session) {
 
 	if selection > len(result.Query.Search) {
 		return
 	}
 
-/*
-	output := ":bulb: "+result.Query.Search[selection].Title+" : \n```\n"
-	//output = output + "(Page " + strconv.Itoa(jsonresponse.Continue.Sroffset) + ")\n"
+	/*
+		output := ":bulb: "+result.Query.Search[selection].Title+" : \n```\n"
+		//output = output + "(Page " + strconv.Itoa(jsonresponse.Continue.Sroffset) + ")\n"
 
-	output = output + strip.StripTags(result.Query.Search[selection].Snippet) + "...\n"
-	output = output + "\n"
-	output = output + "Read more at: https://dualuniverse.gamepedia.com/"+strings.Replace(result.Query.Search[selection].Title, " ", "%20", -1) + "\n"
+		output = output + strip.StripTags(result.Query.Search[selection].Snippet) + "...\n"
+		output = output + "\n"
+		output = output + "Read more at: https://dualuniverse.gamepedia.com/"+strings.Replace(result.Query.Search[selection].Title, " ", "%20", -1) + "\n"
 
-	loc, _ := time.LoadLocation("America/Chicago")
-	output = output + result.Query.Search[selection].Timestamp.In(loc).Format("Mon Jan _2 03:04 MST 2006") + "\n"
+		loc, _ := time.LoadLocation("America/Chicago")
+		output = output + result.Query.Search[selection].Timestamp.In(loc).Format("Mon Jan _2 03:04 MST 2006") + "\n"
 
-	output = output + "\n```\n"
-*/
-	output := ":bulb: " + "https://dualuniverse.gamepedia.com/"+strings.Replace(result.Query.Search[selection].Title, " ", "_", -1)
-	s.ChannelMessageEdit(channelID,messageID,output)
+		output = output + "\n```\n"
+	*/
+	output := ":bulb: " + "https://dualuniverse.gamepedia.com/" + strings.Replace(result.Query.Search[selection].Title, " ", "_", -1)
+	s.ChannelMessageEdit(channelID, messageID, output)
 	h.reactions.UnWatch(channelID, messageID)
-/*
-	var reactions []string
-	reactions = append(reactions, "0⃣")
-	reactions = append(reactions, "1⃣")
-	reactions = append(reactions, "2⃣")
-	reactions = append(reactions, "3⃣")
-	reactions = append(reactions, "4⃣")
-	reactions = append(reactions, "5⃣")
-	reactions = append(reactions, "6⃣")
-	reactions = append(reactions, "7⃣")
-	reactions = append(reactions, "8⃣")
-	reactions = append(reactions, "9⃣")
-	reactions = append(reactions, "➡")
-	reactions = append(reactions, "⬅")
+	/*
+		var reactions []string
+		reactions = append(reactions, "0⃣")
+		reactions = append(reactions, "1⃣")
+		reactions = append(reactions, "2⃣")
+		reactions = append(reactions, "3⃣")
+		reactions = append(reactions, "4⃣")
+		reactions = append(reactions, "5⃣")
+		reactions = append(reactions, "6⃣")
+		reactions = append(reactions, "7⃣")
+		reactions = append(reactions, "8⃣")
+		reactions = append(reactions, "9⃣")
+		reactions = append(reactions, "➡")
+		reactions = append(reactions, "⬅")
 
-	for _, reaction := range reactions {
-		s.MessageReactionRemove(channelID, messageID, reaction, s.State.User.ID)
-	}
-*/
+		for _, reaction := range reactions {
+			s.MessageReactionRemove(channelID, messageID, reaction, s.State.User.ID)
+		}
+	*/
 	//time.Sleep(5*time.Second)
 
 	err := s.MessageReactionsRemoveAll(channelID, messageID)

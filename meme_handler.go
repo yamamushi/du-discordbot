@@ -4,8 +4,8 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"strings"
 
-	"strconv"
 	"fmt"
+	"strconv"
 )
 
 // MemeHandler struct -> This operates without relying on a command string.
@@ -32,7 +32,7 @@ func (h *MemeHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		s.ChannelMessageSend(m.ChannelID, "Yes, my child? \n http://i.imgur.com/DYq8TNe.jpg")
 		return
 	}
-	if strings.Contains(message, "scp-"){
+	if strings.Contains(message, "scp-") {
 		payload := strings.Split(message, " ")
 		for _, word := range payload {
 			if strings.HasPrefix(word, "scp-") {
@@ -45,7 +45,7 @@ func (h *MemeHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 			}
 		}
 	}
-	if strings.Contains(message, "/r/"){
+	if strings.Contains(message, "/r/") {
 		words := strings.Split(message, " ")
 		for _, word := range words {
 			if strings.HasPrefix(word, "/r/") {
@@ -77,11 +77,11 @@ func (h *MemeHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		s.MessageReactionAdd(m.ChannelID, m.Message.ID, ":nomad:477252497002594315")
 	}
 	/*
-	if MessageHasMeme(message, "thanks") || MessageHasMeme(message, "thank you") ||
-		MessageHasMeme(message, "danke") || MessageHasMeme(message, "gracias") ||
-			MessageHasMeme(message, "tom hanks"){
-		s.MessageReactionAdd(m.ChannelID, m.Message.ID, ":thanks:297438919165739019")
-	}
+		if MessageHasMeme(message, "thanks") || MessageHasMeme(message, "thank you") ||
+			MessageHasMeme(message, "danke") || MessageHasMeme(message, "gracias") ||
+				MessageHasMeme(message, "tom hanks"){
+			s.MessageReactionAdd(m.ChannelID, m.Message.ID, ":thanks:297438919165739019")
+		}
 	*/
 	return
 }

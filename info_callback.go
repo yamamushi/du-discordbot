@@ -15,7 +15,7 @@ type InfoCallbackHandler struct {
 
 // WatchUser struct
 type InfoWatchUser struct {
-	UserID      string
+	UserID    string
 	ChannelID string
 	MessageID string
 	Handler   func(string, string, string, *discordgo.Session, interface{})
@@ -65,7 +65,7 @@ func (c *InfoCallbackHandler) Read(s *discordgo.Session, m *discordgo.MessageCre
 
 		if m.ChannelID == channelid.String() && m.Author.ID == userid.String() {
 
-			_= s.ChannelMessageDelete(m.ChannelID, m.ID)
+			_ = s.ChannelMessageDelete(m.ChannelID, m.ID)
 
 			// We get the handler interface from our "Handler" field
 			handler := reflect.Indirect(r).FieldByName("Handler")

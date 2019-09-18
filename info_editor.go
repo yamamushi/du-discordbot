@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func (h *InfoHandler) EditMenu(recordname string, messageID string, channelID string, userID string, s *discordgo.Session) (err error){
+func (h *InfoHandler) EditMenu(recordname string, messageID string, channelID string, userID string, s *discordgo.Session) (err error) {
 
 	collection, session, err := h.GetMongoCollecton()
 	if err != nil {
@@ -25,18 +25,17 @@ func (h *InfoHandler) EditMenu(recordname string, messageID string, channelID st
 	err = s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
-
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor"
-	embed.Description = "Currently Editing \"**"+strings.Title(record.Name)+"**\""
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
+	embed.Description = "Currently Editing \"**" + strings.Title(record.Name) + "**\""
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: record.ThumbnailURL}
 	embed.Color = record.Color
 	if record.EditorID != "" {
-		user, err  := s.User(record.EditorID)
+		user, err := s.User(record.EditorID)
 		if err == nil {
 			embed.Footer = &discordgo.MessageEmbedFooter{Text: "Edited by: " + user.Username}
 		}
@@ -110,7 +109,7 @@ func (h *InfoHandler) EditMenu(recordname string, messageID string, channelID st
 	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	h.reactions.Watch(h.HandleEditorMainMenu, messageID, channelID, userID, recordname, s)
@@ -126,20 +125,20 @@ func (h *InfoHandler) HandleEditorMainMenu(reaction string, recordname string, s
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	collection, session, err := h.GetMongoCollecton()
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	defer session.Close()
 
 	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
@@ -166,7 +165,7 @@ func (h *InfoHandler) HandleEditorMainMenu(reaction string, recordname string, s
 	if reaction == "6⃣" {
 		if record.RecordType == "" {
 			errormessage, _ := s.ChannelMessageSend(channelID, "Error: Cannot set record properties without record type, please configure this first.")
-			time.Sleep(10*time.Second)
+			time.Sleep(10 * time.Second)
 			_ = s.ChannelMessageDelete(channelID, errormessage.ID)
 			h.SetRecordTypeMenu(record, s, m)
 			return
@@ -195,7 +194,7 @@ func (h *InfoHandler) HandleEditorMainMenu(reaction string, recordname string, s
 	if reaction == "8⃣" {
 		err = s.ChannelMessageDelete(channelID, messageID)
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 		s.ChannelMessageSend(channelID, "Info Editor Session Closed")
@@ -215,10 +214,9 @@ func (h *InfoHandler) SetRecordTypeMenu(record InfoRecord, s *discordgo.Session,
 
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor - Record Type Selection"
-	embed.Description = "Currently Editing \"**"+strings.Title(record.Name)+"**\""
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
+	embed.Description = "Currently Editing \"**" + strings.Title(record.Name) + "**\""
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: record.ThumbnailURL}
 	embed.Color = record.Color
-
 
 	var fields []*discordgo.MessageEmbedField
 
@@ -246,7 +244,6 @@ func (h *InfoHandler) SetRecordTypeMenu(record InfoRecord, s *discordgo.Session,
 	optionfour.Inline = true
 	fields = append(fields, &optionfour)
 
-
 	var reactions []string
 	reactions = append(reactions, "⬅")
 	reactions = append(reactions, "1⃣")
@@ -258,11 +255,10 @@ func (h *InfoHandler) SetRecordTypeMenu(record InfoRecord, s *discordgo.Session,
 		_ = s.MessageReactionAdd(channelID, messageID, reaction)
 	}
 
-
 	_, err := s.ChannelMessageEditEmbed(channelID, messageID, embed)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	h.reactions.Watch(h.HandleSetRecordType, messageID, channelID, userID, record.Name, s)
@@ -278,27 +274,27 @@ func (h *InfoHandler) HandleSetRecordType(reaction string, recordname string, s 
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	collection, session, err := h.GetMongoCollecton()
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	defer session.Close()
 
 	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	if reaction == "⬅" {
 		err = h.EditMenu(record.Name, messageID, channelID, userID, s)
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 		return
@@ -318,18 +314,17 @@ func (h *InfoHandler) HandleSetRecordType(reaction string, recordname string, s 
 
 	err = h.infodb.SaveRecordToDB(record, *collection)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error Saving Record: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error Saving Record: "+err.Error())
 		return
 	}
 
 	err = h.EditMenu(record.Name, messageID, channelID, userID, s)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	return
 }
-
 
 // Record Description
 
@@ -343,16 +338,15 @@ func (h *InfoHandler) SetRecordDescriptionMenu(record InfoRecord, s *discordgo.S
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor - Record Description"
-	embed.Description = "Currently Editing: \"**"+strings.Title(record.Name)+"**\""
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
+	embed.Description = "Currently Editing: \"**" + strings.Title(record.Name) + "**\""
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: record.ThumbnailURL}
 	embed.Color = record.Color
-
 
 	var fields []*discordgo.MessageEmbedField
 
@@ -370,7 +364,6 @@ func (h *InfoHandler) SetRecordDescriptionMenu(record InfoRecord, s *discordgo.S
 	optiontwo.Inline = false
 	fields = append(fields, &optiontwo)
 
-
 	var reactions []string
 	reactions = append(reactions, "⬅")
 
@@ -379,11 +372,10 @@ func (h *InfoHandler) SetRecordDescriptionMenu(record InfoRecord, s *discordgo.S
 		_ = s.MessageReactionAdd(channelID, messageID, reaction)
 	}
 
-
 	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	h.infocallback.Watch(h.HandleSetRecordDescription, channelID, messageID, userID, record.Name, s)
@@ -402,40 +394,38 @@ func (h *InfoHandler) HandleSetRecordDescription(recordname string, userID strin
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	collection, session, err := h.GetMongoCollecton()
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	defer session.Close()
 
 	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	// Handle invalid descriptions
 	if len(description) > 2047 {
-		errormessage, _ := s.ChannelMessageSend(channelID, "Provided description was too long, " +
+		errormessage, _ := s.ChannelMessageSend(channelID, "Provided description was too long, "+
 			"must be shorter than 2048 characters for discord embed compatibility. Returning to previous menu.")
 		h.SetRecordDescriptionMenu(record, s, m)
-		time.Sleep(10*time.Second)
+		time.Sleep(10 * time.Second)
 		_ = s.ChannelMessageDelete(channelID, errormessage.ID)
 		return
 	}
 
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor - Confirm Record Description"
-	embed.Description = "Confirm Description Selection For: \"**"+strings.Title(recordname)+"**\""
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
+	embed.Description = "Confirm Description Selection For: \"**" + strings.Title(recordname) + "**\""
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: record.ThumbnailURL}
 	embed.Color = record.Color
-
-
 
 	var fields []*discordgo.MessageEmbedField
 
@@ -451,7 +441,6 @@ func (h *InfoHandler) HandleSetRecordDescription(recordname string, userID strin
 	optiontwo.Inline = false
 	fields = append(fields, &optiontwo)
 
-
 	var reactions []string
 	reactions = append(reactions, "✅")
 	reactions = append(reactions, "❎")
@@ -463,7 +452,7 @@ func (h *InfoHandler) HandleSetRecordDescription(recordname string, userID strin
 
 	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
@@ -475,7 +464,6 @@ func (h *InfoHandler) HandleSetRecordDescription(recordname string, userID strin
 
 func (h *InfoHandler) HandleSetRecordDescriptionReactions(reaction string, recordname string, s *discordgo.Session, m interface{}) {
 
-
 	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
 	messageID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("MessageID").String()
 	userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
@@ -484,7 +472,7 @@ func (h *InfoHandler) HandleSetRecordDescriptionReactions(reaction string, recor
 		h.infocallback.UnWatch(channelID, messageID, userID)
 		err := h.EditMenu(recordname, messageID, channelID, userID, s)
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 		return
@@ -502,7 +490,7 @@ func (h *InfoHandler) HandleSetRecordDescriptionConfirm(reaction string, args st
 
 	payload := strings.Split(args, "|#|")
 	if len(payload) < 2 || len(payload) > 2 {
-		_, _ = s.ChannelMessageSend(channelID, "Error: HandleSetRecordDescriptionConfirm payload invalid size - " + strconv.Itoa(len(payload)))
+		_, _ = s.ChannelMessageSend(channelID, "Error: HandleSetRecordDescriptionConfirm payload invalid size - "+strconv.Itoa(len(payload)))
 		return
 	}
 	recordname := payload[0]
@@ -510,14 +498,14 @@ func (h *InfoHandler) HandleSetRecordDescriptionConfirm(reaction string, args st
 
 	collection, session, err := h.GetMongoCollecton()
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	defer session.Close()
 
 	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
@@ -526,7 +514,7 @@ func (h *InfoHandler) HandleSetRecordDescriptionConfirm(reaction string, args st
 		record.Description = description
 		err = h.infodb.SaveRecordToDB(record, *collection)
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 		h.SetRecordDescriptionMenu(record, s, m)
@@ -539,7 +527,6 @@ func (h *InfoHandler) HandleSetRecordDescriptionConfirm(reaction string, args st
 	}
 }
 
-
 // Record Thumbnail URL
 
 func (h *InfoHandler) SetRecordThumbnailURLMenu(record InfoRecord, s *discordgo.Session, m interface{}) {
@@ -551,16 +538,15 @@ func (h *InfoHandler) SetRecordThumbnailURLMenu(record InfoRecord, s *discordgo.
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor - Record Thumbnail URL"
-	embed.Description = "Currently Editing: \"**"+strings.Title(record.Name)+"**\""
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
+	embed.Description = "Currently Editing: \"**" + strings.Title(record.Name) + "**\""
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: record.ThumbnailURL}
 	embed.Color = record.Color
-
 
 	var fields []*discordgo.MessageEmbedField
 
@@ -570,7 +556,6 @@ func (h *InfoHandler) SetRecordThumbnailURLMenu(record InfoRecord, s *discordgo.
 	optiontwo.Inline = false
 	fields = append(fields, &optiontwo)
 
-
 	var reactions []string
 	reactions = append(reactions, "⬅")
 
@@ -579,11 +564,10 @@ func (h *InfoHandler) SetRecordThumbnailURLMenu(record InfoRecord, s *discordgo.
 		_ = s.MessageReactionAdd(channelID, messageID, reaction)
 	}
 
-
 	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	h.infocallback.Watch(h.HandleSetRecordThumbnailURL, channelID, messageID, userID, record.Name, s)
@@ -601,40 +585,39 @@ func (h *InfoHandler) HandleSetRecordThumbnailURL(recordname string, userID stri
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	collection, session, err := h.GetMongoCollecton()
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	defer session.Close()
 
 	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	// Handle invalid urls
 	_, err = url.ParseRequestURI(imageurl)
 	if err != nil {
-		errormessage, _ := s.ChannelMessageSend(channelID, "Provided url is invalid, please check your entry and try again:\n```" + imageurl+"```")
-		r := discordgo.MessageReaction{ChannelID:channelID, MessageID: messageID, UserID: userID}
+		errormessage, _ := s.ChannelMessageSend(channelID, "Provided url is invalid, please check your entry and try again:\n```"+imageurl+"```")
+		r := discordgo.MessageReaction{ChannelID: channelID, MessageID: messageID, UserID: userID}
 		h.SetRecordThumbnailURLMenu(record, s, r)
-		time.Sleep(15*time.Second)
+		time.Sleep(15 * time.Second)
 		_ = s.ChannelMessageDelete(channelID, errormessage.ID)
 		return
 	}
 
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor - Confirm Record Thumbnail URL"
-	embed.Description = "Confirm Thumbnail URL Selection For: \"**"+strings.Title(recordname)+"**\""
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:imageurl}
+	embed.Description = "Confirm Thumbnail URL Selection For: \"**" + strings.Title(recordname) + "**\""
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: imageurl}
 	embed.Color = record.Color
-
 
 	var fields []*discordgo.MessageEmbedField
 
@@ -650,7 +633,6 @@ func (h *InfoHandler) HandleSetRecordThumbnailURL(recordname string, userID stri
 	optiontwo.Inline = false
 	fields = append(fields, &optiontwo)
 
-
 	var reactions []string
 	reactions = append(reactions, "✅")
 	reactions = append(reactions, "❎")
@@ -662,7 +644,7 @@ func (h *InfoHandler) HandleSetRecordThumbnailURL(recordname string, userID stri
 
 	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
@@ -681,7 +663,7 @@ func (h *InfoHandler) HandleSetRecordThumbnailURLReactions(reaction string, reco
 		h.infocallback.UnWatch(channelID, messageID, userID)
 		err := h.EditMenu(recordname, messageID, channelID, userID, s)
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 		return
@@ -700,7 +682,7 @@ func (h *InfoHandler) HandleSetRecordThumbnailURLConfirm(reaction string, args s
 
 	payload := strings.Split(args, "|#|")
 	if len(payload) < 2 || len(payload) > 2 {
-		_, _ = s.ChannelMessageSend(channelID, "Error: HandleSetRecordThumbnailURLConfirm payload invalid size - " + strconv.Itoa(len(payload)))
+		_, _ = s.ChannelMessageSend(channelID, "Error: HandleSetRecordThumbnailURLConfirm payload invalid size - "+strconv.Itoa(len(payload)))
 		return
 	}
 	recordname := payload[0]
@@ -708,14 +690,14 @@ func (h *InfoHandler) HandleSetRecordThumbnailURLConfirm(reaction string, args s
 
 	collection, session, err := h.GetMongoCollecton()
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	defer session.Close()
 
 	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
@@ -724,7 +706,7 @@ func (h *InfoHandler) HandleSetRecordThumbnailURLConfirm(reaction string, args s
 		record.ThumbnailURL = imageurl
 		err = h.infodb.SaveRecordToDB(record, *collection)
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 		h.SetRecordThumbnailURLMenu(record, s, m)
@@ -737,7 +719,6 @@ func (h *InfoHandler) HandleSetRecordThumbnailURLConfirm(reaction string, args s
 	}
 }
 
-
 // Record Color
 
 func (h *InfoHandler) SetRecordColorMenu(record InfoRecord, s *discordgo.Session, m interface{}) {
@@ -749,16 +730,15 @@ func (h *InfoHandler) SetRecordColorMenu(record InfoRecord, s *discordgo.Session
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor - Record Color"
-	embed.Description = "Currently Editing: \"**"+strings.Title(record.Name)+"**\""
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
+	embed.Description = "Currently Editing: \"**" + strings.Title(record.Name) + "**\""
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: record.ThumbnailURL}
 	embed.Color = record.Color
-
 
 	var fields []*discordgo.MessageEmbedField
 
@@ -768,7 +748,6 @@ func (h *InfoHandler) SetRecordColorMenu(record InfoRecord, s *discordgo.Session
 	optiontwo.Inline = false
 	fields = append(fields, &optiontwo)
 
-
 	var reactions []string
 	reactions = append(reactions, "⬅")
 
@@ -777,11 +756,10 @@ func (h *InfoHandler) SetRecordColorMenu(record InfoRecord, s *discordgo.Session
 		_ = s.MessageReactionAdd(channelID, messageID, reaction)
 	}
 
-
 	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	h.infocallback.Watch(h.HandleSetRecordColor, channelID, messageID, userID, record.Name, s)
@@ -799,20 +777,20 @@ func (h *InfoHandler) HandleSetRecordColor(recordname string, userID string, col
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	collection, session, err := h.GetMongoCollecton()
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	defer session.Close()
 
 	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
@@ -820,18 +798,18 @@ func (h *InfoHandler) HandleSetRecordColor(recordname string, userID string, col
 	colorcode, err := strconv.Atoi(color)
 	if err != nil || colorcode > 16777215 {
 		errormessage, _ := s.ChannelMessageSend(channelID,
-			"Provided color code is invalid, please check your entry and try again:\n```" + color+"```")
-		r := discordgo.MessageReaction{ChannelID:channelID, MessageID: messageID, UserID: userID}
+			"Provided color code is invalid, please check your entry and try again:\n```"+color+"```")
+		r := discordgo.MessageReaction{ChannelID: channelID, MessageID: messageID, UserID: userID}
 		h.SetRecordColorMenu(record, s, r)
-		time.Sleep(15*time.Second)
+		time.Sleep(15 * time.Second)
 		_ = s.ChannelMessageDelete(channelID, errormessage.ID)
 		return
 	}
 
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor - Confirm Record Color"
-	embed.Description = "Confirm Color Selection For: \"**"+strings.Title(recordname)+"**\""
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
+	embed.Description = "Confirm Color Selection For: \"**" + strings.Title(recordname) + "**\""
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: record.ThumbnailURL}
 	embed.Color = colorcode
 
 	var fields []*discordgo.MessageEmbedField
@@ -848,7 +826,6 @@ func (h *InfoHandler) HandleSetRecordColor(recordname string, userID string, col
 	optiontwo.Inline = false
 	fields = append(fields, &optiontwo)
 
-
 	var reactions []string
 	reactions = append(reactions, "✅")
 	reactions = append(reactions, "❎")
@@ -860,7 +837,7 @@ func (h *InfoHandler) HandleSetRecordColor(recordname string, userID string, col
 
 	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
@@ -879,7 +856,7 @@ func (h *InfoHandler) HandleSetRecordColorReactions(reaction string, recordname 
 		h.infocallback.UnWatch(channelID, messageID, userID)
 		err := h.EditMenu(recordname, messageID, channelID, userID, s)
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 		return
@@ -898,7 +875,7 @@ func (h *InfoHandler) HandleSetRecordColorConfirm(reaction string, args string, 
 
 	payload := strings.Split(args, "|#|")
 	if len(payload) < 2 || len(payload) > 2 {
-		_, _ = s.ChannelMessageSend(channelID, "Error: HandleSetRecordColorConfirm payload invalid size - " + strconv.Itoa(len(payload)))
+		_, _ = s.ChannelMessageSend(channelID, "Error: HandleSetRecordColorConfirm payload invalid size - "+strconv.Itoa(len(payload)))
 		return
 	}
 	recordname := payload[0]
@@ -906,14 +883,14 @@ func (h *InfoHandler) HandleSetRecordColorConfirm(reaction string, args string, 
 
 	collection, session, err := h.GetMongoCollecton()
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	defer session.Close()
 
 	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
@@ -922,7 +899,7 @@ func (h *InfoHandler) HandleSetRecordColorConfirm(reaction string, args string, 
 		// We check again for consistency
 		colorcode, err := strconv.Atoi(color)
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			h.SetRecordThumbnailURLMenu(record, s, m)
 			return
 		}
@@ -930,7 +907,7 @@ func (h *InfoHandler) HandleSetRecordColorConfirm(reaction string, args string, 
 		record.Color = colorcode
 		err = h.infodb.SaveRecordToDB(record, *collection)
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 		h.SetRecordColorMenu(record, s, m)
@@ -954,15 +931,15 @@ func (h *InfoHandler) SetRecordImageURLMenu(record InfoRecord, s *discordgo.Sess
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor - Record Image URL"
-	embed.Description = "Currently Editing: \"**"+strings.Title(record.Name)+"**\""
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
-	embed.Image = &discordgo.MessageEmbedImage{URL:record.ImageURL}
+	embed.Description = "Currently Editing: \"**" + strings.Title(record.Name) + "**\""
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: record.ThumbnailURL}
+	embed.Image = &discordgo.MessageEmbedImage{URL: record.ImageURL}
 	embed.Color = record.Color
 
 	var fields []*discordgo.MessageEmbedField
@@ -973,7 +950,6 @@ func (h *InfoHandler) SetRecordImageURLMenu(record InfoRecord, s *discordgo.Sess
 	optiontwo.Inline = false
 	fields = append(fields, &optiontwo)
 
-
 	var reactions []string
 	reactions = append(reactions, "⬅")
 
@@ -982,11 +958,10 @@ func (h *InfoHandler) SetRecordImageURLMenu(record InfoRecord, s *discordgo.Sess
 		_ = s.MessageReactionAdd(channelID, messageID, reaction)
 	}
 
-
 	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	h.infocallback.Watch(h.HandleSetRecordImageURL, channelID, messageID, userID, record.Name, s)
@@ -1004,39 +979,39 @@ func (h *InfoHandler) HandleSetRecordImageURL(recordname string, userID string, 
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	collection, session, err := h.GetMongoCollecton()
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	defer session.Close()
 
 	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	// Handle invalid urls
 	_, err = url.ParseRequestURI(imageurl)
 	if err != nil {
-		errormessage, _ := s.ChannelMessageSend(channelID, "Provided url is invalid, please check your entry and try again:\n```" + imageurl+"```")
-		r := discordgo.MessageReaction{ChannelID:channelID, MessageID: messageID, UserID: userID}
+		errormessage, _ := s.ChannelMessageSend(channelID, "Provided url is invalid, please check your entry and try again:\n```"+imageurl+"```")
+		r := discordgo.MessageReaction{ChannelID: channelID, MessageID: messageID, UserID: userID}
 		h.SetRecordImageURLMenu(record, s, r)
-		time.Sleep(15*time.Second)
+		time.Sleep(15 * time.Second)
 		_ = s.ChannelMessageDelete(channelID, errormessage.ID)
 		return
 	}
 
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor - Confirm Record Image URL"
-	embed.Description = "Confirm Image URL Selection For: \"**"+strings.Title(recordname)+"**\""
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
-	embed.Image = &discordgo.MessageEmbedImage{URL:imageurl}
+	embed.Description = "Confirm Image URL Selection For: \"**" + strings.Title(recordname) + "**\""
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: record.ThumbnailURL}
+	embed.Image = &discordgo.MessageEmbedImage{URL: imageurl}
 	embed.Color = record.Color
 
 	var fields []*discordgo.MessageEmbedField
@@ -1053,7 +1028,6 @@ func (h *InfoHandler) HandleSetRecordImageURL(recordname string, userID string, 
 	optiontwo.Inline = false
 	fields = append(fields, &optiontwo)
 
-
 	var reactions []string
 	reactions = append(reactions, "✅")
 	reactions = append(reactions, "❎")
@@ -1065,7 +1039,7 @@ func (h *InfoHandler) HandleSetRecordImageURL(recordname string, userID string, 
 
 	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
@@ -1084,7 +1058,7 @@ func (h *InfoHandler) HandleSetRecordImageURLReactions(reaction string, recordna
 		h.infocallback.UnWatch(channelID, messageID, userID)
 		err := h.EditMenu(recordname, messageID, channelID, userID, s)
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 		return
@@ -1103,7 +1077,7 @@ func (h *InfoHandler) HandleSetRecordImageURLConfirm(reaction string, args strin
 
 	payload := strings.Split(args, "|#|")
 	if len(payload) < 2 || len(payload) > 2 {
-		_, _ = s.ChannelMessageSend(channelID, "Error: HandleSetRecordImageURLConfirm payload invalid size - " + strconv.Itoa(len(payload)))
+		_, _ = s.ChannelMessageSend(channelID, "Error: HandleSetRecordImageURLConfirm payload invalid size - "+strconv.Itoa(len(payload)))
 		return
 	}
 	recordname := payload[0]
@@ -1111,14 +1085,14 @@ func (h *InfoHandler) HandleSetRecordImageURLConfirm(reaction string, args strin
 
 	collection, session, err := h.GetMongoCollecton()
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	defer session.Close()
 
 	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
@@ -1127,7 +1101,7 @@ func (h *InfoHandler) HandleSetRecordImageURLConfirm(reaction string, args strin
 		record.ImageURL = imageurl
 		err = h.infodb.SaveRecordToDB(record, *collection)
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 		h.SetRecordImageURLMenu(record, s, m)

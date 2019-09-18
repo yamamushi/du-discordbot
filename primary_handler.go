@@ -85,7 +85,7 @@ func (h *PrimaryHandler) Init() error {
 	go notifications.CheckNotifications(h.dg)
 
 	fmt.Println("Adding Config Handler")
-	confighandler := ConfigHandler{conf:h.conf, registry: h.command.registry, callback: h.callback, db: h.db}
+	confighandler := ConfigHandler{conf: h.conf, registry: h.command.registry, callback: h.callback, db: h.db}
 	confighandler.Init()
 	h.dg.AddHandler(confighandler.Read)
 	h.reactions.configdb = confighandler.configdb
@@ -100,7 +100,7 @@ func (h *PrimaryHandler) Init() error {
 	h.dg.AddHandler(backer.Read)
 
 	fmt.Println("Adding Lander Handler")
-	landingzone := LanderHandler{configdb:confighandler.configdb, user: h.user}
+	landingzone := LanderHandler{configdb: confighandler.configdb, user: h.user}
 	h.dg.AddHandler(landingzone.Read)
 	h.dg.AddHandler(landingzone.ReadRemove)
 
@@ -143,17 +143,20 @@ func (h *PrimaryHandler) Init() error {
 	wikihandler.Init()
 	h.dg.AddHandler(wikihandler.Read)
 
-	fmt.Println("Adding Rabbit Handler")
-	rabbithandler := RabbitHandler{conf: h.conf, userdb: h.user, registry: h.command.registry, db: h.db, globalstate: h.globalstate,
-		configdb: confighandler.configdb, backerdb: backer.backerInterface}
-	rabbithandler.Init()
-	h.dg.AddHandler(rabbithandler.Read)
-	h.dg.AddHandler(rabbithandler.Catch)
-	h.dg.AddHandler(rabbithandler.CarrotFinder)
-	go rabbithandler.Release(h.dg)
+	// Disabling Rabbit Handler Indefinitely
+	/*
+		fmt.Println("Adding Rabbit Handler")
+		rabbithandler := RabbitHandler{conf: h.conf, userdb: h.user, registry: h.command.registry, db: h.db, globalstate: h.globalstate,
+			configdb: confighandler.configdb, backerdb: backer.backerInterface}
+		rabbithandler.Init()
+		h.dg.AddHandler(rabbithandler.Read)
+		h.dg.AddHandler(rabbithandler.Catch)
+		h.dg.AddHandler(rabbithandler.CarrotFinder)
+		go rabbithandler.Release(h.dg)
+	*/
 
 	fmt.Println("Adding SUTime Handler")
-	sutimehandler := SUTimeHandler{conf: h.conf, registry: h.command.registry,db: h.db, userdb: h.user}
+	sutimehandler := SUTimeHandler{conf: h.conf, registry: h.command.registry, db: h.db, userdb: h.user}
 	sutimehandler.Init()
 	h.dg.AddHandler(sutimehandler.Read)
 
@@ -164,7 +167,7 @@ func (h *PrimaryHandler) Init() error {
 	h.dg.AddHandler(joyhandler.Read)
 
 	fmt.Println("Adding Server Status Handler")
-	statushandler := ServerStatusHandler{conf: h.conf, registry: h.command.registry,db: h.db, userdb: h.user}
+	statushandler := ServerStatusHandler{conf: h.conf, registry: h.command.registry, db: h.db, userdb: h.user}
 	statushandler.Init()
 	h.dg.AddHandler(statushandler.Read)
 
@@ -182,10 +185,16 @@ func (h *PrimaryHandler) Init() error {
 	h.dg.AddHandler(infohandler.Read)
 
 	fmt.Println("Adding Gallery Manager")
-	gallerymanager := GalleryManager{conf: h.conf, registry: h.command.registry, db: h.db, userdb:h.user}
+	gallerymanager := GalleryManager{conf: h.conf, registry: h.command.registry, db: h.db, userdb: h.user}
 	gallerymanager.Init()
 	h.dg.AddHandler(gallerymanager.Read)
 	h.dg.AddHandler(gallerymanager.Watch)
+
+	fmt.Println("Adding NDA Voice Manager")
+	ndavoicemanager := NDAAudioHandler{conf: h.conf}
+	ndavoicemanager.Init()
+	h.dg.AddHandler(ndavoicemanager.NDAWatch)
+	go ndavoicemanager.WatchChannels(h.dg)
 
 	//fmt.Println("Adding Music Handler")
 	//musichandler := MusicHandler{db: h.db, user: h.user, registry: h.command.registry,

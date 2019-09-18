@@ -20,33 +20,33 @@ func (h *InfoHandler) ViewSatelliteInfoMenu(record InfoRecord, s *discordgo.Sess
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	/*
-	collection, session, err := h.GetMongoCollecton()
-	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
-		return
-	}
-	defer session.Close()
+		collection, session, err := h.GetMongoCollecton()
+		if err != nil {
+			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			return
+		}
+		defer session.Close()
 	*/
 
-/*	flush := &discordgo.MessageEmbed{}
-	flush.Title = strings.Title("Loading record...")
-	_, err = s.ChannelMessageEditEmbed(channelID, messageID, flush)
-	if err != nil {
-		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
-		return
-	}
-	time.Sleep(2*time.Second)
+	/*	flush := &discordgo.MessageEmbed{}
+		flush.Title = strings.Title("Loading record...")
+		_, err = s.ChannelMessageEditEmbed(channelID, messageID, flush)
+		if err != nil {
+			//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
+			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			return
+		}
+		time.Sleep(2*time.Second)
 
- */
+	*/
 	collection, session, err := h.GetMongoCollecton()
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	defer session.Close()
@@ -54,17 +54,16 @@ func (h *InfoHandler) ViewSatelliteInfoMenu(record InfoRecord, s *discordgo.Sess
 	// We need to flush the old copy and get the latest one
 	record, err = h.infodb.GetRecordFromDB(record.Name, *collection)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
-
 
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = strings.Title(record.Name)
 	if record.Description != "" {
 		embed.Description = record.Description
 	}
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: record.ThumbnailURL}
 	if record.EditorID != "" {
 		user, err := s.User(record.EditorID)
 		if err == nil {
@@ -72,7 +71,7 @@ func (h *InfoHandler) ViewSatelliteInfoMenu(record InfoRecord, s *discordgo.Sess
 		}
 	}
 	if record.ImageURL != "" {
-		embed.Image = &discordgo.MessageEmbedImage{URL:record.ImageURL}
+		embed.Image = &discordgo.MessageEmbedImage{URL: record.ImageURL}
 	}
 
 	var fields []*discordgo.MessageEmbedField
@@ -86,33 +85,33 @@ func (h *InfoHandler) ViewSatelliteInfoMenu(record InfoRecord, s *discordgo.Sess
 		satellitetype.Value = "**Moon** of " + strings.Title(record.Satellite.ParentSatellite)
 	}
 	satellitetype.Inline = false
-	fields = append(fields, &satellitetype )
+	fields = append(fields, &satellitetype)
 	/*
-	if len(record.Satellite.NotableElements) > 0 {
-		notablelements := discordgo.MessageEmbedField{}
-		notablelements.Name = "Notable Elements"
-		notablelements.Value = strings.Title(strings.Join(record.Satellite.NotableElements, ", "))
-		notablelements.Inline = true
-		fields = append(fields, &notablelements)
-	}
+		if len(record.Satellite.NotableElements) > 0 {
+			notablelements := discordgo.MessageEmbedField{}
+			notablelements.Name = "Notable Elements"
+			notablelements.Value = strings.Title(strings.Join(record.Satellite.NotableElements, ", "))
+			notablelements.Inline = true
+			fields = append(fields, &notablelements)
+		}
 
- */
+	*/
 	/*
-	satellitecount := discordgo.MessageEmbedField{}
-	satellitecount.Name = "Satellite Count"
-	satellitecount.Value = strconv.Itoa(len(record.Satellite.Satellites))
-	satellitecount.Inline = true
-	fields = append(fields, &satellitecount)
-	 */
-	 /*
-	if len(record.Satellite.Satellites) > 0 {
-		satellites := discordgo.MessageEmbedField{}
-		satellites.Name = "Satellites"
-		satellites.Value = strings.Title(strings.Join(record.Satellite.Satellites, ", "))
-		satellites.Inline = true
-		fields = append(fields, &satellites)
-	}
-	  */
+		satellitecount := discordgo.MessageEmbedField{}
+		satellitecount.Name = "Satellite Count"
+		satellitecount.Value = strconv.Itoa(len(record.Satellite.Satellites))
+		satellitecount.Inline = true
+		fields = append(fields, &satellitecount)
+	*/
+	/*
+		if len(record.Satellite.Satellites) > 0 {
+			satellites := discordgo.MessageEmbedField{}
+			satellites.Name = "Satellites"
+			satellites.Value = strings.Title(strings.Join(record.Satellite.Satellites, ", "))
+			satellites.Inline = true
+			fields = append(fields, &satellites)
+		}
+	*/
 
 	var reactions []string
 	// http://www.unicode.org/emoji/charts/full-emoji-list.html
@@ -133,25 +132,24 @@ func (h *InfoHandler) ViewSatelliteInfoMenu(record InfoRecord, s *discordgo.Sess
 	//checkeredflagemoji := html.UnescapeString("&#" + strconv.Itoa(127937) + ";")
 	//reactions = append(reactions, checkeredflagemoji)
 
-	raisedflagemoji := html.UnescapeString("&#" + strconv.Itoa(128681)+";")
+	raisedflagemoji := html.UnescapeString("&#" + strconv.Itoa(128681) + ";")
 	reactions = append(reactions, raisedflagemoji)
 
 	//microscopeemoji := html.UnescapeString("&#" + strconv.Itoa(128300)+";")
 	//reactions = append(reactions, microscopeemoji)
 
-	pickaxeemoji := html.UnescapeString("&#" + strconv.Itoa(9935)+";")
+	pickaxeemoji := html.UnescapeString("&#" + strconv.Itoa(9935) + ";")
 	reactions = append(reactions, pickaxeemoji)
 
 	if StringSliceContains(record.Satellite.UserList, userID) {
-		wavinghandemoji := html.UnescapeString("&#" + strconv.Itoa(128075)+";")
+		wavinghandemoji := html.UnescapeString("&#" + strconv.Itoa(128075) + ";")
 		reactions = append(reactions, wavinghandemoji)
 	} else {
-		raisedhandemoji := html.UnescapeString("&#" + strconv.Itoa(129306)+";")
+		raisedhandemoji := html.UnescapeString("&#" + strconv.Itoa(129306) + ";")
 		reactions = append(reactions, raisedhandemoji)
 	}
 
-
-	stopsignemoji := html.UnescapeString("&#" + strconv.Itoa(128721)+";")
+	stopsignemoji := html.UnescapeString("&#" + strconv.Itoa(128721) + ";")
 	reactions = append(reactions, stopsignemoji)
 
 	embed.Fields = fields
@@ -172,38 +170,37 @@ func (h *InfoHandler) HandleSatelliteInfoMenu(reaction string, recordname string
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	collection, session, err := h.GetMongoCollecton()
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	defer session.Close()
 
 	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	fullmoonemoji := html.UnescapeString("&#" + strconv.Itoa(127773) + ";")
 	sunbehindcloudemoji := html.UnescapeString("&#" + strconv.Itoa(127782) + ";")
-	wavinghandemoji := html.UnescapeString("&#" + strconv.Itoa(128075)+";")
-	raisedhandemoji := html.UnescapeString("&#" + strconv.Itoa(129306)+";")
-	raisedflagemoji := html.UnescapeString("&#" + strconv.Itoa(128681)+";")
+	wavinghandemoji := html.UnescapeString("&#" + strconv.Itoa(128075) + ";")
+	raisedhandemoji := html.UnescapeString("&#" + strconv.Itoa(129306) + ";")
+	raisedflagemoji := html.UnescapeString("&#" + strconv.Itoa(128681) + ";")
 	newmoonemoji := html.UnescapeString("&#" + strconv.Itoa(127761) + ";")
-	pickaxeemoji := html.UnescapeString("&#" + strconv.Itoa(9935)+";")
-	stopsignemoji := html.UnescapeString("&#" + strconv.Itoa(128721)+";")
-
+	pickaxeemoji := html.UnescapeString("&#" + strconv.Itoa(9935) + ";")
+	stopsignemoji := html.UnescapeString("&#" + strconv.Itoa(128721) + ";")
 
 	// Moons
 	if reaction == newmoonemoji {
 		parentsatellite, err := h.infodb.GetRecordFromDB(record.Satellite.ParentSatellite, *collection)
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 		h.ViewSatelliteInfoMenu(parentsatellite, s, m)
@@ -250,7 +247,6 @@ func (h *InfoHandler) HandleSatelliteInfoMenu(reaction string, recordname string
 	return
 }
 
-
 // Moons
 func (h *InfoHandler) ViewSatelliteMoonsMenu(record InfoRecord, s *discordgo.Session, m interface{}) {
 
@@ -262,14 +258,14 @@ func (h *InfoHandler) ViewSatelliteMoonsMenu(record InfoRecord, s *discordgo.Ses
 
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = strings.Title(record.Name)
 	embed.Description = "Moons of " + strings.Title(record.Name)
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: record.ThumbnailURL}
 	embed.Color = record.Color
 
 	var fields []*discordgo.MessageEmbedField
@@ -301,7 +297,7 @@ func (h *InfoHandler) ViewSatelliteMoonsMenu(record InfoRecord, s *discordgo.Ses
 	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	h.reactions.Watch(h.HandleViewSatelliteMoonsMenu, messageID, channelID, userID, record.Name, s)
@@ -317,14 +313,14 @@ func (h *InfoHandler) HandleViewSatelliteMoonsMenu(reaction string, recordname s
 		h.infocallback.UnWatch(channelID, messageID, userID)
 		collection, session, err := h.GetMongoCollecton()
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 		defer session.Close()
 
 		record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 
@@ -333,24 +329,23 @@ func (h *InfoHandler) HandleViewSatelliteMoonsMenu(reaction string, recordname s
 	} else {
 		collection, session, err := h.GetMongoCollecton()
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 		defer session.Close()
 
 		record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
-
 
 		for i := 0; i < 25; i++ {
 			resourceindicator := html.UnescapeString("&#" + strconv.Itoa(i+127462) + ";")
 			if reaction == resourceindicator {
 				moonrecord, err := h.infodb.GetRecordFromDB(record.Satellite.Satellites[i], *collection)
 				if err != nil {
-					_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+					_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 					return
 				}
 				h.ViewSatelliteInfoMenu(moonrecord, s, m)
@@ -363,7 +358,6 @@ func (h *InfoHandler) HandleViewSatelliteMoonsMenu(reaction string, recordname s
 	return
 }
 
-
 // Territories
 func (h *InfoHandler) ViewSatelliteTerritoriesMenu(record InfoRecord, s *discordgo.Session, m interface{}) {
 
@@ -375,14 +369,14 @@ func (h *InfoHandler) ViewSatelliteTerritoriesMenu(record InfoRecord, s *discord
 
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = strings.Title(record.Name)
 	embed.Description = "Territories of " + strings.Title(record.Name)
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: record.ThumbnailURL}
 	embed.Color = record.Color
 
 	var fields []*discordgo.MessageEmbedField
@@ -422,7 +416,7 @@ func (h *InfoHandler) ViewSatelliteTerritoriesMenu(record InfoRecord, s *discord
 	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	h.reactions.Watch(h.HandleViewSatelliteTerritoriesMenu, messageID, channelID, userID, record.Name, s)
@@ -437,14 +431,14 @@ func (h *InfoHandler) HandleViewSatelliteTerritoriesMenu(reaction string, record
 	//h.infocallback.UnWatch(channelID, messageID, userID)
 	collection, session, err := h.GetMongoCollecton()
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	defer session.Close()
 
 	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
@@ -470,14 +464,14 @@ func (h *InfoHandler) ViewSatelliteDetailsMenu(record InfoRecord, s *discordgo.S
 
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = strings.Title(record.Name)
 	embed.Description = ":white_sun_rain_cloud: Details of " + strings.Title(record.Name)
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: record.ThumbnailURL}
 	embed.Color = record.Color
 
 	var fields []*discordgo.MessageEmbedField
@@ -554,7 +548,7 @@ func (h *InfoHandler) ViewSatelliteDetailsMenu(record InfoRecord, s *discordgo.S
 	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	h.reactions.Watch(h.HandleViewSatelliteTerritoriesMenu, messageID, channelID, userID, record.Name, s)
@@ -571,14 +565,14 @@ func (h *InfoHandler) HandleViewSatelliteDetailsMenu(reaction string, recordname
 	//h.infocallback.UnWatch(channelID, messageID, userID)
 	collection, session, err := h.GetMongoCollecton()
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	defer session.Close()
 
 	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
@@ -604,21 +598,21 @@ func (h *InfoHandler) ViewSatelliteElementsMenu(record InfoRecord, s *discordgo.
 
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = strings.Title(record.Name)
 	embed.Description = "Reources on " + strings.Title(record.Name)
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: record.ThumbnailURL}
 	embed.Color = record.Color
 
 	var fields []*discordgo.MessageEmbedField
 	var reactions []string
 	reactions = append(reactions, "⬅")
 
-	pickaxeemoji := html.UnescapeString("&#" + strconv.Itoa(9935)+";")
+	pickaxeemoji := html.UnescapeString("&#" + strconv.Itoa(9935) + ";")
 
 	optionone := discordgo.MessageEmbedField{}
 	optionone.Name = pickaxeemoji
@@ -645,7 +639,7 @@ func (h *InfoHandler) ViewSatelliteElementsMenu(record InfoRecord, s *discordgo.
 	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	h.reactions.Watch(h.HandleViewSatelliteElementsMenu, messageID, channelID, userID, record.Name, s)
@@ -662,14 +656,14 @@ func (h *InfoHandler) HandleViewSatelliteElementsMenu(reaction string, recordnam
 	if reaction == "⬅" {
 		collection, session, err := h.GetMongoCollecton()
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 		defer session.Close()
 
 		record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 
@@ -678,24 +672,23 @@ func (h *InfoHandler) HandleViewSatelliteElementsMenu(reaction string, recordnam
 	} else {
 		collection, session, err := h.GetMongoCollecton()
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 		defer session.Close()
 
 		record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
-
 
 		for i := 0; i < 25; i++ {
 			resourceindicator := html.UnescapeString("&#" + strconv.Itoa(i+127462) + ";")
 			if reaction == resourceindicator {
 				_, err := h.infodb.GetRecordFromDB(record.Satellite.NotableElements[i], *collection)
 				if err != nil {
-					_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+					_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 					return
 				}
 				h.ViewSatelliteInfoMenu(record, s, m)
@@ -710,7 +703,6 @@ func (h *InfoHandler) HandleViewSatelliteElementsMenu(reaction string, recordnam
 	return
 }
 
-
 // User Location Registration
 func (h *InfoHandler) ViewSatelliteSetLocationMenu(record InfoRecord, s *discordgo.Session, m interface{}) {
 
@@ -722,20 +714,19 @@ func (h *InfoHandler) ViewSatelliteSetLocationMenu(record InfoRecord, s *discord
 
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = strings.Title(record.Name)
 	embed.Description = "Location Registration Menu - **" + strings.Title(record.Name) + "**"
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: record.ThumbnailURL}
 	embed.Color = record.Color
 
 	var fields []*discordgo.MessageEmbedField
 	var reactions []string
 	reactions = append(reactions, "⬅")
-
 
 	optionone := discordgo.MessageEmbedField{}
 	optionone.Name = ":map:"
@@ -751,7 +742,7 @@ func (h *InfoHandler) ViewSatelliteSetLocationMenu(record InfoRecord, s *discord
 
 	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	h.infocallback.Watch(h.HandleViewSatelliteSetLocationMenu, channelID, messageID, userID, record.Name, s)
@@ -766,56 +757,52 @@ func (h *InfoHandler) HandleViewSatelliteSetLocationMenu(recordname string, user
 	h.reactions.UnWatch(channelID, messageID, userID)
 	h.infocallback.UnWatch(channelID, messageID, userID)
 
-
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	collection, session, err := h.GetMongoCollecton()
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	defer session.Close()
 
 	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	if position == "confirm" {
 		err = h.SetUserLocation(userID, recordname, position)
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
-		r := &discordgo.MessageReaction{MessageID:messageID,ChannelID:channelID,UserID:userID}
+		r := &discordgo.MessageReaction{MessageID: messageID, ChannelID: channelID, UserID: userID}
 		h.ViewSatelliteInfoMenu(record, s, r)
 		return
 	}
-
 
 	// Handle invalid names
 	if !h.ValidatePosition(position) {
 		errormessage, _ := s.ChannelMessageSend(channelID, "Provided location was invalid, returning to previous menu.")
-		r := &discordgo.MessageReaction{MessageID:messageID,ChannelID:channelID,UserID:userID}
+		r := &discordgo.MessageReaction{MessageID: messageID, ChannelID: channelID, UserID: userID}
 		h.ViewSatelliteInfoMenu(record, s, r)
-		time.Sleep(10*time.Second)
+		time.Sleep(10 * time.Second)
 		_ = s.ChannelMessageDelete(channelID, errormessage.ID)
 		return
 	}
 
-
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor - Confirm User Location"
 	embed.Description = "Confirm Location"
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: record.ThumbnailURL}
 	embed.Color = record.Color
-
 
 	var fields []*discordgo.MessageEmbedField
 
@@ -831,7 +818,6 @@ func (h *InfoHandler) HandleViewSatelliteSetLocationMenu(recordname string, user
 	optiontwo.Inline = false
 	fields = append(fields, &optiontwo)
 
-
 	var reactions []string
 	reactions = append(reactions, "✅")
 	reactions = append(reactions, "❎")
@@ -843,7 +829,7 @@ func (h *InfoHandler) HandleViewSatelliteSetLocationMenu(recordname string, user
 
 	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
@@ -863,14 +849,14 @@ func (h *InfoHandler) HandleSetSatelliteSetLocationNoPositionConfirm(reaction st
 
 	collection, session, err := h.GetMongoCollecton()
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	defer session.Close()
 
 	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
@@ -893,7 +879,7 @@ func (h *InfoHandler) HandleSetSatelliteSetLocationConfirm(reaction string, args
 
 	payload := strings.Split(args, "|#|")
 	if len(payload) < 2 || len(payload) > 2 {
-		_, _ = s.ChannelMessageSend(channelID, "Error: HandleSetSatelliteSetLocationConfirm payload invalid size - " + strconv.Itoa(len(payload)))
+		_, _ = s.ChannelMessageSend(channelID, "Error: HandleSetSatelliteSetLocationConfirm payload invalid size - "+strconv.Itoa(len(payload)))
 		return
 	}
 	recordname := payload[0]
@@ -901,21 +887,21 @@ func (h *InfoHandler) HandleSetSatelliteSetLocationConfirm(reaction string, args
 
 	collection, session, err := h.GetMongoCollecton()
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	defer session.Close()
 
 	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	if reaction == "✅" {
 		err = h.SetUserLocation(userID, record.Name, position)
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 		h.ViewSatelliteInfoMenu(record, s, m)

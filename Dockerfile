@@ -30,7 +30,7 @@ RUN go get github.com/yuin/gopher-lua
 RUN go get github.com/wcharczuk/go-chart
 RUN go get github.com/grokify/html-strip-tags-go
 RUN go get gopkg.in/mgo.v2
-#RUN go get github.com/jonas747/ogg
+RUN go get github.com/jonas747/ogg
 #RUN go get -u github.com/rylio/ytdl/...
 
 # This is a fork of gofeed that allows for custom user-agent strings in requests to work with sites that filter these

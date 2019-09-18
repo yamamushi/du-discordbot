@@ -12,9 +12,9 @@ type GalleryDB struct {
 }
 
 type GalleryConfig struct {
-	ChannelID        string `storm:"id"` // The name of our config option
-	Whitelist   []string
-	Enabled     bool
+	ChannelID string `storm:"id"` // The name of our config option
+	Whitelist []string
+	Enabled   bool
 }
 
 // AddNotificationToDB function
@@ -54,7 +54,6 @@ func (h *GalleryDB) GetConfigFromDB(channelid string) (entry GalleryConfig, err 
 	return entry, errors.New("No record found")
 }
 
-
 // GetAllNotifications function
 func (h *GalleryDB) GetAllConfigs() (configlist []GalleryConfig, err error) {
 	h.querylocker.Lock()
@@ -68,7 +67,6 @@ func (h *GalleryDB) GetAllConfigs() (configlist []GalleryConfig, err error) {
 
 	return configlist, nil
 }
-
 
 // UpdateConfig - Don't use this, it doesn't work as intended
 func (h *GalleryDB) UpdateConfig(config GalleryConfig) (err error) {

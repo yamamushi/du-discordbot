@@ -1,13 +1,13 @@
 package main
 
 import (
-	"github.com/bwmarrin/discordgo"
-	"strings"
-	"net/http"
 	"bytes"
-	"io/ioutil"
 	"encoding/json"
+	"github.com/bwmarrin/discordgo"
+	"io/ioutil"
+	"net/http"
 	"strconv"
+	"strings"
 )
 
 type StrawpollHandler struct {
@@ -18,29 +18,27 @@ type StrawpollHandler struct {
 }
 
 type StrawpollPost struct {
-	Title       string      `json:"title"`
-	Options     []string    `json:"options"`
-	Multi       bool        `json:"multi"`
-	Dupcheck    string      `json:"dupcheck"`
-	Captcha     bool        `json:"captcha"`
+	Title    string   `json:"title"`
+	Options  []string `json:"options"`
+	Multi    bool     `json:"multi"`
+	Dupcheck string   `json:"dupcheck"`
+	Captcha  bool     `json:"captcha"`
 }
 
 type StrawpollPostResponse struct {
-	ID          int      `json:"id"`
-	Title       string      `json:"title"`
-	Options     []string    `json:"options"`
-	Multi       bool        `json:"multi"`
-	Dupcheck    string      `json:"dupcheck"`
-	Captcha     bool        `json:"captcha"`
+	ID       int      `json:"id"`
+	Title    string   `json:"title"`
+	Options  []string `json:"options"`
+	Multi    bool     `json:"multi"`
+	Dupcheck string   `json:"dupcheck"`
+	Captcha  bool     `json:"captcha"`
 }
-
 
 // Init function
 func (h *StrawpollHandler) Init() {
 	h.RegisterCommands()
 	h.API = h.conf.APIConfig.Strawpoll
 }
-
 
 // RegisterCommands function
 func (h *StrawpollHandler) RegisterCommands() (err error) {
@@ -98,10 +96,10 @@ func (h *StrawpollHandler) ParseCommand(commandlist []string, s *discordgo.Sessi
 		return
 	}
 
-	requestString := &StrawpollPost{Title:title, Options: options, Multi: false, Dupcheck: "normal", Captcha: true}
+	requestString := &StrawpollPost{Title: title, Options: options, Multi: false, Dupcheck: "normal", Captcha: true}
 	byteString, err := json.Marshal(requestString)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error Marshall: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error Marshall: "+err.Error())
 		return
 	}
 
@@ -112,7 +110,7 @@ func (h *StrawpollHandler) ParseCommand(commandlist []string, s *discordgo.Sessi
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error Post: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error Post: "+err.Error())
 		return
 	}
 	defer resp.Body.Close()
@@ -122,15 +120,13 @@ func (h *StrawpollHandler) ParseCommand(commandlist []string, s *discordgo.Sessi
 	responseJson := StrawpollPostResponse{}
 	err = json.Unmarshal(body, &responseJson)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error Unmarshall: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error Unmarshall: "+err.Error())
 		return
 	}
 	link := "https://www.strawpoll.me/" + strconv.Itoa(responseJson.ID)
-	s.ChannelMessageSend(m.ChannelID, ":ballot_box: | **"+m.Author.Username+"'s Poll** \n" + link)
+	s.ChannelMessageSend(m.ChannelID, ":ballot_box: | **"+m.Author.Username+"'s Poll** \n"+link)
 	return
 }
-
-
 
 func (h *StrawpollHandler) splitOptions(message string) (title string, options []string) {
 
@@ -144,7 +140,6 @@ func (h *StrawpollHandler) splitOptions(message string) (title string, options [
 			title = split[i]
 		}
 	}
-
 
 	return title, options
 }

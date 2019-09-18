@@ -123,11 +123,10 @@ func (h *LuaHandler) RunReadLuaInput(s *discordgo.Session, m *discordgo.MessageC
 		return
 	}
 
-	if strings.Contains(message, "until false") || strings.Contains(message, "until nil") || strings.Contains(message, "until true"){
+	if strings.Contains(message, "until false") || strings.Contains(message, "until nil") || strings.Contains(message, "until true") {
 		s.ChannelMessageSend(m.ChannelID, "Invalid input!")
 		return
 	}
-
 
 	h.RunLua(message, s, m)
 	return

@@ -14,25 +14,24 @@ type GiveawayDB struct {
 
 // GiveawayRecord struct
 type GiveawayRecord struct {
-	ID      string `storm:"id"`
-	OwnerID  string
-	ShortName string
+	ID          string `storm:"id"`
+	OwnerID     string
+	ShortName   string
 	Description string
-	WinnerID string
-	CreatedDate    time.Time
-	Duration time.Duration
-	Active bool
-	Restricted bool
+	WinnerID    string
+	CreatedDate time.Time
+	Duration    time.Duration
+	Active      bool
+	Restricted  bool
 }
 
 // GiveawayEntry struct
 type GiveawayEntry struct {
-	ID      string `storm:"id"`
+	ID         string `storm:"id"`
 	GiveawayID string
-	UserID  string
-	Date    time.Time
+	UserID     string
+	Date       time.Time
 }
-
 
 // AddGiveawayToDB function
 func (h *GiveawayDB) AddGiveawayRecordToDB(record GiveawayRecord) (err error) {
@@ -101,7 +100,6 @@ func (h *GiveawayDB) GetAllGiveawayDB() (RecordList []GiveawayRecord, err error)
 	return RecordList, nil
 }
 
-
 func (h *GiveawayDB) UpdateGiveawayRecord(record GiveawayRecord) (err error) {
 	h.querylocker.Lock()
 	defer h.querylocker.Unlock()
@@ -115,7 +113,6 @@ func (h *GiveawayDB) UpdateGiveawayRecord(record GiveawayRecord) (err error) {
 	err = db.Save(&record)
 	return err
 }
-
 
 // Entry Functions
 
@@ -186,7 +183,6 @@ func (h *GiveawayDB) GetAllEntryDB() (RecordList []GiveawayEntry, err error) {
 	return RecordList, nil
 }
 
-
 func (h *GiveawayDB) UpdateEntryRecord(record GiveawayEntry) (err error) {
 	h.querylocker.Lock()
 	defer h.querylocker.Unlock()
@@ -200,7 +196,6 @@ func (h *GiveawayDB) UpdateEntryRecord(record GiveawayEntry) (err error) {
 	err = db.Save(&record)
 	return err
 }
-
 
 func (h *GiveawayDB) FlushEntriesForGiveaway(giveawayID string) (err error) {
 	entries, err := h.GetAllEntryDB()

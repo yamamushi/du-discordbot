@@ -19,16 +19,15 @@ func (h *InfoHandler) SatellitePropertiesMenu(record InfoRecord, s *discordgo.Se
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor - Satellite Properties :satellite:"
-	embed.Description = "Currently Editing: \"**"+strings.Title(record.Name)+"**\""
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
+	embed.Description = "Currently Editing: \"**" + strings.Title(record.Name) + "**\""
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: record.ThumbnailURL}
 	embed.Color = record.Color
-
 
 	var fields []*discordgo.MessageEmbedField
 
@@ -85,7 +84,7 @@ func (h *InfoHandler) SatellitePropertiesMenu(record InfoRecord, s *discordgo.Se
 	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	h.reactions.Watch(h.HandleSatellitePropertiesMenu, messageID, channelID, userID, record.Name, s)
@@ -102,20 +101,20 @@ func (h *InfoHandler) HandleSatellitePropertiesMenu(reaction string, recordname 
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	collection, session, err := h.GetMongoCollecton()
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	defer session.Close()
 
 	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
@@ -153,7 +152,6 @@ func (h *InfoHandler) HandleSatellitePropertiesMenu(reaction string, recordname 
 	}
 }
 
-
 // Satellite Type
 
 func (h *InfoHandler) SetSatelliteTypeMenu(record InfoRecord, s *discordgo.Session, m interface{}) {
@@ -164,10 +162,9 @@ func (h *InfoHandler) SetSatelliteTypeMenu(record InfoRecord, s *discordgo.Sessi
 
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor - Satellite Type Selection :satellite:"
-	embed.Description = "Currently Editing \"**"+strings.Title(record.Name)+"**\""
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
+	embed.Description = "Currently Editing \"**" + strings.Title(record.Name) + "**\""
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: record.ThumbnailURL}
 	embed.Color = record.Color
-
 
 	var fields []*discordgo.MessageEmbedField
 
@@ -183,7 +180,6 @@ func (h *InfoHandler) SetSatelliteTypeMenu(record InfoRecord, s *discordgo.Sessi
 	optiontwo.Inline = true
 	fields = append(fields, &optiontwo)
 
-
 	var reactions []string
 	reactions = append(reactions, "⬅")
 	reactions = append(reactions, "1⃣")
@@ -193,11 +189,10 @@ func (h *InfoHandler) SetSatelliteTypeMenu(record InfoRecord, s *discordgo.Sessi
 		_ = s.MessageReactionAdd(channelID, messageID, reaction)
 	}
 
-
 	_, err := s.ChannelMessageEditEmbed(channelID, messageID, embed)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	h.reactions.Watch(h.HandleSetSatelliteType, messageID, channelID, userID, record.Name, s)
@@ -211,24 +206,23 @@ func (h *InfoHandler) HandleSetSatelliteType(reaction string, recordname string,
 	userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
 	h.reactions.UnWatch(channelID, messageID, userID)
 
-
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	collection, session, err := h.GetMongoCollecton()
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	defer session.Close()
 
 	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
@@ -245,14 +239,13 @@ func (h *InfoHandler) HandleSetSatelliteType(reaction string, recordname string,
 
 	err = h.infodb.SaveRecordToDB(record, *collection)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error Saving Record: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error Saving Record: "+err.Error())
 		return
 	}
 
 	h.SatellitePropertiesMenu(record, s, m)
 	return
 }
-
 
 // Details Menu
 
@@ -265,16 +258,15 @@ func (h *InfoHandler) SetSatelliteDetailsMenu(record InfoRecord, s *discordgo.Se
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor - Satellite Details :satellite:"
-	embed.Description = "Currently Editing: \"**"+strings.Title(record.Name)+"**\""
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
+	embed.Description = "Currently Editing: \"**" + strings.Title(record.Name) + "**\""
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: record.ThumbnailURL}
 	embed.Color = record.Color
-
 
 	var fields []*discordgo.MessageEmbedField
 
@@ -331,7 +323,7 @@ func (h *InfoHandler) SetSatelliteDetailsMenu(record InfoRecord, s *discordgo.Se
 	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	h.reactions.Watch(h.HandleSatelliteDetailsMenu, messageID, channelID, userID, record.Name, s)
@@ -348,20 +340,20 @@ func (h *InfoHandler) HandleSatelliteDetailsMenu(reaction string, recordname str
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	collection, session, err := h.GetMongoCollecton()
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	defer session.Close()
 
 	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
@@ -405,7 +397,6 @@ func (h *InfoHandler) HandleSatelliteDetailsMenu(reaction string, recordname str
 	return
 }
 
-
 // Discovered By
 
 func (h *InfoHandler) SetSatelliteDiscoveredByMenu(record InfoRecord, s *discordgo.Session, m interface{}) {
@@ -417,16 +408,15 @@ func (h *InfoHandler) SetSatelliteDiscoveredByMenu(record InfoRecord, s *discord
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor - Satellite Discovered By :satellite:"
-	embed.Description = "Currently Editing: \"**"+strings.Title(record.Name)+"**\""
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
+	embed.Description = "Currently Editing: \"**" + strings.Title(record.Name) + "**\""
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: record.ThumbnailURL}
 	embed.Color = record.Color
-
 
 	var fields []*discordgo.MessageEmbedField
 
@@ -444,7 +434,6 @@ func (h *InfoHandler) SetSatelliteDiscoveredByMenu(record InfoRecord, s *discord
 	optiontwo.Inline = false
 	fields = append(fields, &optiontwo)
 
-
 	var reactions []string
 	reactions = append(reactions, "⬅")
 
@@ -453,11 +442,10 @@ func (h *InfoHandler) SetSatelliteDiscoveredByMenu(record InfoRecord, s *discord
 		_ = s.MessageReactionAdd(channelID, messageID, reaction)
 	}
 
-
 	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	h.infocallback.Watch(h.HandleSetSatelliteDiscoveredBy, channelID, messageID, userID, record.Name, s)
@@ -475,40 +463,38 @@ func (h *InfoHandler) HandleSetSatelliteDiscoveredBy(recordname string, userID s
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	collection, session, err := h.GetMongoCollecton()
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	defer session.Close()
 
 	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	// Handle invalid names
 	if len(name) > 1024 {
-		errormessage, _ := s.ChannelMessageSend(channelID, "Provided name was too long, " +
+		errormessage, _ := s.ChannelMessageSend(channelID, "Provided name was too long, "+
 			"must be shorter than 1024 characters for discord embed compatibility. Returning to previous menu.")
 		h.SetSatelliteDiscoveredByMenu(record, s, m)
-		time.Sleep(10*time.Second)
+		time.Sleep(10 * time.Second)
 		_ = s.ChannelMessageDelete(channelID, errormessage.ID)
 		return
 	}
 
-
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor - Confirm Satellite Discovered By"
-	embed.Description = "Confirm Discovered By Selection For: \"**"+strings.Title(recordname)+"**\""
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
+	embed.Description = "Confirm Discovered By Selection For: \"**" + strings.Title(recordname) + "**\""
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: record.ThumbnailURL}
 	embed.Color = record.Color
-
 
 	var fields []*discordgo.MessageEmbedField
 
@@ -524,7 +510,6 @@ func (h *InfoHandler) HandleSetSatelliteDiscoveredBy(recordname string, userID s
 	optiontwo.Inline = false
 	fields = append(fields, &optiontwo)
 
-
 	var reactions []string
 	reactions = append(reactions, "✅")
 	reactions = append(reactions, "❎")
@@ -536,7 +521,7 @@ func (h *InfoHandler) HandleSetSatelliteDiscoveredBy(recordname string, userID s
 
 	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
@@ -555,14 +540,14 @@ func (h *InfoHandler) HandleSetSatelliteDiscoveredByReactions(reaction string, r
 		h.infocallback.UnWatch(channelID, messageID, userID)
 		collection, session, err := h.GetMongoCollecton()
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 		defer session.Close()
 
 		record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 
@@ -583,7 +568,7 @@ func (h *InfoHandler) HandleSetSatelliteDiscoveredByConfirm(reaction string, arg
 
 	payload := strings.Split(args, "|#|")
 	if len(payload) < 2 || len(payload) > 2 {
-		_, _ = s.ChannelMessageSend(channelID, "Error: HandleSetRecordImageURLConfirm payload invalid size - " + strconv.Itoa(len(payload)))
+		_, _ = s.ChannelMessageSend(channelID, "Error: HandleSetRecordImageURLConfirm payload invalid size - "+strconv.Itoa(len(payload)))
 		return
 	}
 	recordname := payload[0]
@@ -591,14 +576,14 @@ func (h *InfoHandler) HandleSetSatelliteDiscoveredByConfirm(reaction string, arg
 
 	collection, session, err := h.GetMongoCollecton()
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	defer session.Close()
 
 	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
@@ -607,7 +592,7 @@ func (h *InfoHandler) HandleSetSatelliteDiscoveredByConfirm(reaction string, arg
 		record.Satellite.DiscoveredBy = discoveredby
 		err = h.infodb.SaveRecordToDB(record, *collection)
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 		h.SetSatelliteDiscoveredByMenu(record, s, m)
@@ -620,7 +605,6 @@ func (h *InfoHandler) HandleSetSatelliteDiscoveredByConfirm(reaction string, arg
 	}
 }
 
-
 // System Zone
 
 func (h *InfoHandler) SetSatelliteSystemZoneMenu(record InfoRecord, s *discordgo.Session, m interface{}) {
@@ -632,17 +616,16 @@ func (h *InfoHandler) SetSatelliteSystemZoneMenu(record InfoRecord, s *discordgo
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor - Satellite System Zone :satellite:"
-	embed.Description = "Currently Editing: \"**"+strings.Title(record.Name)+"**\"" +
+	embed.Description = "Currently Editing: \"**" + strings.Title(record.Name) + "**\"" +
 		"\nCurrently: " + record.Satellite.SystemZone
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: record.ThumbnailURL}
 	embed.Color = record.Color
-
 
 	var fields []*discordgo.MessageEmbedField
 
@@ -685,7 +668,7 @@ func (h *InfoHandler) SetSatelliteSystemZoneMenu(record InfoRecord, s *discordgo
 	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	h.reactions.Watch(h.HandleSatelliteSystemZoneMenu, messageID, channelID, userID, record.Name, s)
@@ -702,20 +685,20 @@ func (h *InfoHandler) HandleSatelliteSystemZoneMenu(reaction string, recordname 
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	collection, session, err := h.GetMongoCollecton()
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	defer session.Close()
 
 	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
@@ -738,14 +721,13 @@ func (h *InfoHandler) HandleSatelliteSystemZoneMenu(reaction string, recordname 
 	}
 	err = h.infodb.SaveRecordToDB(record, *collection)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	h.SetSatelliteDetailsMenu(record, s, m)
 	return
 }
-
 
 // Atmosphere
 
@@ -758,16 +740,15 @@ func (h *InfoHandler) SetSatelliteAtmosphereMenu(record InfoRecord, s *discordgo
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor - Satellite Atmosphere :satellite:"
-	embed.Description = "Currently Editing: \"**"+strings.Title(record.Name)+"**\""
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
+	embed.Description = "Currently Editing: \"**" + strings.Title(record.Name) + "**\""
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: record.ThumbnailURL}
 	embed.Color = record.Color
-
 
 	var fields []*discordgo.MessageEmbedField
 
@@ -783,7 +764,6 @@ func (h *InfoHandler) SetSatelliteAtmosphereMenu(record InfoRecord, s *discordgo
 	optiontwo.Inline = false
 	fields = append(fields, &optiontwo)
 
-
 	var reactions []string
 	reactions = append(reactions, "⬅")
 
@@ -792,11 +772,10 @@ func (h *InfoHandler) SetSatelliteAtmosphereMenu(record InfoRecord, s *discordgo
 		_ = s.MessageReactionAdd(channelID, messageID, reaction)
 	}
 
-
 	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	h.infocallback.Watch(h.HandleSetSatelliteAtmosphere, channelID, messageID, userID, record.Name, s)
@@ -814,42 +793,40 @@ func (h *InfoHandler) HandleSetSatelliteAtmosphere(recordname string, userID str
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	collection, session, err := h.GetMongoCollecton()
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	defer session.Close()
 
 	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	// Handle invalid names
 	_, err = strconv.ParseFloat(atmosphere, 64)
 	if err != nil {
-		errormessage, _ := s.ChannelMessageSend(channelID, "Provided value was not a float," +
+		errormessage, _ := s.ChannelMessageSend(channelID, "Provided value was not a float,"+
 			"please provide a correct value.")
-		r := &discordgo.MessageReaction{MessageID:messageID, ChannelID: channelID, UserID: userID}
+		r := &discordgo.MessageReaction{MessageID: messageID, ChannelID: channelID, UserID: userID}
 		h.SetSatelliteAtmosphereMenu(record, s, r)
-		time.Sleep(10*time.Second)
+		time.Sleep(10 * time.Second)
 		_ = s.ChannelMessageDelete(channelID, errormessage.ID)
 		return
 	}
 
-
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor - Confirm Satellite Atmosphere"
-	embed.Description = "Confirm Atmosphere Selection For: \"**"+strings.Title(recordname)+"**\""
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
+	embed.Description = "Confirm Atmosphere Selection For: \"**" + strings.Title(recordname) + "**\""
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: record.ThumbnailURL}
 	embed.Color = record.Color
-
 
 	var fields []*discordgo.MessageEmbedField
 
@@ -865,7 +842,6 @@ func (h *InfoHandler) HandleSetSatelliteAtmosphere(recordname string, userID str
 	optiontwo.Inline = false
 	fields = append(fields, &optiontwo)
 
-
 	var reactions []string
 	reactions = append(reactions, "✅")
 	reactions = append(reactions, "❎")
@@ -877,7 +853,7 @@ func (h *InfoHandler) HandleSetSatelliteAtmosphere(recordname string, userID str
 
 	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
@@ -896,14 +872,14 @@ func (h *InfoHandler) HandleSetSatelliteAtmosphereReactions(reaction string, rec
 		//h.infocallback.UnWatch(channelID, messageID, userID)
 		collection, session, err := h.GetMongoCollecton()
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 		defer session.Close()
 
 		record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 
@@ -924,7 +900,7 @@ func (h *InfoHandler) HandleSetSatelliteAtmosphereConfirm(reaction string, args 
 
 	payload := strings.Split(args, "|#|")
 	if len(payload) < 2 || len(payload) > 2 {
-		_, _ = s.ChannelMessageSend(channelID, "Error: HandleSetRecordImageURLConfirm payload invalid size - " + strconv.Itoa(len(payload)))
+		_, _ = s.ChannelMessageSend(channelID, "Error: HandleSetRecordImageURLConfirm payload invalid size - "+strconv.Itoa(len(payload)))
 		return
 	}
 	recordname := payload[0]
@@ -932,14 +908,14 @@ func (h *InfoHandler) HandleSetSatelliteAtmosphereConfirm(reaction string, args 
 
 	collection, session, err := h.GetMongoCollecton()
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	defer session.Close()
 
 	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
@@ -948,7 +924,7 @@ func (h *InfoHandler) HandleSetSatelliteAtmosphereConfirm(reaction string, args 
 		record.Satellite.Atmosphere = atmosphere
 		err = h.infodb.SaveRecordToDB(record, *collection)
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 		h.SetSatelliteAtmosphereMenu(record, s, m)
@@ -962,7 +938,6 @@ func (h *InfoHandler) HandleSetSatelliteAtmosphereConfirm(reaction string, args 
 	}
 }
 
-
 // Gravity
 
 func (h *InfoHandler) SetSatelliteGravityMenu(record InfoRecord, s *discordgo.Session, m interface{}) {
@@ -974,16 +949,15 @@ func (h *InfoHandler) SetSatelliteGravityMenu(record InfoRecord, s *discordgo.Se
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor - Satellite Gravity :satellite:"
-	embed.Description = "Currently Editing: \"**"+strings.Title(record.Name)+"**\""
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
+	embed.Description = "Currently Editing: \"**" + strings.Title(record.Name) + "**\""
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: record.ThumbnailURL}
 	embed.Color = record.Color
-
 
 	var fields []*discordgo.MessageEmbedField
 
@@ -999,7 +973,6 @@ func (h *InfoHandler) SetSatelliteGravityMenu(record InfoRecord, s *discordgo.Se
 	optiontwo.Inline = false
 	fields = append(fields, &optiontwo)
 
-
 	var reactions []string
 	reactions = append(reactions, "⬅")
 
@@ -1008,11 +981,10 @@ func (h *InfoHandler) SetSatelliteGravityMenu(record InfoRecord, s *discordgo.Se
 		_ = s.MessageReactionAdd(channelID, messageID, reaction)
 	}
 
-
 	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	h.infocallback.Watch(h.HandleSetSatelliteGravity, channelID, messageID, userID, record.Name, s)
@@ -1030,42 +1002,40 @@ func (h *InfoHandler) HandleSetSatelliteGravity(recordname string, userID string
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	collection, session, err := h.GetMongoCollecton()
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	defer session.Close()
 
 	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	// Handle invalid names
 	_, err = strconv.ParseFloat(gravity, 64)
 	if err != nil {
-		errormessage, _ := s.ChannelMessageSend(channelID, "Provided value was not a float," +
+		errormessage, _ := s.ChannelMessageSend(channelID, "Provided value was not a float,"+
 			"please provide a correct value.")
-		r := &discordgo.MessageReaction{MessageID:messageID, ChannelID: channelID, UserID: userID}
+		r := &discordgo.MessageReaction{MessageID: messageID, ChannelID: channelID, UserID: userID}
 		h.SetSatelliteGravityMenu(record, s, r)
-		time.Sleep(10*time.Second)
+		time.Sleep(10 * time.Second)
 		_ = s.ChannelMessageDelete(channelID, errormessage.ID)
 		return
 	}
 
-
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor - Confirm Satellite Gravity"
-	embed.Description = "Confirm Gravity Selection For: \"**"+strings.Title(recordname)+"**\""
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
+	embed.Description = "Confirm Gravity Selection For: \"**" + strings.Title(recordname) + "**\""
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: record.ThumbnailURL}
 	embed.Color = record.Color
-
 
 	var fields []*discordgo.MessageEmbedField
 
@@ -1081,7 +1051,6 @@ func (h *InfoHandler) HandleSetSatelliteGravity(recordname string, userID string
 	optiontwo.Inline = false
 	fields = append(fields, &optiontwo)
 
-
 	var reactions []string
 	reactions = append(reactions, "✅")
 	reactions = append(reactions, "❎")
@@ -1093,7 +1062,7 @@ func (h *InfoHandler) HandleSetSatelliteGravity(recordname string, userID string
 
 	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
@@ -1112,14 +1081,14 @@ func (h *InfoHandler) HandleSetSatelliteGravityReactions(reaction string, record
 		//h.infocallback.UnWatch(channelID, messageID, userID)
 		collection, session, err := h.GetMongoCollecton()
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 		defer session.Close()
 
 		record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 
@@ -1140,7 +1109,7 @@ func (h *InfoHandler) HandleSetSatelliteGravityConfirm(reaction string, args str
 
 	payload := strings.Split(args, "|#|")
 	if len(payload) < 2 || len(payload) > 2 {
-		_, _ = s.ChannelMessageSend(channelID, "Error: HandleSetSatelliteGravityConfirm payload invalid size - " + strconv.Itoa(len(payload)))
+		_, _ = s.ChannelMessageSend(channelID, "Error: HandleSetSatelliteGravityConfirm payload invalid size - "+strconv.Itoa(len(payload)))
 		return
 	}
 	recordname := payload[0]
@@ -1148,14 +1117,14 @@ func (h *InfoHandler) HandleSetSatelliteGravityConfirm(reaction string, args str
 
 	collection, session, err := h.GetMongoCollecton()
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	defer session.Close()
 
 	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
@@ -1164,7 +1133,7 @@ func (h *InfoHandler) HandleSetSatelliteGravityConfirm(reaction string, args str
 		record.Satellite.Gravity = gravity
 		err = h.infodb.SaveRecordToDB(record, *collection)
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 		h.SetSatelliteGravityMenu(record, s, m)
@@ -1178,7 +1147,6 @@ func (h *InfoHandler) HandleSetSatelliteGravityConfirm(reaction string, args str
 	}
 }
 
-
 // Surface Area
 
 func (h *InfoHandler) SetSatelliteSurfaceAreaMenu(record InfoRecord, s *discordgo.Session, m interface{}) {
@@ -1190,16 +1158,15 @@ func (h *InfoHandler) SetSatelliteSurfaceAreaMenu(record InfoRecord, s *discordg
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor - Satellite Surface Area :satellite:"
-	embed.Description = "Currently Editing: \"**"+strings.Title(record.Name)+"**\""
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
+	embed.Description = "Currently Editing: \"**" + strings.Title(record.Name) + "**\""
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: record.ThumbnailURL}
 	embed.Color = record.Color
-
 
 	var fields []*discordgo.MessageEmbedField
 
@@ -1215,7 +1182,6 @@ func (h *InfoHandler) SetSatelliteSurfaceAreaMenu(record InfoRecord, s *discordg
 	optiontwo.Inline = false
 	fields = append(fields, &optiontwo)
 
-
 	var reactions []string
 	reactions = append(reactions, "⬅")
 
@@ -1224,11 +1190,10 @@ func (h *InfoHandler) SetSatelliteSurfaceAreaMenu(record InfoRecord, s *discordg
 		_ = s.MessageReactionAdd(channelID, messageID, reaction)
 	}
 
-
 	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	h.infocallback.Watch(h.HandleSetSatelliteSurfaceArea, channelID, messageID, userID, record.Name, s)
@@ -1246,42 +1211,40 @@ func (h *InfoHandler) HandleSetSatelliteSurfaceArea(recordname string, userID st
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	collection, session, err := h.GetMongoCollecton()
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	defer session.Close()
 
 	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	// Handle invalid names
 	_, err = strconv.ParseFloat(surfacearea, 64)
 	if err != nil {
-		errormessage, _ := s.ChannelMessageSend(channelID, "Provided value was not a float," +
+		errormessage, _ := s.ChannelMessageSend(channelID, "Provided value was not a float,"+
 			"please provide a correct value.")
-		r := &discordgo.MessageReaction{MessageID:messageID, ChannelID: channelID, UserID: userID}
+		r := &discordgo.MessageReaction{MessageID: messageID, ChannelID: channelID, UserID: userID}
 		h.SetSatelliteSurfaceAreaMenu(record, s, r)
-		time.Sleep(10*time.Second)
+		time.Sleep(10 * time.Second)
 		_ = s.ChannelMessageDelete(channelID, errormessage.ID)
 		return
 	}
 
-
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor - Confirm Satellite Surface Area"
-	embed.Description = "Confirm Gravity Selection For: \"**"+strings.Title(recordname)+"**\""
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
+	embed.Description = "Confirm Gravity Selection For: \"**" + strings.Title(recordname) + "**\""
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: record.ThumbnailURL}
 	embed.Color = record.Color
-
 
 	var fields []*discordgo.MessageEmbedField
 
@@ -1297,7 +1260,6 @@ func (h *InfoHandler) HandleSetSatelliteSurfaceArea(recordname string, userID st
 	optiontwo.Inline = false
 	fields = append(fields, &optiontwo)
 
-
 	var reactions []string
 	reactions = append(reactions, "✅")
 	reactions = append(reactions, "❎")
@@ -1309,7 +1271,7 @@ func (h *InfoHandler) HandleSetSatelliteSurfaceArea(recordname string, userID st
 
 	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
@@ -1328,14 +1290,14 @@ func (h *InfoHandler) HandleSetSatelliteSurfaceAreaReactions(reaction string, re
 		//h.infocallback.UnWatch(channelID, messageID, userID)
 		collection, session, err := h.GetMongoCollecton()
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 		defer session.Close()
 
 		record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 
@@ -1357,7 +1319,7 @@ func (h *InfoHandler) HandleSetSatelliteSurfaceAreaConfirm(reaction string, args
 	payload := strings.Split(args, "|#|")
 	if len(payload) < 2 || len(payload) > 2 {
 		_, _ = s.ChannelMessageSend(channelID,
-			"Error: HandleSetSatelliteSurfaceAreaConfirm payload invalid size - " + strconv.Itoa(len(payload)))
+			"Error: HandleSetSatelliteSurfaceAreaConfirm payload invalid size - "+strconv.Itoa(len(payload)))
 		return
 	}
 	recordname := payload[0]
@@ -1365,14 +1327,14 @@ func (h *InfoHandler) HandleSetSatelliteSurfaceAreaConfirm(reaction string, args
 
 	collection, session, err := h.GetMongoCollecton()
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	defer session.Close()
 
 	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
@@ -1381,7 +1343,7 @@ func (h *InfoHandler) HandleSetSatelliteSurfaceAreaConfirm(reaction string, args
 		record.Satellite.SurfaceArea = surfacearea
 		err = h.infodb.SaveRecordToDB(record, *collection)
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 		h.SetSatelliteSurfaceAreaMenu(record, s, m)
@@ -1392,7 +1354,6 @@ func (h *InfoHandler) HandleSetSatelliteSurfaceAreaConfirm(reaction string, args
 		return
 	}
 }
-
 
 // Biosphere
 
@@ -1405,17 +1366,16 @@ func (h *InfoHandler) SetSatelliteBiosphereMenu(record InfoRecord, s *discordgo.
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor - Satellite System Zone :satellite:"
-	embed.Description = "Currently Editing: \"**"+strings.Title(record.Name)+"**\"" +
+	embed.Description = "Currently Editing: \"**" + strings.Title(record.Name) + "**\"" +
 		"\nCurrently: " + record.Satellite.Biosphere
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: record.ThumbnailURL}
 	embed.Color = record.Color
-
 
 	var fields []*discordgo.MessageEmbedField
 
@@ -1458,7 +1418,7 @@ func (h *InfoHandler) SetSatelliteBiosphereMenu(record InfoRecord, s *discordgo.
 	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	h.reactions.Watch(h.HandleSatelliteBiosphereMenu, messageID, channelID, userID, record.Name, s)
@@ -1475,20 +1435,20 @@ func (h *InfoHandler) HandleSatelliteBiosphereMenu(reaction string, recordname s
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	collection, session, err := h.GetMongoCollecton()
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	defer session.Close()
 
 	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
@@ -1511,14 +1471,13 @@ func (h *InfoHandler) HandleSatelliteBiosphereMenu(reaction string, recordname s
 	}
 	err = h.infodb.SaveRecordToDB(record, *collection)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	h.SetSatelliteDetailsMenu(record, s, m)
 	return
 }
-
 
 // Elements
 
@@ -1531,16 +1490,15 @@ func (h *InfoHandler) SetSatelliteElementsMenu(record InfoRecord, s *discordgo.S
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor - Satellite Elements :satellite:"
-	embed.Description = "Currently Editing: \"**"+strings.Title(record.Name)+"**\""
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
+	embed.Description = "Currently Editing: \"**" + strings.Title(record.Name) + "**\""
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: record.ThumbnailURL}
 	embed.Color = record.Color
-
 
 	var fields []*discordgo.MessageEmbedField
 
@@ -1550,7 +1508,6 @@ func (h *InfoHandler) SetSatelliteElementsMenu(record InfoRecord, s *discordgo.S
 	info.Value = "Current Elements: " + strings.Title(elementlist)
 	info.Inline = false
 	fields = append(fields, &info)
-
 
 	optionone := discordgo.MessageEmbedField{}
 	optionone.Name = "1⃣"
@@ -1577,7 +1534,7 @@ func (h *InfoHandler) SetSatelliteElementsMenu(record InfoRecord, s *discordgo.S
 	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	h.reactions.Watch(h.HandleSatelliteElementsMenu, messageID, channelID, userID, record.Name, s)
@@ -1594,20 +1551,20 @@ func (h *InfoHandler) HandleSatelliteElementsMenu(reaction string, recordname st
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	collection, session, err := h.GetMongoCollecton()
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	defer session.Close()
 
 	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
@@ -1626,7 +1583,6 @@ func (h *InfoHandler) HandleSatelliteElementsMenu(reaction string, recordname st
 		return
 	}
 
-
 	// We only get this far if a wrong value was received
 	var reactions []string
 	reactions = append(reactions, "⬅")
@@ -1639,8 +1595,7 @@ func (h *InfoHandler) HandleSatelliteElementsMenu(reaction string, recordname st
 	return
 }
 
-
-func (h *InfoHandler) AddSatelliteElementMenu( record InfoRecord, s *discordgo.Session, m interface{}) {
+func (h *InfoHandler) AddSatelliteElementMenu(record InfoRecord, s *discordgo.Session, m interface{}) {
 
 	// Please provide an element name or press <- to return to the Satellite Properties Menu
 	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
@@ -1650,23 +1605,22 @@ func (h *InfoHandler) AddSatelliteElementMenu( record InfoRecord, s *discordgo.S
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	collection, session, err := h.GetMongoCollecton()
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	defer session.Close()
 
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor - Satellite Add Element :satellite:"
-	embed.Description = "Currently Editing: \"**"+strings.Title(record.Name)+"**\"\nSelect an element from the list below"
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
+	embed.Description = "Currently Editing: \"**" + strings.Title(record.Name) + "**\"\nSelect an element from the list below"
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: record.ThumbnailURL}
 	embed.Color = record.Color
-
 
 	var fields []*discordgo.MessageEmbedField
 
@@ -1705,16 +1659,14 @@ func (h *InfoHandler) AddSatelliteElementMenu( record InfoRecord, s *discordgo.S
 		_ = s.MessageReactionAdd(channelID, messageID, reaction)
 	}
 
-
 	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	h.reactions.Watch(h.HandleSetSatelliteAddElementReactions, messageID, channelID, userID, record.Name, s)
 	return
-
 
 }
 
@@ -1727,14 +1679,14 @@ func (h *InfoHandler) HandleSetSatelliteAddElementReactions(reaction string, rec
 		h.infocallback.UnWatch(channelID, messageID, userID)
 		collection, session, err := h.GetMongoCollecton()
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 		defer session.Close()
 
 		record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 
@@ -1743,14 +1695,14 @@ func (h *InfoHandler) HandleSetSatelliteAddElementReactions(reaction string, rec
 	} else {
 		collection, session, err := h.GetMongoCollecton()
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 		defer session.Close()
 
 		record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 
@@ -1762,7 +1714,7 @@ func (h *InfoHandler) HandleSetSatelliteAddElementReactions(reaction string, rec
 				record.Satellite.NotableElements = AppendStringIfMissing(record.Satellite.NotableElements, resourcelist[i].Name)
 				err = h.infodb.SaveRecordToDB(record, *collection)
 				if err != nil {
-					_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+					_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 					return
 				}
 				h.SetSatelliteElementsMenu(record, s, m)
@@ -1776,8 +1728,7 @@ func (h *InfoHandler) HandleSetSatelliteAddElementReactions(reaction string, rec
 
 }
 
-
-func (h *InfoHandler) RemoveSatelliteElementMenu( record InfoRecord, s *discordgo.Session, m interface{}) {
+func (h *InfoHandler) RemoveSatelliteElementMenu(record InfoRecord, s *discordgo.Session, m interface{}) {
 
 	// Please provide an element name or press <- to return to the Satellite Properties Menu
 	channelID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("ChannelID").String()
@@ -1787,16 +1738,15 @@ func (h *InfoHandler) RemoveSatelliteElementMenu( record InfoRecord, s *discordg
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor - Satellite Remove Element :satellite:"
-	embed.Description = "Currently Editing: \"**"+strings.Title(record.Name)+"**\"\nSelect an element from the list below"
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
+	embed.Description = "Currently Editing: \"**" + strings.Title(record.Name) + "**\"\nSelect an element from the list below"
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: record.ThumbnailURL}
 	embed.Color = record.Color
-
 
 	var fields []*discordgo.MessageEmbedField
 
@@ -1828,16 +1778,14 @@ func (h *InfoHandler) RemoveSatelliteElementMenu( record InfoRecord, s *discordg
 		_ = s.MessageReactionAdd(channelID, messageID, reaction)
 	}
 
-
 	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	h.reactions.Watch(h.HandleSetSatelliteRemoveElementReactions, messageID, channelID, userID, record.Name, s)
 	return
-
 
 }
 
@@ -1850,14 +1798,14 @@ func (h *InfoHandler) HandleSetSatelliteRemoveElementReactions(reaction string, 
 		h.infocallback.UnWatch(channelID, messageID, userID)
 		collection, session, err := h.GetMongoCollecton()
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 		defer session.Close()
 
 		record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 
@@ -1866,14 +1814,14 @@ func (h *InfoHandler) HandleSetSatelliteRemoveElementReactions(reaction string, 
 	} else {
 		collection, session, err := h.GetMongoCollecton()
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 		defer session.Close()
 
 		record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 
@@ -1883,7 +1831,7 @@ func (h *InfoHandler) HandleSetSatelliteRemoveElementReactions(reaction string, 
 				record.Satellite.NotableElements = append(record.Satellite.NotableElements[:i], record.Satellite.NotableElements[i+1:]...)
 				err = h.infodb.SaveRecordToDB(record, *collection)
 				if err != nil {
-					_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+					_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 					return
 				}
 
@@ -1898,8 +1846,6 @@ func (h *InfoHandler) HandleSetSatelliteRemoveElementReactions(reaction string, 
 
 }
 
-
-
 // Territories
 
 // Territories Menu
@@ -1912,16 +1858,15 @@ func (h *InfoHandler) SetSatelliteTerritoriesMenu(record InfoRecord, s *discordg
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor - Satellite Details :satellite:"
-	embed.Description = "Currently Editing: \"**"+strings.Title(record.Name)+"**\""
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
+	embed.Description = "Currently Editing: \"**" + strings.Title(record.Name) + "**\""
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: record.ThumbnailURL}
 	embed.Color = record.Color
-
 
 	var fields []*discordgo.MessageEmbedField
 
@@ -1957,7 +1902,7 @@ func (h *InfoHandler) SetSatelliteTerritoriesMenu(record InfoRecord, s *discordg
 	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	h.reactions.Watch(h.HandleSatelliteTerritoriesMenu, messageID, channelID, userID, record.Name, s)
@@ -1974,20 +1919,20 @@ func (h *InfoHandler) HandleSatelliteTerritoriesMenu(reaction string, recordname
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	collection, session, err := h.GetMongoCollecton()
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	defer session.Close()
 
 	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
@@ -2026,16 +1971,15 @@ func (h *InfoHandler) SetSatelliteTerraNulliusMenu(record InfoRecord, s *discord
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor - Satellite Terra Nullius :satellite:"
-	embed.Description = "Currently Editing: \"**"+strings.Title(record.Name)+"**\""
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
+	embed.Description = "Currently Editing: \"**" + strings.Title(record.Name) + "**\""
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: record.ThumbnailURL}
 	embed.Color = record.Color
-
 
 	var fields []*discordgo.MessageEmbedField
 
@@ -2051,7 +1995,6 @@ func (h *InfoHandler) SetSatelliteTerraNulliusMenu(record InfoRecord, s *discord
 	optiontwo.Inline = false
 	fields = append(fields, &optiontwo)
 
-
 	var reactions []string
 	reactions = append(reactions, "⬅")
 
@@ -2060,11 +2003,10 @@ func (h *InfoHandler) SetSatelliteTerraNulliusMenu(record InfoRecord, s *discord
 		_ = s.MessageReactionAdd(channelID, messageID, reaction)
 	}
 
-
 	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	h.infocallback.Watch(h.HandleSetSatelliteTerraNullius, channelID, messageID, userID, record.Name, s)
@@ -2082,42 +2024,40 @@ func (h *InfoHandler) HandleSetSatelliteTerraNullius(recordname string, userID s
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	collection, session, err := h.GetMongoCollecton()
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	defer session.Close()
 
 	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	// Handle invalid names
 	_, err = strconv.ParseFloat(terranullius, 64)
 	if err != nil {
-		errormessage, _ := s.ChannelMessageSend(channelID, "Provided value was not a float," +
+		errormessage, _ := s.ChannelMessageSend(channelID, "Provided value was not a float,"+
 			"please provide a correct value.")
-		r := &discordgo.MessageReaction{MessageID:messageID, ChannelID: channelID, UserID: userID}
+		r := &discordgo.MessageReaction{MessageID: messageID, ChannelID: channelID, UserID: userID}
 		h.SetSatelliteTerraNulliusMenu(record, s, r)
-		time.Sleep(10*time.Second)
+		time.Sleep(10 * time.Second)
 		_ = s.ChannelMessageDelete(channelID, errormessage.ID)
 		return
 	}
 
-
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor - Confirm Satellite Terra Nullius"
-	embed.Description = "Confirm Terra Nullius Selection For: \"**"+strings.Title(recordname)+"**\""
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
+	embed.Description = "Confirm Terra Nullius Selection For: \"**" + strings.Title(recordname) + "**\""
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: record.ThumbnailURL}
 	embed.Color = record.Color
-
 
 	var fields []*discordgo.MessageEmbedField
 
@@ -2133,7 +2073,6 @@ func (h *InfoHandler) HandleSetSatelliteTerraNullius(recordname string, userID s
 	optiontwo.Inline = false
 	fields = append(fields, &optiontwo)
 
-
 	var reactions []string
 	reactions = append(reactions, "✅")
 	reactions = append(reactions, "❎")
@@ -2145,7 +2084,7 @@ func (h *InfoHandler) HandleSetSatelliteTerraNullius(recordname string, userID s
 
 	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
@@ -2164,14 +2103,14 @@ func (h *InfoHandler) HandleSetSatelliteTerraNulliusReactions(reaction string, r
 		h.infocallback.UnWatch(channelID, messageID, userID)
 		collection, session, err := h.GetMongoCollecton()
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 		defer session.Close()
 
 		record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 
@@ -2191,10 +2130,9 @@ func (h *InfoHandler) HandleSetSatelliteTerraNulliusConfirm(reaction string, arg
 	userID := reflect.Indirect(reflect.ValueOf(m)).FieldByName("UserID").String()
 	h.reactions.UnWatch(channelID, messageID, userID)
 
-
 	payload := strings.Split(args, "|#|")
 	if len(payload) < 2 || len(payload) > 2 {
-		_, _ = s.ChannelMessageSend(channelID, "Error: HandleSetSatelliteTerraNulliusConfirm payload invalid size - " + strconv.Itoa(len(payload)))
+		_, _ = s.ChannelMessageSend(channelID, "Error: HandleSetSatelliteTerraNulliusConfirm payload invalid size - "+strconv.Itoa(len(payload)))
 		return
 	}
 	recordname := payload[0]
@@ -2202,14 +2140,14 @@ func (h *InfoHandler) HandleSetSatelliteTerraNulliusConfirm(reaction string, arg
 
 	collection, session, err := h.GetMongoCollecton()
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	defer session.Close()
 
 	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
@@ -2218,7 +2156,7 @@ func (h *InfoHandler) HandleSetSatelliteTerraNulliusConfirm(reaction string, arg
 		record.Satellite.TerraNullius = terranullius
 		err = h.infodb.SaveRecordToDB(record, *collection)
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 		h.SetSatelliteTerraNulliusMenu(record, s, m)
@@ -2243,16 +2181,15 @@ func (h *InfoHandler) SetSatelliteTerritoryCountMenu(record InfoRecord, s *disco
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor - Satellite Territory Count :satellite:"
-	embed.Description = "Currently Editing: \"**"+strings.Title(record.Name)+"**\""
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
+	embed.Description = "Currently Editing: \"**" + strings.Title(record.Name) + "**\""
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: record.ThumbnailURL}
 	embed.Color = record.Color
-
 
 	var fields []*discordgo.MessageEmbedField
 
@@ -2268,7 +2205,6 @@ func (h *InfoHandler) SetSatelliteTerritoryCountMenu(record InfoRecord, s *disco
 	optiontwo.Inline = false
 	fields = append(fields, &optiontwo)
 
-
 	var reactions []string
 	reactions = append(reactions, "⬅")
 
@@ -2277,11 +2213,10 @@ func (h *InfoHandler) SetSatelliteTerritoryCountMenu(record InfoRecord, s *disco
 		_ = s.MessageReactionAdd(channelID, messageID, reaction)
 	}
 
-
 	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	h.infocallback.Watch(h.HandleSetSatelliteTerritoryCount, channelID, messageID, userID, record.Name, s)
@@ -2299,20 +2234,20 @@ func (h *InfoHandler) HandleSetSatelliteTerritoryCount(recordname string, userID
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	collection, session, err := h.GetMongoCollecton()
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	defer session.Close()
 
 	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
@@ -2320,18 +2255,18 @@ func (h *InfoHandler) HandleSetSatelliteTerritoryCount(recordname string, userID
 	_, err = strconv.Atoi(territorycount)
 	if err != nil {
 		errormessage, _ := s.ChannelMessageSend(channelID,
-			"Provided value is invalid, please check your entry and try again:\n```" + territorycount+"```")
-		r := discordgo.MessageReaction{ChannelID:channelID, MessageID: messageID, UserID: userID}
+			"Provided value is invalid, please check your entry and try again:\n```"+territorycount+"```")
+		r := discordgo.MessageReaction{ChannelID: channelID, MessageID: messageID, UserID: userID}
 		h.SetSatelliteTerritoryCountMenu(record, s, r)
-		time.Sleep(15*time.Second)
+		time.Sleep(15 * time.Second)
 		_ = s.ChannelMessageDelete(channelID, errormessage.ID)
 		return
 	}
 
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor - Confirm Satellite Territory Count"
-	embed.Description = "Confirm Color Selection For: \"**"+strings.Title(recordname)+"**\""
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
+	embed.Description = "Confirm Color Selection For: \"**" + strings.Title(recordname) + "**\""
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: record.ThumbnailURL}
 	embed.Color = record.Color
 
 	var fields []*discordgo.MessageEmbedField
@@ -2348,7 +2283,6 @@ func (h *InfoHandler) HandleSetSatelliteTerritoryCount(recordname string, userID
 	optiontwo.Inline = false
 	fields = append(fields, &optiontwo)
 
-
 	var reactions []string
 	reactions = append(reactions, "✅")
 	reactions = append(reactions, "❎")
@@ -2360,7 +2294,7 @@ func (h *InfoHandler) HandleSetSatelliteTerritoryCount(recordname string, userID
 
 	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
@@ -2380,14 +2314,14 @@ func (h *InfoHandler) HandleSetSatelliteTerritoryCountReactions(reaction string,
 		h.infocallback.UnWatch(channelID, messageID, userID)
 		collection, session, err := h.GetMongoCollecton()
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 		defer session.Close()
 
 		record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 
@@ -2409,7 +2343,7 @@ func (h *InfoHandler) HandleSetSatelliteTerritoryCountConfirm(reaction string, a
 
 	payload := strings.Split(args, "|#|")
 	if len(payload) < 2 || len(payload) > 2 {
-		_, _ = s.ChannelMessageSend(channelID, "Error: HandleSetRecordColorConfirm payload invalid size - " + strconv.Itoa(len(payload)))
+		_, _ = s.ChannelMessageSend(channelID, "Error: HandleSetRecordColorConfirm payload invalid size - "+strconv.Itoa(len(payload)))
 		return
 	}
 	recordname := payload[0]
@@ -2417,14 +2351,14 @@ func (h *InfoHandler) HandleSetSatelliteTerritoryCountConfirm(reaction string, a
 
 	collection, session, err := h.GetMongoCollecton()
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	defer session.Close()
 
 	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
@@ -2433,7 +2367,7 @@ func (h *InfoHandler) HandleSetSatelliteTerritoryCountConfirm(reaction string, a
 		// We check again for consistency
 		territorycountint, err := strconv.Atoi(territorycount)
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			h.SetRecordThumbnailURLMenu(record, s, m)
 			return
 		}
@@ -2441,7 +2375,7 @@ func (h *InfoHandler) HandleSetSatelliteTerritoryCountConfirm(reaction string, a
 		record.Satellite.Territories = territorycountint
 		err = h.infodb.SaveRecordToDB(record, *collection)
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 		h.SetSatelliteTerritoryCountMenu(record, s, m)
@@ -2465,16 +2399,15 @@ func (h *InfoHandler) SetSatelliteTerritoriesClaimedMenu(record InfoRecord, s *d
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor - Satellite Territories Claimed :satellite:"
-	embed.Description = "Currently Editing: \"**"+strings.Title(record.Name)+"**\""
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
+	embed.Description = "Currently Editing: \"**" + strings.Title(record.Name) + "**\""
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: record.ThumbnailURL}
 	embed.Color = record.Color
-
 
 	var fields []*discordgo.MessageEmbedField
 
@@ -2490,7 +2423,6 @@ func (h *InfoHandler) SetSatelliteTerritoriesClaimedMenu(record InfoRecord, s *d
 	optiontwo.Inline = false
 	fields = append(fields, &optiontwo)
 
-
 	var reactions []string
 	reactions = append(reactions, "⬅")
 
@@ -2499,11 +2431,10 @@ func (h *InfoHandler) SetSatelliteTerritoriesClaimedMenu(record InfoRecord, s *d
 		_ = s.MessageReactionAdd(channelID, messageID, reaction)
 	}
 
-
 	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	h.infocallback.Watch(h.HandleSetSatelliteTerritoriesClaimed, channelID, messageID, userID, record.Name, s)
@@ -2521,20 +2452,20 @@ func (h *InfoHandler) HandleSetSatelliteTerritoriesClaimed(recordname string, us
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	collection, session, err := h.GetMongoCollecton()
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	defer session.Close()
 
 	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
@@ -2542,18 +2473,18 @@ func (h *InfoHandler) HandleSetSatelliteTerritoriesClaimed(recordname string, us
 	_, err = strconv.Atoi(territoriesclaimed)
 	if err != nil {
 		errormessage, _ := s.ChannelMessageSend(channelID,
-			"Provided value is invalid, please check your entry and try again:\n```" + territoriesclaimed+"```")
-		r := discordgo.MessageReaction{ChannelID:channelID, MessageID: messageID, UserID: userID}
+			"Provided value is invalid, please check your entry and try again:\n```"+territoriesclaimed+"```")
+		r := discordgo.MessageReaction{ChannelID: channelID, MessageID: messageID, UserID: userID}
 		h.SetSatelliteTerritoryCountMenu(record, s, r)
-		time.Sleep(15*time.Second)
+		time.Sleep(15 * time.Second)
 		_ = s.ChannelMessageDelete(channelID, errormessage.ID)
 		return
 	}
 
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor - Confirm Satellite Territories Claimed"
-	embed.Description = "Confirm Color Selection For: \"**"+strings.Title(recordname)+"**\""
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
+	embed.Description = "Confirm Color Selection For: \"**" + strings.Title(recordname) + "**\""
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: record.ThumbnailURL}
 	embed.Color = record.Color
 
 	var fields []*discordgo.MessageEmbedField
@@ -2570,7 +2501,6 @@ func (h *InfoHandler) HandleSetSatelliteTerritoriesClaimed(recordname string, us
 	optiontwo.Inline = false
 	fields = append(fields, &optiontwo)
 
-
 	var reactions []string
 	reactions = append(reactions, "✅")
 	reactions = append(reactions, "❎")
@@ -2582,7 +2512,7 @@ func (h *InfoHandler) HandleSetSatelliteTerritoriesClaimed(recordname string, us
 
 	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
@@ -2601,14 +2531,14 @@ func (h *InfoHandler) HandleSetSatelliteTerritoriesClaimedReactions(reaction str
 		h.infocallback.UnWatch(channelID, messageID, userID)
 		collection, session, err := h.GetMongoCollecton()
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 		defer session.Close()
 
 		record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 
@@ -2629,7 +2559,7 @@ func (h *InfoHandler) HandleSetSatelliteTerritoriesClaimedConfirm(reaction strin
 
 	payload := strings.Split(args, "|#|")
 	if len(payload) < 2 || len(payload) > 2 {
-		_, _ = s.ChannelMessageSend(channelID, "Error: HandleSetSatelliteTerritoriesClaimedConfirm payload invalid size - " + strconv.Itoa(len(payload)))
+		_, _ = s.ChannelMessageSend(channelID, "Error: HandleSetSatelliteTerritoriesClaimedConfirm payload invalid size - "+strconv.Itoa(len(payload)))
 		return
 	}
 	recordname := payload[0]
@@ -2637,14 +2567,14 @@ func (h *InfoHandler) HandleSetSatelliteTerritoriesClaimedConfirm(reaction strin
 
 	collection, session, err := h.GetMongoCollecton()
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	defer session.Close()
 
 	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
@@ -2653,7 +2583,7 @@ func (h *InfoHandler) HandleSetSatelliteTerritoriesClaimedConfirm(reaction strin
 		// We check again for consistency
 		territorycountint, err := strconv.Atoi(territoriesclaimed)
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			h.SetRecordThumbnailURLMenu(record, s, m)
 			return
 		}
@@ -2661,7 +2591,7 @@ func (h *InfoHandler) HandleSetSatelliteTerritoriesClaimedConfirm(reaction strin
 		record.Satellite.TerritoriesClaimed = territorycountint
 		err = h.infodb.SaveRecordToDB(record, *collection)
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 		h.SetSatelliteTerritoriesClaimedMenu(record, s, m)
@@ -2686,16 +2616,15 @@ func (h *InfoHandler) SetSatelliteMoonsMenu(record InfoRecord, s *discordgo.Sess
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor - Satellite Details :satellite:"
-	embed.Description = "Currently Editing: \"**"+strings.Title(record.Name)+"**\""
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
+	embed.Description = "Currently Editing: \"**" + strings.Title(record.Name) + "**\""
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: record.ThumbnailURL}
 	embed.Color = record.Color
-
 
 	var fields []*discordgo.MessageEmbedField
 
@@ -2732,7 +2661,7 @@ func (h *InfoHandler) SetSatelliteMoonsMenu(record InfoRecord, s *discordgo.Sess
 	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	h.reactions.Watch(h.HandleSatelliteMoonsMenu, messageID, channelID, userID, record.Name, s)
@@ -2752,20 +2681,20 @@ func (h *InfoHandler) HandleSatelliteMoonsMenu(reaction string, recordname strin
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	collection, session, err := h.GetMongoCollecton()
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	defer session.Close()
 
 	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
@@ -2798,16 +2727,15 @@ func (h *InfoHandler) SetSatelliteAddMoonMenu(record InfoRecord, s *discordgo.Se
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor - Satellite Add Moon :satellite:"
-	embed.Description = "Currently Editing: \"**"+strings.Title(record.Name)+"**\""
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
+	embed.Description = "Currently Editing: \"**" + strings.Title(record.Name) + "**\""
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: record.ThumbnailURL}
 	embed.Color = record.Color
-
 
 	var fields []*discordgo.MessageEmbedField
 
@@ -2825,11 +2753,10 @@ func (h *InfoHandler) SetSatelliteAddMoonMenu(record InfoRecord, s *discordgo.Se
 		_ = s.MessageReactionAdd(channelID, messageID, reaction)
 	}
 
-
 	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	h.infocallback.Watch(h.HandleSetSatelliteNewMoon, channelID, messageID, userID, record.Name, s)
@@ -2847,20 +2774,20 @@ func (h *InfoHandler) HandleSetSatelliteNewMoon(recordname string, userID string
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	collection, session, err := h.GetMongoCollecton()
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	defer session.Close()
 
 	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
@@ -2873,10 +2800,10 @@ func (h *InfoHandler) HandleSetSatelliteNewMoon(recordname string, userID string
 			found = true
 			if validmoon.Satellite.ParentSatellite != "" {
 				errormessage, _ := s.ChannelMessageSend(channelID,
-					"Provided moon already has a parent, you must remove it from that satellite first\n```" + validmoon.Satellite.ParentSatellite +"```")
-				r := discordgo.MessageReaction{ChannelID:channelID, MessageID: messageID, UserID: userID}
+					"Provided moon already has a parent, you must remove it from that satellite first\n```"+validmoon.Satellite.ParentSatellite+"```")
+				r := discordgo.MessageReaction{ChannelID: channelID, MessageID: messageID, UserID: userID}
 				h.SetSatelliteMoonsMenu(record, s, r)
-				time.Sleep(15*time.Second)
+				time.Sleep(15 * time.Second)
 				_ = s.ChannelMessageDelete(channelID, errormessage.ID)
 				return
 			}
@@ -2884,18 +2811,16 @@ func (h *InfoHandler) HandleSetSatelliteNewMoon(recordname string, userID string
 	}
 
 	if !found {
-		r := &discordgo.MessageReaction{MessageID:messageID, ChannelID:channelID, UserID:userID}
+		r := &discordgo.MessageReaction{MessageID: messageID, ChannelID: channelID, UserID: userID}
 		h.SetSatelliteNewMoonPrompt(record, moonname, s, r)
 		return
 	}
 
-
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor - Confirm Satellite New Moon"
-	embed.Description = "Confirm Moon Selection For: \"**"+strings.Title(recordname)+"**\""
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
+	embed.Description = "Confirm Moon Selection For: \"**" + strings.Title(recordname) + "**\""
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: record.ThumbnailURL}
 	embed.Color = record.Color
-
 
 	var fields []*discordgo.MessageEmbedField
 
@@ -2911,7 +2836,6 @@ func (h *InfoHandler) HandleSetSatelliteNewMoon(recordname string, userID string
 	optiontwo.Inline = false
 	fields = append(fields, &optiontwo)
 
-
 	var reactions []string
 	reactions = append(reactions, "✅")
 	reactions = append(reactions, "❎")
@@ -2923,7 +2847,7 @@ func (h *InfoHandler) HandleSetSatelliteNewMoon(recordname string, userID string
 
 	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
@@ -2940,14 +2864,14 @@ func (h *InfoHandler) SetSatelliteNewMoonPrompt(record InfoRecord, moonname stri
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor - Satellite Add Moon :satellite:"
-	embed.Description = "No record for Moon \"**"+strings.Title(moonname)+"**\" found, would you like to create it?"
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
+	embed.Description = "No record for Moon \"**" + strings.Title(moonname) + "**\" found, would you like to create it?"
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: record.ThumbnailURL}
 	embed.Color = record.Color
 
 	var fields []*discordgo.MessageEmbedField
@@ -2970,7 +2894,7 @@ func (h *InfoHandler) SetSatelliteNewMoonPrompt(record InfoRecord, moonname stri
 
 	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
@@ -2987,33 +2911,31 @@ func (h *InfoHandler) HandleSetSatelliteNewMoonReactions(reaction string, args s
 
 	payload := strings.Split(args, "|#|")
 	if len(payload) < 2 || len(payload) > 2 {
-		_, _ = s.ChannelMessageSend(channelID, "Error: HandleSetSatelliteNewMoonReactions payload invalid size - " + strconv.Itoa(len(payload)))
+		_, _ = s.ChannelMessageSend(channelID, "Error: HandleSetSatelliteNewMoonReactions payload invalid size - "+strconv.Itoa(len(payload)))
 		return
 	}
 	recordname := payload[0]
 	moonname := payload[1]
 
-
 	collection, session, err := h.GetMongoCollecton()
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	defer session.Close()
 
 	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
-
 	if reaction == "✅" {
-		moonrecord := &InfoRecord{RecordType:"satellite", Name:moonname,
-			Satellite:SatelliteRecord{SatelliteType:"moon", ParentSatellite:record.Name}}
+		moonrecord := &InfoRecord{RecordType: "satellite", Name: moonname,
+			Satellite: SatelliteRecord{SatelliteType: "moon", ParentSatellite: record.Name}}
 		err = h.infodb.SaveRecordToDB(*moonrecord, *collection)
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 
@@ -3021,7 +2943,7 @@ func (h *InfoHandler) HandleSetSatelliteNewMoonReactions(reaction string, args s
 
 		err = h.infodb.SaveRecordToDB(record, *collection)
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 		h.SetSatelliteMoonsMenu(record, s, m)
@@ -3040,7 +2962,7 @@ func (h *InfoHandler) HandleSetSatelliteNewMoonConfirm(reaction string, args str
 
 	payload := strings.Split(args, "|#|")
 	if len(payload) < 2 || len(payload) > 2 {
-		_, _ = s.ChannelMessageSend(channelID, "Error: HandleSetSatelliteNewMoonConfirm payload invalid size - " + strconv.Itoa(len(payload)))
+		_, _ = s.ChannelMessageSend(channelID, "Error: HandleSetSatelliteNewMoonConfirm payload invalid size - "+strconv.Itoa(len(payload)))
 		return
 	}
 	recordname := payload[0]
@@ -3048,14 +2970,14 @@ func (h *InfoHandler) HandleSetSatelliteNewMoonConfirm(reaction string, args str
 
 	collection, session, err := h.GetMongoCollecton()
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	defer session.Close()
 
 	record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 	if err != nil {
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
@@ -3063,7 +2985,7 @@ func (h *InfoHandler) HandleSetSatelliteNewMoonConfirm(reaction string, args str
 		record.Satellite.Satellites = append(record.Satellite.Satellites, moonname)
 		err = h.infodb.SaveRecordToDB(record, *collection)
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 		h.SetSatelliteMoonsMenu(record, s, m)
@@ -3085,14 +3007,14 @@ func (h *InfoHandler) SetSatelliteRemoveMoonMenu(record InfoRecord, s *discordgo
 	err := s.MessageReactionsRemoveAll(channelID, messageID)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 
 	embed := &discordgo.MessageEmbed{}
 	embed.Title = "Info System Editor - Satellite Remove Moon :satellite:"
-	embed.Description = "Currently Editing: \"**"+strings.Title(record.Name)+"**\""
-	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:record.ThumbnailURL}
+	embed.Description = "Currently Editing: \"**" + strings.Title(record.Name) + "**\""
+	embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: record.ThumbnailURL}
 	embed.Color = record.Color
 
 	var fields []*discordgo.MessageEmbedField
@@ -3117,17 +3039,15 @@ func (h *InfoHandler) SetSatelliteRemoveMoonMenu(record InfoRecord, s *discordgo
 	optiontwo.Inline = false
 	fields = append(fields, &optiontwo)
 
-
 	embed.Fields = fields
 	for _, reaction := range reactions {
 		_ = s.MessageReactionAdd(channelID, messageID, reaction)
 	}
 
-
 	_, err = s.ChannelMessageEditEmbed(channelID, messageID, embed)
 	if err != nil {
 		//fmt.Println(err.Error()) // We don't have to die here because this shouldn't be a fatal error (famous last words)
-		_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+		_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 		return
 	}
 	h.reactions.Watch(h.HandleSetSatelliteRemoveMoonReactions, messageID, channelID, userID, record.Name, s)
@@ -3142,14 +3062,14 @@ func (h *InfoHandler) HandleSetSatelliteRemoveMoonReactions(reaction string, rec
 	if reaction == "⬅" {
 		collection, session, err := h.GetMongoCollecton()
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 		defer session.Close()
 
 		record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 
@@ -3158,14 +3078,14 @@ func (h *InfoHandler) HandleSetSatelliteRemoveMoonReactions(reaction string, rec
 	} else {
 		collection, session, err := h.GetMongoCollecton()
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 		defer session.Close()
 
 		record, err := h.infodb.GetRecordFromDB(recordname, *collection)
 		if err != nil {
-			_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+			_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 			return
 		}
 
@@ -3173,15 +3093,15 @@ func (h *InfoHandler) HandleSetSatelliteRemoveMoonReactions(reaction string, rec
 			escapedemoji := html.UnescapeString("&#" + strconv.Itoa(i+127462) + ";")
 			if reaction == escapedemoji {
 
-				moonrecord,err := h.infodb.GetRecordFromDB(record.Satellite.Satellites[i], *collection)
+				moonrecord, err := h.infodb.GetRecordFromDB(record.Satellite.Satellites[i], *collection)
 				if err != nil {
-					_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+					_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 					return
 				}
 				moonrecord.Satellite.ParentSatellite = ""
 				err = h.infodb.SaveRecordToDB(moonrecord, *collection)
 				if err != nil {
-					_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+					_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 					return
 				}
 				h.SetSatelliteMoonsMenu(record, s, m)
@@ -3189,7 +3109,7 @@ func (h *InfoHandler) HandleSetSatelliteRemoveMoonReactions(reaction string, rec
 				record.Satellite.Satellites = append(record.Satellite.Satellites[:i], record.Satellite.Satellites[i+1:]...)
 				err = h.infodb.SaveRecordToDB(record, *collection)
 				if err != nil {
-					_, _ = s.ChannelMessageSend(channelID, "Error: " + err.Error())
+					_, _ = s.ChannelMessageSend(channelID, "Error: "+err.Error())
 					return
 				}
 				h.SetSatelliteMoonsMenu(record, s, m)

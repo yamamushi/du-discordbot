@@ -1,12 +1,12 @@
 package main
 
 import (
-	"github.com/bwmarrin/discordgo"
 	"container/list"
+	"github.com/bwmarrin/discordgo"
 	"reflect"
-		"time"
 	"sync"
-	)
+	"time"
+)
 
 // This will come in handy later
 /*
@@ -24,23 +24,22 @@ import (
 */
 
 type ReactionsHandler struct {
-	WatchList    list.List
-	dg           *discordgo.Session
-	logger       *Logger
-	conf         *Config
-	querylocker  sync.RWMutex
-	configdb     *ConfigDB
+	WatchList   list.List
+	dg          *discordgo.Session
+	logger      *Logger
+	conf        *Config
+	querylocker sync.RWMutex
+	configdb    *ConfigDB
 }
-
 
 // WatchReaction struct
 type WatchReaction struct {
-	Reaction      string
-	ChannelID     string
-	MessageID     string
-	Handler       func(string, string, *discordgo.Session, interface{})
-	Created       time.Time
-	Args          string
+	Reaction  string
+	ChannelID string
+	MessageID string
+	Handler   func(string, string, *discordgo.Session, interface{})
+	Created   time.Time
+	Args      string
 }
 
 // AddHandler function
@@ -52,26 +51,26 @@ func (h *ReactionsHandler) AddHandler(i interface{}) {
 
 func (h *ReactionsHandler) Create(Handler func(string, string, *discordgo.Session, interface{}),
 	Reactions []string, TargetChannelID string, Output string, Args string,
-	s *discordgo.Session) (err error){
+	s *discordgo.Session) (err error) {
 
-		message, err := s.ChannelMessageSend(TargetChannelID, Output)
-		if err != nil {
-			return err
-		}
-		//fmt.Println("ID: " + message.ID)
-		//fmt.Println("Channel: " + message.ChannelID)
+	message, err := s.ChannelMessageSend(TargetChannelID, Output)
+	if err != nil {
+		return err
+	}
+	//fmt.Println("ID: " + message.ID)
+	//fmt.Println("Channel: " + message.ChannelID)
 
-		for _, reaction := range Reactions {
-			s.MessageReactionAdd(message.ChannelID, message.ID, reaction)
-		}
+	for _, reaction := range Reactions {
+		s.MessageReactionAdd(message.ChannelID, message.ID, reaction)
+	}
 
-		h.Watch(Handler, message.ID, TargetChannelID, Args, s)
-		return nil
+	h.Watch(Handler, message.ID, TargetChannelID, Args, s)
+	return nil
 }
 
 func (h *ReactionsHandler) CreateEmbed(Handler func(string, string, *discordgo.Session, interface{}),
 	Reactions []string, TargetChannelID string, Output *discordgo.MessageEmbed, Args string,
-	s *discordgo.Session) (err error){
+	s *discordgo.Session) (err error) {
 
 	message, err := s.ChannelMessageSendEmbed(TargetChannelID, Output)
 	if err != nil {
@@ -90,7 +89,7 @@ func (h *ReactionsHandler) CreateEmbed(Handler func(string, string, *discordgo.S
 
 // Watch function
 func (h *ReactionsHandler) Watch(Handler func(string, string, *discordgo.Session, interface{}),
-	MessageID string, TargetChannelID string,  Args string, s *discordgo.Session) {
+	MessageID string, TargetChannelID string, Args string, s *discordgo.Session) {
 
 	h.querylocker.Lock()
 	defer h.querylocker.Unlock()
@@ -100,9 +99,9 @@ func (h *ReactionsHandler) Watch(Handler func(string, string, *discordgo.Session
 
 }
 
-func (h *ReactionsHandler) Cleaner(){
+func (h *ReactionsHandler) Cleaner() {
 	for {
-		time.Sleep(3*time.Minute)
+		time.Sleep(3 * time.Minute)
 		expirationTime, err := h.configdb.GetValue("reactions-expiration")
 		if err != nil {
 			expirationTime = int(h.conf.Reactions.ReactionsExpiration)
@@ -113,7 +112,7 @@ func (h *ReactionsHandler) Cleaner(){
 		for e := h.WatchList.Front(); e != nil; e = e.Next() {
 			r := reflect.ValueOf(e.Value)
 			reaction := r.Interface().(WatchReaction)
-			if time.Now().After(reaction.Created.Add(time.Duration(expirationTime)*time.Minute)) {
+			if time.Now().After(reaction.Created.Add(time.Duration(expirationTime) * time.Minute)) {
 				h.WatchList.Remove(e)
 			}
 		}
@@ -140,8 +139,7 @@ func (h *ReactionsHandler) UnWatch(ChannelID string, MessageID string) {
 	}
 }
 
-
-func (h *ReactionsHandler) ReadReactionAdd(s *discordgo.Session, m *discordgo.MessageReactionAdd){
+func (h *ReactionsHandler) ReadReactionAdd(s *discordgo.Session, m *discordgo.MessageReactionAdd) {
 
 	// Ignore all messages created by the bot itself
 	if m.UserID == s.State.User.ID {
@@ -179,8 +177,7 @@ func (h *ReactionsHandler) ReadReactionAdd(s *discordgo.Session, m *discordgo.Me
 	}
 }
 
-
-func (h *ReactionsHandler) ReadReactionRemove(s *discordgo.Session, m *discordgo.MessageReactionRemove){
+func (h *ReactionsHandler) ReadReactionRemove(s *discordgo.Session, m *discordgo.MessageReactionRemove) {
 	// Ignore all messages created by the bot itself
 	if m.UserID == s.State.User.ID {
 		return

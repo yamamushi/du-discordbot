@@ -1,13 +1,13 @@
 package main
 
 import (
-	"github.com/bwmarrin/discordgo"
-	"strings"
-	"fmt"
-	"time"
-	"github.com/anaskhan96/soup"
-	"strconv"
 	"errors"
+	"fmt"
+	"github.com/anaskhan96/soup"
+	"github.com/bwmarrin/discordgo"
+	"strconv"
+	"strings"
+	"time"
 )
 
 // RecruitmentHandler struct
@@ -28,12 +28,10 @@ type ServerStatus struct {
 	Duration    time.Duration
 }
 
-
 // Init function
 func (h *ServerStatusHandler) Init() {
 	h.RegisterCommands()
 }
-
 
 // RegisterCommands function
 func (h *ServerStatusHandler) RegisterCommands() (err error) {
@@ -77,8 +75,6 @@ func (h *ServerStatusHandler) Read(s *discordgo.Session, m *discordgo.MessageCre
 	}
 }
 
-
-
 // ParseCommand function
 func (h *ServerStatusHandler) ParseCommand(commandlist []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
@@ -99,7 +95,6 @@ func (h *ServerStatusHandler) ParseCommand(commandlist []string, s *discordgo.Se
 	h.FormatStatusEmbed(status, s, m)
 	return
 }
-
 
 func (h *ServerStatusHandler) GetServerStatusList() (statuslist []ServerStatus, err error) {
 
@@ -165,14 +160,14 @@ func (h *ServerStatusHandler) GetServerStatusList() (statuslist []ServerStatus, 
 						}
 						if colNumber == 3 {
 							//fmt.Println(strings.TrimSpace(column.Text()))
-							status.StartDate, err  = time.Parse("January 02, 2006 - 15:04 MST", strings.TrimSpace(column.Text()))
+							status.StartDate, err = time.Parse("January 02, 2006 - 15:04 MST", strings.TrimSpace(column.Text()))
 							if err != nil {
 								//fmt.Println(err.Error())
 								return statuslist, errors.New("Could not parse start date for row " + strconv.Itoa(rowNum))
 							}
 						}
 						if colNumber == 4 {
-							status.EndDate, err  = time.Parse("January 02, 2006 - 15:04 MST", strings.TrimSpace(column.Text()))
+							status.EndDate, err = time.Parse("January 02, 2006 - 15:04 MST", strings.TrimSpace(column.Text()))
 							if err != nil {
 								return statuslist, errors.New("Could not parse end date for row " + strconv.Itoa(rowNum))
 							}
@@ -212,7 +207,6 @@ func (h *ServerStatusHandler) GetServerStatusList() (statuslist []ServerStatus, 
 	return statuslist, nil
 }
 
-
 func (h *ServerStatusHandler) FindCurrentTest(statuslist []ServerStatus) (status ServerStatus, err error) {
 
 	for num, item := range statuslist {
@@ -233,8 +227,7 @@ func (h *ServerStatusHandler) FindCurrentTest(statuslist []ServerStatus) (status
 	return status, errors.New("Could not find current or next test")
 }
 
-
-func (h *ServerStatusHandler) FormatSendStatus(status ServerStatus,  s *discordgo.Session, m *discordgo.MessageCreate) {
+func (h *ServerStatusHandler) FormatSendStatus(status ServerStatus, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	output := ":satellite: Server Status \n```\n"
 
@@ -243,18 +236,18 @@ func (h *ServerStatusHandler) FormatSendStatus(status ServerStatus,  s *discordg
 
 		output += "The server is currently live until:\n" +
 			status.EndDate.In(loc).Format("January 02, 2006 03:04 PM MST") +
-			" ("+status.EndDate.Format("January 02, 2006 03:04 PM MST")  + ")\n\n"
+			" (" + status.EndDate.Format("January 02, 2006 03:04 PM MST") + ")\n\n"
 
-		output += "The current "+status.TestType+" test session is scheduled to end in approximately:\n" +
+		output += "The current " + status.TestType + " test session is scheduled to end in approximately:\n" +
 			fmtDuration(status.EndDate.Sub(time.Now().Round(0))) + "\n"
 
 	} else {
 
 		output += "The server is currently offline, and is scheduled to come online at:\n " +
-			status.StartDate.In(loc).Format("January 02, 2006 03:04 PM MST")+
-			" ("+status.EndDate.Format("January 02, 2006 03:04 PM MST")  + ")\n\n"
+			status.StartDate.In(loc).Format("January 02, 2006 03:04 PM MST") +
+			" (" + status.EndDate.Format("January 02, 2006 03:04 PM MST") + ")\n\n"
 
-		output += "The next "+status.TestType+" test session is scheduled to begin in approximately:\n" +
+		output += "The next " + status.TestType + " test session is scheduled to begin in approximately:\n" +
 			status.StartDate.Sub(time.Now().Round(0)).String()
 
 		output += "The current scheduled upcoming test duration is " +
@@ -263,18 +256,17 @@ func (h *ServerStatusHandler) FormatSendStatus(status ServerStatus,  s *discordg
 
 	output += "\n```\n"
 
-	s.ChannelMessageSend(m.ChannelID, output )
+	s.ChannelMessageSend(m.ChannelID, output)
 	return
 }
 
-func (h *ServerStatusHandler) FormatStatusEmbed(status ServerStatus,  s *discordgo.Session, m *discordgo.MessageCreate) {
+func (h *ServerStatusHandler) FormatStatusEmbed(status ServerStatus, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	output := discordgo.MessageEmbed{}
 	authorField := discordgo.MessageEmbedAuthor{}
 	output.Author = &authorField
 	output.Color = status.StatusColor
 	authorField.Name = "Dual Universe " + status.TestType + " Test"
-
 
 	fields := []*discordgo.MessageEmbedField{}
 	//counter := discordgo.MessageEmbedField{}
@@ -286,20 +278,20 @@ func (h *ServerStatusHandler) FormatStatusEmbed(status ServerStatus,  s *discord
 
 		output.Title = "The server is currently **Live**"
 
-		output.Footer = &discordgo.MessageEmbedFooter{Text:"Test Ending In: " + fmtDuration(status.EndDate.Sub(time.Now().Round(0))),
-			IconURL:"https://cdn.discordapp.com/attachments/418457755276410880/473080359219625989/Server_Logo.jpg"}
+		output.Footer = &discordgo.MessageEmbedFooter{Text: "Test Ending In: " + fmtDuration(status.EndDate.Sub(time.Now().Round(0))),
+			IconURL: "https://cdn.discordapp.com/attachments/418457755276410880/473080359219625989/Server_Logo.jpg"}
 		//counter.Name = "Ending In"
 		//counter.Value = fmtDuration(status.EndDate.Sub(time.Now().Round(0)))
 
 		//output += "The current "+status.TestType+" test session is scheduled to end in approximately:\n" +
 		//	fmtDuration(status.EndDate.Sub(time.Now().Round(0))) + "\n"
 
-	} else if strings.ToLower(status.Status) == "planned"{
+	} else if strings.ToLower(status.Status) == "planned" {
 
 		output.Title = "The server is currently scheduled to come online."
 
-		output.Footer = &discordgo.MessageEmbedFooter{Text:"Test Starting In: " + fmtDuration(status.StartDate.Sub(time.Now().Round(0))),
-			IconURL:"https://cdn.discordapp.com/attachments/418457755276410880/473080359219625989/Server_Logo.jpg"}
+		output.Footer = &discordgo.MessageEmbedFooter{Text: "Test Starting In: " + fmtDuration(status.StartDate.Sub(time.Now().Round(0))),
+			IconURL: "https://cdn.discordapp.com/attachments/418457755276410880/473080359219625989/Server_Logo.jpg"}
 		//counter.Name = "Starting In"
 		//counter.Value = fmtDuration(status.StartDate.Sub(time.Now().Round(0)))
 
@@ -312,7 +304,7 @@ func (h *ServerStatusHandler) FormatStatusEmbed(status ServerStatus,  s *discord
 
 	output.URL = "https://www.dualthegame.com/en/server-status/"
 
-	output.Thumbnail = &discordgo.MessageEmbedThumbnail{URL:"https://cdn.discordapp.com/attachments/452882025553199105/477363590429409283/ux5Nv-CRwNwu9nedK_6cr4HfMqTeeC65Hz3Rnxz6FNg.png"}
+	output.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: "https://cdn.discordapp.com/attachments/452882025553199105/477363590429409283/ux5Nv-CRwNwu9nedK_6cr4HfMqTeeC65Hz3Rnxz6FNg.png"}
 
 	//output.Image = &discordgo.MessageEmbedImage{URL:"https://cdn.discordapp.com/attachments/327676701133897730/477360048494870538/serverstatus.png", Width:50, Height:50}
 
@@ -327,42 +319,36 @@ func (h *ServerStatusHandler) FormatStatusEmbed(status ServerStatus,  s *discord
 	}
 	fields = append(fields, &access)
 
-
 	duration := discordgo.MessageEmbedField{}
 	duration.Name = "Duration"
 	duration.Value = fmtDuration(status.Duration)
 	fields = append(fields, &duration)
 
-
 	startTime := discordgo.MessageEmbedField{}
 	startTime.Inline = true
 	startTime.Name = "Start Date"
-	startTime.Value = status.StartDate.In(loc).Format("January 02 03:04 PM MST")+
-		"\n"+status.StartDate.Format("January 02 03:04 PM MST")
+	startTime.Value = status.StartDate.In(loc).Format("January 02 03:04 PM MST") +
+		"\n" + status.StartDate.Format("January 02 03:04 PM MST")
 	fields = append(fields, &startTime)
-
 
 	endTime := discordgo.MessageEmbedField{}
 	endTime.Inline = true
 	endTime.Name = "End Date"
 	endTime.Value = status.EndDate.In(loc).Format("January 02 03:04 PM MST") +
-		"\n"+status.EndDate.Format("January 02 03:04 PM MST")
+		"\n" + status.EndDate.Format("January 02 03:04 PM MST")
 	fields = append(fields, &endTime)
-
-
 
 	output.Fields = fields
 
-
 	//output += "\n```\n"
 
-	sentEmbed, err := s.ChannelMessageSendEmbed(m.ChannelID, &output )
+	sentEmbed, err := s.ChannelMessageSendEmbed(m.ChannelID, &output)
 	if err != nil {
 		return
 	}
 
 	if m.ChannelID != "477247944249049089" {
-		time.Sleep(time.Second*30)
+		time.Sleep(time.Second * 30)
 		err = s.ChannelMessageDelete(m.ChannelID, sentEmbed.ID)
 		if err != nil {
 			return

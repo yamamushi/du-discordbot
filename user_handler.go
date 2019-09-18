@@ -102,7 +102,6 @@ func (h *UserHandler) GetUser(userid string) (user User, err error) {
 	return user, nil
 }
 
-
 // GetUser function
 func (h *UserHandler) UpdateUserRecord(user User) (err error) {
 
@@ -231,7 +230,7 @@ func (h *UserHandler) FormatGroups(groups []string) (formatted string) {
 	return formatted
 }
 
-func (h *UserHandler) CheckDiscordRole(userID string, rolename string,  s *discordgo.Session,) (bool) {
+func (h *UserHandler) CheckDiscordRole(userID string, rolename string, s *discordgo.Session) bool {
 
 	discordroles, err := s.GuildRoles(h.conf.DiscordConfig.GuildID)
 	if err != nil {

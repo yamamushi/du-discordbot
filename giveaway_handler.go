@@ -13,17 +13,17 @@ import (
 
 // NotificationsHandler struct
 type GiveawayHandler struct {
-	conf     *Config
-	registry *CommandRegistry
-	callback *CallbackHandler
-	db       *DBHandler
-	giveawaydb  *GiveawayDB
+	conf       *Config
+	registry   *CommandRegistry
+	callback   *CallbackHandler
+	db         *DBHandler
+	giveawaydb *GiveawayDB
 }
 
 type NewGiveaway struct {
-	Shortname string
+	Shortname   string
 	Description string
-	Duration string
+	Duration    string
 }
 
 // Init function
@@ -31,7 +31,6 @@ func (h *GiveawayHandler) Init() {
 	h.RegisterCommands()
 	h.giveawaydb = &GiveawayDB{db: h.db}
 }
-
 
 // RegisterCommands function
 func (h *GiveawayHandler) RegisterCommands() (err error) {
@@ -74,15 +73,13 @@ func (h *GiveawayHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate)
 	}
 }
 
-
-
 // ParseCommand function
 func (h *GiveawayHandler) ParseCommand(commandlist []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	command, payload := SplitPayload(commandlist)
 
 	if len(payload) == 0 {
-		s.ChannelMessageSend(m.ChannelID, "Command " + command + " expects an argument, see help for usage.")
+		s.ChannelMessageSend(m.ChannelID, "Command "+command+" expects an argument, see help for usage.")
 		return
 	}
 	if payload[0] == "help" {
@@ -127,7 +124,7 @@ func (h *GiveawayHandler) ParseCommand(commandlist []string, s *discordgo.Sessio
 }
 
 // HelpOutput function
-func (h *GiveawayHandler) HelpOutput(s *discordgo.Session, m *discordgo.MessageCreate){
+func (h *GiveawayHandler) HelpOutput(s *discordgo.Session, m *discordgo.MessageCreate) {
 	output := "Command usage for giveaway: \n"
 	output = output + "```\n"
 	output = output + "enter: enter a giveaway by name or ID\n"
@@ -154,10 +151,10 @@ func (h *GiveawayHandler) GiveawayWatcher(s *discordgo.Session) {
 				if time.Now().After(endTime) && record.Active {
 					winnerID, err := h.PickWinner(record.ID)
 					if err == nil {
-						s.ChannelMessageSend(h.conf.DUBotConfig.GiveawayChannel, "<@"+winnerID+"> has won the " + record.ShortName + " giveaway! Congratulations! Please contact <@" + record.OwnerID + "> to claim your prize!")
+						s.ChannelMessageSend(h.conf.DUBotConfig.GiveawayChannel, "<@"+winnerID+"> has won the "+record.ShortName+" giveaway! Congratulations! Please contact <@"+record.OwnerID+"> to claim your prize!")
 
 					} else {
-						s.ChannelMessageSend(h.conf.DUBotConfig.GiveawayChannel, record.ShortName + " has ended without a winner because no entries were found.")
+						s.ChannelMessageSend(h.conf.DUBotConfig.GiveawayChannel, record.ShortName+" has ended without a winner because no entries were found.")
 					}
 					h.DeactivateGiveaway(record.ShortName, winnerID)
 				}
@@ -166,7 +163,7 @@ func (h *GiveawayHandler) GiveawayWatcher(s *discordgo.Session) {
 	}
 }
 
-func (h *GiveawayHandler) PickWinner(giveawayid string) (winnerID string, err error){
+func (h *GiveawayHandler) PickWinner(giveawayid string) (winnerID string, err error) {
 	var activeentrylist []GiveawayEntry
 	recordlist, err := h.giveawaydb.GetAllGiveawayDB()
 	if err != nil {
@@ -194,8 +191,7 @@ func (h *GiveawayHandler) PickWinner(giveawayid string) (winnerID string, err er
 	return "", errors.New("no entries found")
 }
 
-
-func (h *GiveawayHandler) NewGiveaway(payload []string, s *discordgo.Session, m *discordgo.MessageCreate){
+func (h *GiveawayHandler) NewGiveaway(payload []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	// Grab our sender ID to verify if this user has permission to use this command
 	db := h.db.rawdb.From("Users")
@@ -217,24 +213,24 @@ func (h *GiveawayHandler) NewGiveaway(payload []string, s *discordgo.Session, m 
 	if strings.ToLower(payload[0]) == "help" {
 
 		examplePayload := "{\n\t\"shortname\": \"IWannaWin\",\n\t\"description\": \"Enter to win a prize!\",\n\t\"duration\" : \"1d 2h 3m\"\n}"
-		s.ChannelMessageSend(m.ChannelID, "'new' expects a payload formatted in json. Example: ```" +examplePayload+ "\n```" )
+		s.ChannelMessageSend(m.ChannelID, "'new' expects a payload formatted in json. Example: ```"+examplePayload+"\n```")
 		return
 	}
 
 	var combined string
 	for count, i := range payload {
-		if count != 0 && count != len(payload) - 1 {
+		if count != 0 && count != len(payload)-1 {
 			combined += i + " "
 		}
 	}
 	//fmt.Println(combined)
 	unpacked, err := h.UnpackGiveaway(combined)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error unpacking payload: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error unpacking payload: "+err.Error())
 		return
 	}
 
-	if strings.Contains(unpacked.Shortname, " ") ||  strings.Contains(unpacked.Shortname, "\n") {
+	if strings.Contains(unpacked.Shortname, " ") || strings.Contains(unpacked.Shortname, "\n") {
 		s.ChannelMessageSend(m.ChannelID, "Shortname cannot contain spaces!")
 		return
 	}
@@ -242,7 +238,7 @@ func (h *GiveawayHandler) NewGiveaway(payload []string, s *discordgo.Session, m 
 	//fmt.Println("Duration: " + unpacked.Duration)
 	days, hours, minutes, err := h.ParseDuration(unpacked.Duration)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error parsing duration: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error parsing duration: "+err.Error())
 		return
 	}
 	minutes = (days * 24 * 60) + (hours * 60) + minutes
@@ -254,7 +250,7 @@ func (h *GiveawayHandler) NewGiveaway(payload []string, s *discordgo.Session, m 
 
 	giveawayrecords, err := h.giveawaydb.GetAllGiveawayDB()
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Could not read database: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Could not read database: "+err.Error())
 		return
 	}
 	for _, giveawayrecord := range giveawayrecords {
@@ -264,10 +260,9 @@ func (h *GiveawayHandler) NewGiveaway(payload []string, s *discordgo.Session, m 
 		}
 	}
 
-
 	err = h.giveawaydb.AddGiveawayRecordToDB(record)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Could not save record to database: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Could not save record to database: "+err.Error())
 		return
 	}
 
@@ -275,14 +270,13 @@ func (h *GiveawayHandler) NewGiveaway(payload []string, s *discordgo.Session, m 
 	return
 }
 
-
 func (h *GiveawayHandler) ParseDuration(duration string) (days int64, hours int64, minutes int64, err error) {
 
 	daysstring := "0"
 	hoursstring := "0"
 	minutesstring := "0"
 
-	if !strings.Contains(duration, " ") && len(duration) > 3{
+	if !strings.Contains(duration, " ") && len(duration) > 3 {
 		return 0, 0, 0, errors.New("Invalid time interval format")
 	}
 
@@ -329,7 +323,6 @@ func (h *GiveawayHandler) ParseDuration(duration string) (days int64, hours int6
 	return days, hours, minutes, nil
 }
 
-
 func (h *GiveawayHandler) UnpackGiveaway(payload string) (unpacked NewGiveaway, err error) {
 
 	payload = strings.TrimPrefix(payload, "~giveaway new ") // This all will need to be updated later, this is just
@@ -363,7 +356,7 @@ func (h *GiveawayHandler) CreateGiveaway(ownerID string, shortname string, descr
 	return record, nil
 }
 
-func (h *GiveawayHandler) EnterGiveaway(payload []string, s *discordgo.Session, m *discordgo.MessageCreate){
+func (h *GiveawayHandler) EnterGiveaway(payload []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 	if len(payload) == 0 {
 		s.ChannelMessageSend(m.ChannelID, "Command 'enter' expects an argument.")
 		return
@@ -371,7 +364,7 @@ func (h *GiveawayHandler) EnterGiveaway(payload []string, s *discordgo.Session, 
 
 	giveawayrecords, err := h.giveawaydb.GetAllGiveawayDB()
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error reading database: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error reading database: "+err.Error())
 		return
 	}
 
@@ -380,7 +373,7 @@ func (h *GiveawayHandler) EnterGiveaway(payload []string, s *discordgo.Session, 
 		if strings.ToLower(giveawayrecord.ShortName) == strings.ToLower(shortname) {
 			entries, err := h.giveawaydb.GetAllEntryDB()
 			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, "Error validating entry: " + err.Error())
+				s.ChannelMessageSend(m.ChannelID, "Error validating entry: "+err.Error())
 				return
 			}
 
@@ -394,7 +387,7 @@ func (h *GiveawayHandler) EnterGiveaway(payload []string, s *discordgo.Session, 
 			if giveawayrecord.Restricted {
 				discordmember, err := s.GuildMember(h.conf.DiscordConfig.GuildID, m.Author.ID)
 				if err != nil {
-					s.ChannelMessageSend(m.ChannelID, "Error validating user discord record: " + err.Error())
+					s.ChannelMessageSend(m.ChannelID, "Error validating user discord record: "+err.Error())
 					return
 				}
 
@@ -402,24 +395,23 @@ func (h *GiveawayHandler) EnterGiveaway(payload []string, s *discordgo.Session, 
 				for _, role := range userroles {
 					rolename, err := getRoleNameByID(role, h.conf.DiscordConfig.GuildID, s)
 					if err != nil {
-						s.ChannelMessageSend(m.ChannelID, "Error validating roles: " + err.Error())
+						s.ChannelMessageSend(m.ChannelID, "Error validating roles: "+err.Error())
 						return
 					}
 
-					if rolename == "Alpha Authorized" || rolename == "ATV Authorized" || rolename == "Pre Alpha Authorized"{
-						s.ChannelMessageSend(m.ChannelID, "You are not allowed to enter this giveaway, as it is only for users who do not currently have Alpha access." )
+					if rolename == "Alpha Authorized" || rolename == "ATV Authorized" || rolename == "Pre Alpha Authorized" {
+						s.ChannelMessageSend(m.ChannelID, "You are not allowed to enter this giveaway, as it is only for users who do not currently have Alpha access.")
 						return
 					}
 				}
 			}
-
 
 			newentry := GiveawayEntry{}
 			newentry.Date = time.Now()
 
 			newentry.ID, err = GetUUID()
 			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, "Error generating entry: " + err.Error())
+				s.ChannelMessageSend(m.ChannelID, "Error generating entry: "+err.Error())
 				return
 			}
 
@@ -428,7 +420,7 @@ func (h *GiveawayHandler) EnterGiveaway(payload []string, s *discordgo.Session, 
 
 			err = h.giveawaydb.AddEntryRecordToDB(newentry)
 			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, "Error saving entry: " + err.Error())
+				s.ChannelMessageSend(m.ChannelID, "Error saving entry: "+err.Error())
 				return
 			}
 
@@ -436,12 +428,11 @@ func (h *GiveawayHandler) EnterGiveaway(payload []string, s *discordgo.Session, 
 			return
 		}
 	}
-	s.ChannelMessageSend(m.ChannelID, "No giveaway with name " + shortname + " exists!")
+	s.ChannelMessageSend(m.ChannelID, "No giveaway with name "+shortname+" exists!")
 	return
 }
 
-
-func (h *GiveawayHandler) UpdateGiveaway(payload []string, s *discordgo.Session, m *discordgo.MessageCreate){
+func (h *GiveawayHandler) UpdateGiveaway(payload []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 	// Grab our sender ID to verify if this user has permission to use this command
 	db := h.db.rawdb.From("Users")
 	var user User
@@ -462,7 +453,7 @@ func (h *GiveawayHandler) UpdateGiveaway(payload []string, s *discordgo.Session,
 	return
 }
 
-func (h *GiveawayHandler) EndGiveaway(payload []string, s *discordgo.Session, m *discordgo.MessageCreate){
+func (h *GiveawayHandler) EndGiveaway(payload []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 	// Grab our sender ID to verify if this user has permission to use this command
 	db := h.db.rawdb.From("Users")
 	var user User
@@ -485,11 +476,11 @@ func (h *GiveawayHandler) EndGiveaway(payload []string, s *discordgo.Session, m 
 	giveawayownerID := ""
 	giveawayrecords, err := h.giveawaydb.GetAllGiveawayDB()
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Could not read database: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Could not read database: "+err.Error())
 		return
 	}
 	for _, giveawayrecord := range giveawayrecords {
-		if strings.ToLower(giveawayrecord.ShortName) == strings.ToLower(payload[0]){
+		if strings.ToLower(giveawayrecord.ShortName) == strings.ToLower(payload[0]) {
 			giveawayID = giveawayrecord.ID
 			giveawayownerID = giveawayrecord.OwnerID
 		}
@@ -497,7 +488,7 @@ func (h *GiveawayHandler) EndGiveaway(payload []string, s *discordgo.Session, m 
 	winneroutput := ""
 	winnerID, err := h.PickWinner(giveawayID)
 	if err == nil {
-		winneroutput = " and <@"+winnerID+"> has won, Congratulations! Please contact <@" + giveawayownerID + "> to claim your prize!"
+		winneroutput = " and <@" + winnerID + "> has won, Congratulations! Please contact <@" + giveawayownerID + "> to claim your prize!"
 
 	} else if err.Error() == "no entries" {
 		winneroutput = " without a winner because no entries were found."
@@ -506,10 +497,10 @@ func (h *GiveawayHandler) EndGiveaway(payload []string, s *discordgo.Session, m 
 	found := h.DeactivateGiveaway(strings.ToLower(payload[0]), winnerID)
 
 	if found {
-		s.ChannelMessageSend(m.ChannelID, payload[0] + " has been ended manually by " + m.Author.Mention() + winneroutput)
+		s.ChannelMessageSend(m.ChannelID, payload[0]+" has been ended manually by "+m.Author.Mention()+winneroutput)
 		return
 	} else {
-		s.ChannelMessageSend(m.ChannelID, "Error: No record with short name " + payload[0] + " found.")
+		s.ChannelMessageSend(m.ChannelID, "Error: No record with short name "+payload[0]+" found.")
 		return
 	}
 }
@@ -526,7 +517,7 @@ func (h *GiveawayHandler) DeactivateGiveaway(shortname string, winnerID string) 
 			found = true
 			giveawayrecord.Active = false
 			giveawayrecord.WinnerID = winnerID
-			giveawayrecord.ShortName = "inactive_"+giveawayrecord.ShortName
+			giveawayrecord.ShortName = "inactive_" + giveawayrecord.ShortName
 			h.giveawaydb.UpdateGiveawayRecord(giveawayrecord)
 		}
 	}
@@ -534,11 +525,11 @@ func (h *GiveawayHandler) DeactivateGiveaway(shortname string, winnerID string) 
 	return found
 }
 
-func (h *GiveawayHandler) ListGiveaways(payload []string, s *discordgo.Session, m *discordgo.MessageCreate){
+func (h *GiveawayHandler) ListGiveaways(payload []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	records, err := h.giveawaydb.GetAllGiveawayDB()
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error reading database: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error reading database: "+err.Error())
 		return
 	}
 	output := "Current Active Giveaways:\n```\n"
@@ -559,7 +550,7 @@ func (h *GiveawayHandler) ListGiveaways(payload []string, s *discordgo.Session, 
 	return
 }
 
-func (h *GiveawayHandler) GiveawayHistory(payload []string, s *discordgo.Session, m *discordgo.MessageCreate){
+func (h *GiveawayHandler) GiveawayHistory(payload []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 	if len(payload) == 0 {
 		s.ChannelMessageSend(m.ChannelID, "Command 'history' expects an argument.")
 		return
@@ -569,7 +560,7 @@ func (h *GiveawayHandler) GiveawayHistory(payload []string, s *discordgo.Session
 	return
 }
 
-func (h *GiveawayHandler) GiveawayInfo(payload []string, s *discordgo.Session, m *discordgo.MessageCreate){
+func (h *GiveawayHandler) GiveawayInfo(payload []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 	if len(payload) == 0 {
 		s.ChannelMessageSend(m.ChannelID, "Command 'info' expects an argument.")
 		return
@@ -577,26 +568,25 @@ func (h *GiveawayHandler) GiveawayInfo(payload []string, s *discordgo.Session, m
 
 	giveawayrecords, err := h.giveawaydb.GetAllGiveawayDB()
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Could not read database: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Could not read database: "+err.Error())
 		return
 	}
 	found := false
 	output := ":bulb: " + payload[0] + " Giveaway :\n```\n"
 	for _, giveawayrecord := range giveawayrecords {
-		if strings.ToLower(giveawayrecord.ShortName) == strings.ToLower(payload[0]){
+		if strings.ToLower(giveawayrecord.ShortName) == strings.ToLower(payload[0]) {
 
 			entryrecords, err := h.giveawaydb.GetAllEntryDB()
 			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, "Could not read database: " + err.Error())
+				s.ChannelMessageSend(m.ChannelID, "Could not read database: "+err.Error())
 				return
 			}
 			entrycount := strconv.Itoa(len(entryrecords))
 			ownerObject, err := s.User(giveawayrecord.OwnerID)
 			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, "Error parsing record: " + err.Error())
+				s.ChannelMessageSend(m.ChannelID, "Error parsing record: "+err.Error())
 				return
 			}
-
 
 			found = true
 
@@ -607,10 +597,10 @@ func (h *GiveawayHandler) GiveawayInfo(payload []string, s *discordgo.Session, m
 			if !giveawayrecord.Active {
 				winnerObject, err := s.User(giveawayrecord.WinnerID)
 				if err != nil {
-					s.ChannelMessageSend(m.ChannelID, "Error parsing record: " + err.Error())
+					s.ChannelMessageSend(m.ChannelID, "Error parsing record: "+err.Error())
 					return
 				}
-				output = output + "Winner:      " + winnerObject.Username + " - ("+winnerObject.ID+")\n"
+				output = output + "Winner:      " + winnerObject.Username + " - (" + winnerObject.ID + ")\n"
 			}
 			output = output + "Active:      " + strconv.FormatBool(giveawayrecord.Active) + "\n"
 			output = output + "Description: " + giveawayrecord.Description + "\n"

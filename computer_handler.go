@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/bwmarrin/discordgo"
 	"strings"
-	)
+)
 
 // ComputerHandler struct
 type ComputerHandler struct {
@@ -40,7 +40,7 @@ func (h *ComputerHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate)
 	*/
 
 	phrase := strings.ToLower(strings.Trim(m.Content, h.conf.DUBotConfig.CP+command))
-	if strings.Contains(phrase, "open the pod bay doors"){
+	if strings.Contains(phrase, "open the pod bay doors") {
 		s.ChannelMessageSend(m.ChannelID, "https://www.youtube.com/watch?v=7qnd-hdmgfk")
 		return
 	}

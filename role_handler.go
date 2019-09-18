@@ -4,9 +4,9 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"strings"
 	//"fmt"
-	"time"
 	"encoding/json"
 	"strconv"
+	"time"
 )
 
 // NotificationsHandler struct
@@ -24,7 +24,6 @@ func (h *RoleHandler) Init() {
 	h.RegisterCommands()
 	h.rolesDB = RoleDB{db: h.db}
 }
-
 
 // RegisterCommands function
 func (h *RoleHandler) RegisterCommands() (err error) {
@@ -72,7 +71,7 @@ func (h *RoleHandler) ParseCommand(commandlist []string, s *discordgo.Session, m
 	command, payload := SplitPayload(commandlist)
 
 	if len(payload) == 0 {
-		s.ChannelMessageSend(m.ChannelID, "Command " + command + " expects an argument, see help for usage.")
+		s.ChannelMessageSend(m.ChannelID, "Command "+command+" expects an argument, see help for usage.")
 		return
 	}
 	if payload[0] == "help" {
@@ -114,17 +113,17 @@ func (h *RoleHandler) ParseCommand(commandlist []string, s *discordgo.Session, m
 		h.FlushQueue(commandpayload, s, m)
 		return
 	}
-	if payload[0] == "show" ||  payload[0] == "json" {
+	if payload[0] == "show" || payload[0] == "json" {
 		_, commandpayload := SplitPayload(payload)
 		h.RoleJson(commandpayload, s, m)
 		return
 	}
-	if payload[0] == "queue" ||  payload[0] == "status" {
+	if payload[0] == "queue" || payload[0] == "status" {
 		_, commandpayload := SplitPayload(payload)
 		h.Status(commandpayload, s, m)
 		return
 	}
-	if payload[0] == "user" ||  payload[0] == "userinfo" {
+	if payload[0] == "user" || payload[0] == "userinfo" {
 		if len(m.Mentions) < 1 {
 			s.ChannelMessageSend(m.ChannelID, "Command '"+payload[0]+"' expects a user mention")
 			return
@@ -132,7 +131,7 @@ func (h *RoleHandler) ParseCommand(commandlist []string, s *discordgo.Session, m
 		h.User(m.Mentions[0].ID, s, m)
 		return
 	}
-	if payload[0] == "resetuser" ||  payload[0] == "userreset" {
+	if payload[0] == "resetuser" || payload[0] == "userreset" {
 		if len(m.Mentions) < 1 {
 			s.ChannelMessageSend(m.ChannelID, "Command '"+payload[0]+"' expects a user mention")
 			return
@@ -155,9 +154,8 @@ func (h *RoleHandler) ParseCommand(commandlist []string, s *discordgo.Session, m
 	}
 }
 
-
 // HelpOutput function
-func (h *RoleHandler) HelpOutput(s *discordgo.Session, m *discordgo.MessageCreate){
+func (h *RoleHandler) HelpOutput(s *discordgo.Session, m *discordgo.MessageCreate) {
 	output := "Command usage for giveaway: \n"
 	output = output + "```\n"
 	output = output + "list: list auto roles and their id's\n"
@@ -172,8 +170,6 @@ func (h *RoleHandler) HelpOutput(s *discordgo.Session, m *discordgo.MessageCreat
 	output = output + "```\n"
 	s.ChannelMessageSend(m.ChannelID, output)
 }
-
-
 
 func (h *RoleHandler) RoleSynchronizer(s *discordgo.Session) {
 	for true {
@@ -226,7 +222,7 @@ func (h *RoleHandler) RoleSynchronizer(s *discordgo.Session) {
 
 										// If our last updated timeout is less than the role timeout
 										if userobject.LatestRoleTimeout <= role.TimeoutDuration {
-											if !userHasRole && !userHasAutoRole{
+											if !userHasRole && !userHasAutoRole {
 												//fmt.Print("Adding: ")
 												//fmt.Println(role.Name+": " + userobject.ID + " - " + userobject.LatestRoleTimeout.String() + " - " + role.TimeoutDuration.String() + " - " + roleID + " - CurrentAutoRole: " + userobject.CurrentAutoRoleID)
 
@@ -239,8 +235,8 @@ func (h *RoleHandler) RoleSynchronizer(s *discordgo.Session) {
 													userobject.CurrentAutoRoleID = role.ID
 													userobject.LatestRoleTimeout = role.TimeoutDuration
 													h.user.UpdateUserRecord(userobject)
-													}
 												}
+											}
 										} else {
 											if userHasRole {
 												//fmt.Print("Removing: ")
@@ -265,8 +261,6 @@ func (h *RoleHandler) RoleSynchronizer(s *discordgo.Session) {
 	}
 }
 
-
-
 func (h *RoleHandler) RoleUpdater(s *discordgo.Session) {
 	for true {
 		time.Sleep(h.conf.RolesConfig.RoleUpdaterTimer * time.Minute)
@@ -276,7 +270,7 @@ func (h *RoleHandler) RoleUpdater(s *discordgo.Session) {
 			//fmt.Println("\nLength of Role Updater queue - " + strconv.Itoa(len(queuedRoles)))
 			for _, queuedRole := range queuedRoles {
 				//fmt.Println("Parsing role: " + queuedRole.RoleID + " - " + queuedRole.UserID )
-				time.Sleep(time.Second * 1  )
+				time.Sleep(time.Second * 1)
 				if queuedRole.Remove {
 					role, err := h.rolesDB.GetRoleFromDB(queuedRole.RoleID)
 					if err == nil {
@@ -290,7 +284,6 @@ func (h *RoleHandler) RoleUpdater(s *discordgo.Session) {
 							}
 						}
 
-
 					} else {
 						//fmt.Println("Error Getting role from DB: " + err.Error())
 					}
@@ -302,15 +295,15 @@ func (h *RoleHandler) RoleUpdater(s *discordgo.Session) {
 						for _, guildrole := range guildroles {
 							if guildrole.Name == role.Name {
 								err = s.GuildMemberRoleAdd(h.conf.DiscordConfig.GuildID, queuedRole.UserID, guildrole.ID)
-/*
-								userobject, err := h.user.GetUser(queuedRole.UserID)
-								if err == nil {
-									//fmt.Println("Role added: " + queuedRole.UserID + " - " + guildrole.ID)
-									h.user.UpdateUserRecord(userobject)
-								} else {
-									//fmt.Println("Error getting RoleID: " +err.Error())
-								}
-*/
+								/*
+									userobject, err := h.user.GetUser(queuedRole.UserID)
+									if err == nil {
+										//fmt.Println("Role added: " + queuedRole.UserID + " - " + guildrole.ID)
+										h.user.UpdateUserRecord(userobject)
+									} else {
+										//fmt.Println("Error getting RoleID: " +err.Error())
+									}
+								*/
 							}
 						}
 
@@ -327,8 +320,7 @@ func (h *RoleHandler) RoleUpdater(s *discordgo.Session) {
 	}
 }
 
-
-func (h *RoleHandler) GetAllUsers(s *discordgo.Session) (userList []*discordgo.Member, err error){
+func (h *RoleHandler) GetAllUsers(s *discordgo.Session) (userList []*discordgo.Member, err error) {
 
 	guild, err := s.Guild(h.conf.DiscordConfig.GuildID)
 	if err != nil {
@@ -345,10 +337,7 @@ func (h *RoleHandler) GetAllUsers(s *discordgo.Session) (userList []*discordgo.M
 	return guild.Members, nil
 }
 
-
-
-
-func (h *RoleHandler) RoleEdit(payload []string, s *discordgo.Session, m *discordgo.MessageCreate){
+func (h *RoleHandler) RoleEdit(payload []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 	if len(payload) == 0 {
 		s.ChannelMessageSend(m.ChannelID, "Command 'edit' expects a formatted role, see help for usage.")
 		return
@@ -356,33 +345,33 @@ func (h *RoleHandler) RoleEdit(payload []string, s *discordgo.Session, m *discor
 
 	if strings.ToLower(payload[0]) == "help" {
 		examplePayload := "{\n\t\"Name\": \"Spectator\", \n\t\"NewName\":\"OptionalNewName\",\"\n\t\"Color\": 252525,\n\t\"timeout\" : \"45m\"\n}"
-		s.ChannelMessageSend(m.ChannelID, "'edit' expects a payload formatted in json. Example: ```" +examplePayload+ "\n```" )
+		s.ChannelMessageSend(m.ChannelID, "'edit' expects a payload formatted in json. Example: ```"+examplePayload+"\n```")
 		return
 	}
 
 	var combined string
 	for count, i := range payload {
-		if count != 0 && count != len(payload) - 1 {
+		if count != 0 && count != len(payload)-1 {
 			combined += i + " "
 		}
 	}
 
 	unpacked, err := h.UnpackRole(combined)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error unpacking payload: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error unpacking payload: "+err.Error())
 		return
 	}
 
 	duration, _, err := ParseDuration(unpacked.Timeout)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error parsing timeout: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error parsing timeout: "+err.Error())
 		return
 	}
 	unpacked.TimeoutDuration = duration
 
 	roleslist, err := h.rolesDB.GetAllRolesDB()
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error reading roles DB: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error reading roles DB: "+err.Error())
 		return
 	}
 
@@ -414,17 +403,15 @@ func (h *RoleHandler) RoleEdit(payload []string, s *discordgo.Session, m *discor
 				roleinlist.TimeoutDuration = unpacked.TimeoutDuration
 			}
 
-
-
-			_, err = s.GuildRoleEdit(h.conf.DiscordConfig.GuildID, guildRoleID, roleinlist.Name, roleinlist.Color, true, 0, false )
+			_, err = s.GuildRoleEdit(h.conf.DiscordConfig.GuildID, guildRoleID, roleinlist.Name, roleinlist.Color, true, 0, false)
 			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, "Error: Could not update Discord role:\n " + err.Error())
+				s.ChannelMessageSend(m.ChannelID, "Error: Could not update Discord role:\n "+err.Error())
 				return
 			}
 
 			err = h.rolesDB.UpdateRoleRecord(roleinlist)
 			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, "Error: Could not update database: " + err.Error())
+				s.ChannelMessageSend(m.ChannelID, "Error: Could not update database: "+err.Error())
 				return
 			}
 
@@ -434,15 +421,13 @@ func (h *RoleHandler) RoleEdit(payload []string, s *discordgo.Session, m *discor
 	}
 
 	if !found {
-		s.ChannelMessageSend(m.ChannelID, "Error: Role with name " + unpacked.Name + " does not exist, did you mean to use `new` instead?")
+		s.ChannelMessageSend(m.ChannelID, "Error: Role with name "+unpacked.Name+" does not exist, did you mean to use `new` instead?")
 		return
 	}
 
 }
 
-
-
-func (h *RoleHandler) RoleAdd(payload []string, s *discordgo.Session, m *discordgo.MessageCreate){
+func (h *RoleHandler) RoleAdd(payload []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 	if len(payload) == 0 {
 		s.ChannelMessageSend(m.ChannelID, "Command 'add' expects a formatted role, see help for usage.")
 		return
@@ -450,58 +435,58 @@ func (h *RoleHandler) RoleAdd(payload []string, s *discordgo.Session, m *discord
 
 	if strings.ToLower(payload[0]) == "help" {
 		examplePayload := "{\n\t\"Name\": \"Spectator\",\n\t\"Color\": 9715417,\n\t\"timeout\" : \"15m\"\n}"
-		s.ChannelMessageSend(m.ChannelID, "'add' expects a payload formatted in json. Example: ```" +examplePayload+ "\n```" )
+		s.ChannelMessageSend(m.ChannelID, "'add' expects a payload formatted in json. Example: ```"+examplePayload+"\n```")
 		return
 	}
 
 	var combined string
 	for count, i := range payload {
-		if count != 0 && count != len(payload) - 1 {
+		if count != 0 && count != len(payload)-1 {
 			combined += i + " "
 		}
 	}
 
 	unpacked, err := h.UnpackRole(combined)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error unpacking payload: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error unpacking payload: "+err.Error())
 		return
 	}
 
 	duration, _, err := ParseDuration(unpacked.Timeout)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error parsing timeout: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error parsing timeout: "+err.Error())
 		return
 	}
 	unpacked.TimeoutDuration = duration
 
 	roleslist, err := h.rolesDB.GetAllRolesDB()
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error reading roles DB: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error reading roles DB: "+err.Error())
 		return
 	}
 
 	for _, roleinlist := range roleslist {
 		if strings.ToLower(roleinlist.Name) == strings.ToLower(unpacked.Name) {
-			s.ChannelMessageSend(m.ChannelID, "Error: Role with name " + unpacked.Name + " already exists!")
+			s.ChannelMessageSend(m.ChannelID, "Error: Role with name "+unpacked.Name+" already exists!")
 			return
 		}
 	}
 
 	uuid, err := GetUUID()
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error generating role ID: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error generating role ID: "+err.Error())
 		return
 	}
 	unpacked.ID = uuid
 
 	err = h.AddRole(unpacked, s)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error adding role to Guild: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error adding role to Guild: "+err.Error())
 		return
 	}
 	err = h.rolesDB.AddRoleRecordToDB(unpacked)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error saving role to database: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error saving role to database: "+err.Error())
 		return
 	}
 
@@ -536,7 +521,7 @@ func (h *RoleHandler) UnpackRole(payload string) (unpacked RoleRecord, err error
 	}
 }
 
-func (h *RoleHandler) DebugRoles(payload []string, s *discordgo.Session, m *discordgo.MessageCreate){
+func (h *RoleHandler) DebugRoles(payload []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 	//guild, err := s.Guild(h.conf.DiscordConfig.GuildID)
 	//if err != nil {
 	//	return nil, err
@@ -554,12 +539,12 @@ func (h *RoleHandler) DebugRoles(payload []string, s *discordgo.Session, m *disc
 	return
 }
 
-func (h *RoleHandler) RoleList(payload []string, s *discordgo.Session, m *discordgo.MessageCreate){
+func (h *RoleHandler) RoleList(payload []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	output := "AutoRole List: ```\n"
 	roleslist, err := h.rolesDB.GetAllRolesDB()
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error reading roles DB: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error reading roles DB: "+err.Error())
 		return
 	}
 
@@ -571,7 +556,7 @@ func (h *RoleHandler) RoleList(payload []string, s *discordgo.Session, m *discor
 	return
 }
 
-func (h *RoleHandler) RoleInit(payload []string, s *discordgo.Session, m *discordgo.MessageCreate){
+func (h *RoleHandler) RoleInit(payload []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 	if len(payload) == 0 {
 		s.ChannelMessageSend(m.ChannelID, "Command 'init' expects an argument.")
 		return
@@ -581,7 +566,7 @@ func (h *RoleHandler) RoleInit(payload []string, s *discordgo.Session, m *discor
 	return
 }
 
-func (h *RoleHandler) RoleJson(payload []string, s *discordgo.Session, m *discordgo.MessageCreate){
+func (h *RoleHandler) RoleJson(payload []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 	if len(payload) == 0 {
 		s.ChannelMessageSend(m.ChannelID, "Command 'json' expects an argument.")
 		return
@@ -590,24 +575,24 @@ func (h *RoleHandler) RoleJson(payload []string, s *discordgo.Session, m *discor
 
 	roleslist, err := h.rolesDB.GetAllRolesDB()
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error reading roles DB: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error reading roles DB: "+err.Error())
 		return
 	}
 	found := false
 	for _, roleinlist := range roleslist {
 		if payload[0] == roleinlist.Name {
 			found = true
-/*
-			jsonoutput, err := json.Marshal(roleinlist)
-			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, "Error marshalling role: " + err.Error())
-				return
-			}
-*/
+			/*
+				jsonoutput, err := json.Marshal(roleinlist)
+				if err != nil {
+					s.ChannelMessageSend(m.ChannelID, "Error marshalling role: " + err.Error())
+					return
+				}
+			*/
 
 			jsonoutput, err := json.MarshalIndent(roleinlist, "", "    ")
 			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, "Error marshalling role: " + err.Error())
+				s.ChannelMessageSend(m.ChannelID, "Error marshalling role: "+err.Error())
 				return
 			}
 			output = output + string(jsonoutput)
@@ -619,26 +604,24 @@ func (h *RoleHandler) RoleJson(payload []string, s *discordgo.Session, m *discor
 		return
 	}
 
-
 	output = output + "\n```\n"
 
 	s.ChannelMessageSend(m.ChannelID, output)
 	return
 }
 
-
-func (h *RoleHandler) WhitelistUser(userid string, s *discordgo.Session, m *discordgo.MessageCreate){
+func (h *RoleHandler) WhitelistUser(userid string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	userobject, err := h.user.GetUser(userid)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error: could not validate user - " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error: could not validate user - "+err.Error())
 		return
 	}
 
 	userobject.DisableAutoRole = !userobject.DisableAutoRole
 	err = h.user.UpdateUserRecord(userobject)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error: could not save user record - " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error: could not save user record - "+err.Error())
 		return
 	}
 	if userobject.DisableAutoRole {
@@ -649,39 +632,38 @@ func (h *RoleHandler) WhitelistUser(userid string, s *discordgo.Session, m *disc
 	return
 }
 
-func (h *RoleHandler) FlushQueue(payload []string, s *discordgo.Session, m *discordgo.MessageCreate){
+func (h *RoleHandler) FlushQueue(payload []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 	s.ChannelMessageSend(m.ChannelID, "Disabled Command - Enabled in Dev Only")
 	//h.flush()
 	//s.ChannelMessageSend(m.ChannelID, "Database Flushed")
 	return
 }
 
-func (h *RoleHandler) Status(payload []string, s *discordgo.Session, m *discordgo.MessageCreate){
+func (h *RoleHandler) Status(payload []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	queuedRoles, err := h.rolesDB.GetAllRoleQueuedDB()
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 		return
 	}
 	queuesize := len(queuedRoles)
-	s.ChannelMessageSend(m.ChannelID, "Current Queue: " + strconv.Itoa(queuesize))
+	s.ChannelMessageSend(m.ChannelID, "Current Queue: "+strconv.Itoa(queuesize))
 
 	return
 }
 
-func (h *RoleHandler) User(userid string, s *discordgo.Session, m *discordgo.MessageCreate){
+func (h *RoleHandler) User(userid string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	userobject, err := h.user.GetUser(userid)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 		return
 	}
-
 
 	member, err := s.GuildMember(h.conf.DiscordConfig.GuildID, userid)
 	memberjoined, err := time.Parse(time.RFC3339, string(member.JoinedAt))
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 		return
 	}
 
@@ -690,18 +672,18 @@ func (h *RoleHandler) User(userid string, s *discordgo.Session, m *discordgo.Mes
 	output := "User info: \n```"
 	output = output + "Timeout: " + userobject.LatestRoleTimeout.String() + "\n"
 	output = output + "Current Role:" + userobject.CurrentAutoRoleID + "\n"
-	output = output + "Member Age:" + memberAge.String()+ "\n"
+	output = output + "Member Age:" + memberAge.String() + "\n"
 	output = output + "\n```\n"
 
 	s.ChannelMessageSend(m.ChannelID, output)
 	return
 }
 
-func (h *RoleHandler) UserReset(userid string, s *discordgo.Session, m *discordgo.MessageCreate){
+func (h *RoleHandler) UserReset(userid string, s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	userobject, err := h.user.GetUser(userid)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 		return
 	}
 
@@ -710,7 +692,7 @@ func (h *RoleHandler) UserReset(userid string, s *discordgo.Session, m *discordg
 	userobject.CurrentAutoRoleName = ""
 	h.user.UpdateUserRecord(userobject)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 		return
 	}
 
@@ -718,7 +700,7 @@ func (h *RoleHandler) UserReset(userid string, s *discordgo.Session, m *discordg
 	return
 }
 
-func (h *RoleHandler) ResetAll(s *discordgo.Session, m *discordgo.MessageCreate){
+func (h *RoleHandler) ResetAll(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	s.ChannelMessageSend(m.ChannelID, "Resetting user records...")
 
@@ -729,7 +711,7 @@ func (h *RoleHandler) ResetAll(s *discordgo.Session, m *discordgo.MessageCreate)
 
 	memberlist, err := h.GetAllUsers(s)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 		return
 	}
 
@@ -740,20 +722,16 @@ func (h *RoleHandler) ResetAll(s *discordgo.Session, m *discordgo.MessageCreate)
 		userobject.CurrentAutoRoleName = ""
 		h.user.UpdateUserRecord(userobject)
 		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+			s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
 			return
 		}
 	}
-
-
 
 	s.ChannelMessageSend(m.ChannelID, "User Records Reset")
 	return
 }
 
-
-
-func (h *RoleHandler) flush() (err error){
+func (h *RoleHandler) flush() (err error) {
 
 	h.rolesDB.FlushDB()
 
@@ -772,8 +750,7 @@ func (h *RoleHandler) flush() (err error){
 	return nil
 }
 
-
-func (h *RoleHandler) sync(s *discordgo.Session) (err error){
+func (h *RoleHandler) sync(s *discordgo.Session) (err error) {
 
 	sortedlist, _ := h.rolesDB.GetAllRolesDB()
 	discordroles, _ := s.GuildRoles(h.conf.DiscordConfig.GuildID)
@@ -791,18 +768,18 @@ func (h *RoleHandler) sync(s *discordgo.Session) (err error){
 	return nil
 }
 
-func (h *RoleHandler) RoleSync(payload []string, s *discordgo.Session, m *discordgo.MessageCreate){
+func (h *RoleHandler) RoleSync(payload []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 	s.ChannelMessageSend(m.ChannelID, "Starting role order synchronization")
 
 	sortedlist, err := h.rolesDB.GetAllRolesDB()
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Could not read roles db: " + err.Error() )
+		s.ChannelMessageSend(m.ChannelID, "Could not read roles db: "+err.Error())
 		return
 	}
 
 	discordroles, err := s.GuildRoles(h.conf.DiscordConfig.GuildID)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error reading discord roles: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error reading discord roles: "+err.Error())
 		return
 	}
 	var orderedlist []*discordgo.Role
@@ -816,7 +793,7 @@ func (h *RoleHandler) RoleSync(payload []string, s *discordgo.Session, m *discor
 				item.Color = discordrole.Color
 				item.DiscordID = discordrole.ID
 				h.rolesDB.UpdateRoleRecord(item)
-			} else if discordrole.Name != "Guest"{
+			} else if discordrole.Name != "Guest" {
 				originalist = append(originalist, discordrole)
 			}
 		}
@@ -838,7 +815,7 @@ func (h *RoleHandler) RoleSync(payload []string, s *discordgo.Session, m *discor
 
 	_, err = s.GuildRoleReorder(h.conf.DiscordConfig.GuildID, finallist)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error reordering roles: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error reordering roles: "+err.Error())
 		return
 	}
 
@@ -846,7 +823,7 @@ func (h *RoleHandler) RoleSync(payload []string, s *discordgo.Session, m *discor
 	return
 }
 
-func (h *RoleHandler) RoleRemove(payload []string, s *discordgo.Session, m *discordgo.MessageCreate){
+func (h *RoleHandler) RoleRemove(payload []string, s *discordgo.Session, m *discordgo.MessageCreate) {
 	if len(payload) == 0 {
 		s.ChannelMessageSend(m.ChannelID, "Command 'remove' expects an argument.")
 		return
@@ -854,13 +831,13 @@ func (h *RoleHandler) RoleRemove(payload []string, s *discordgo.Session, m *disc
 
 	roleDiscordID, err := getRoleIDByName(s, h.conf.DiscordConfig.GuildID, payload[0])
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error retrieving role from Discord API: " + err.Error() + " \n Continuing...")
+		s.ChannelMessageSend(m.ChannelID, "Error retrieving role from Discord API: "+err.Error()+" \n Continuing...")
 		//return
 	}
 
 	rolelist, err := h.rolesDB.GetAllRolesDB()
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error retrieving role list from DB: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error retrieving role list from DB: "+err.Error())
 		return
 	}
 
@@ -868,7 +845,7 @@ func (h *RoleHandler) RoleRemove(payload []string, s *discordgo.Session, m *disc
 		if role.Name == payload[0] {
 			err = h.rolesDB.RemoveRoleRecordFromDB(role)
 			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, "Error removing role from DB: " + err.Error())
+				s.ChannelMessageSend(m.ChannelID, "Error removing role from DB: "+err.Error())
 				return
 			}
 		}
@@ -876,7 +853,7 @@ func (h *RoleHandler) RoleRemove(payload []string, s *discordgo.Session, m *disc
 
 	err = s.GuildRoleDelete(h.conf.DiscordConfig.GuildID, roleDiscordID)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error removing role from Discord: " + err.Error())
+		s.ChannelMessageSend(m.ChannelID, "Error removing role from Discord: "+err.Error())
 		return
 	}
 
