@@ -234,7 +234,11 @@ func (h *NDAAudioHandler) PlayAudioFile(s *discordgo.Session, path string, chann
 	// Join the provided voice channel.
 	vc, err := s.ChannelVoiceJoin(h.conf.DiscordConfig.GuildID, channelID, false, true)
 	if err != nil {
-		return err
+		if _, ok := s.VoiceConnections[h.conf.DiscordConfig.GuildID]; ok {
+			vc = s.VoiceConnections[h.conf.DiscordConfig.GuildID]
+		} else {
+			return err
+		}
 	}
 
 	// Sleep for a specified amount of time before playing the sound
