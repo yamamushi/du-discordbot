@@ -67,9 +67,9 @@ func (h *PrimaryHandler) Init() error {
 	tutorials := TutorialHandler{db: h.db, conf: h.conf, user: h.user, registry: h.command.registry}
 	h.dg.AddHandler(tutorials.Read)
 
-	fmt.Println("Adding Meme Handler")
-	memes := MemeHandler{}
-	h.dg.AddHandler(memes.Read)
+	//fmt.Println("Adding Meme Handler")
+	//memes := MemeHandler{}
+	//h.dg.AddHandler(memes.Read)
 
 	fmt.Println("Adding Backer Handler")
 	backer := BackerHandler{db: h.db, callback: h.callback, conf: h.conf}

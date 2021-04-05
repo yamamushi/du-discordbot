@@ -5,16 +5,16 @@ import (
 	"github.com/wcharczuk/go-chart"
 	"github.com/wcharczuk/go-chart/drawing"
 
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"os"
+	"strconv"
 	//"fmt"
 	"strings"
-	"os"
-	"io/ioutil"
-	"encoding/json"
-	"strconv"
-	"time"
-	"bytes"
 	"sync"
-	"fmt"
+	"time"
 )
 
 type StatsHandler struct {
@@ -120,11 +120,11 @@ func (h *StatsHandler) GetCurrentStats(s *discordgo.Session) (record StatRecord,
 	}
 	record.IdleUsers = idleUserCount
 
-	gamingUserCount, err := h.GetGamingCount(guild)
-	if err != nil {
+	//gamingUserCount, err := h.GetGamingCount(guild)
+	//if err != nil {
 		return record, err
 	}
-	record.GamingUsers = gamingUserCount
+	//record.GamingUsers = gamingUserCount
 
 	voiceUserCount, err := h.GetVoiceCount(guild)
 	if err != nil {
@@ -972,6 +972,7 @@ func (h *StatsHandler) GetDNDCount(guild *discordgo.Guild) (count int, err error
 	return count, nil
 }
 
+/*
 func (h *StatsHandler) GetGamingCount(guild *discordgo.Guild) (count int, err error) {
 	for _, presence := range guild.Presences {
 		if presence.Game != nil {
@@ -982,6 +983,7 @@ func (h *StatsHandler) GetGamingCount(guild *discordgo.Guild) (count int, err er
 	}
 	return count, nil
 }
+ */
 
 func (h *StatsHandler) GetVoiceCount(guild *discordgo.Guild) (count int, err error) {
 	return len(guild.VoiceStates), nil
