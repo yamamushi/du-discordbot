@@ -20,13 +20,17 @@ RUN go get github.com/anaskhan96/soup
 RUN cd /go/src/github.com/anaskhan96/soup && git checkout ad448eafe
 RUN go get github.com/bwmarrin/discordgo
 RUN go get github.com/BurntSushi/toml
-RUN go get github.com/asdine/storm
+RUN go get github.com/coreos/bbolt
+#RUN cd /go/src/github.com/coreos/bbolt && git checkout master
+RUN go get -u github.com/asdine/storm
 RUN go get gopkg.in/oleiade/lane.v1
-RUN go get github.com/satori/go.uuid
+RUN go get github.com/gofrs/uuid
 RUN go get github.com/lunixbochs/vtclean
 RUN go get github.com/yuin/gopher-lua
 RUN go get github.com/wcharczuk/go-chart
-#RUN go get github.com/jonas747/ogg
+RUN go get github.com/grokify/html-strip-tags-go
+RUN go get gopkg.in/mgo.v2
+RUN go get github.com/jonas747/ogg
 #RUN go get -u github.com/rylio/ytdl/...
 
 # This is a fork of gofeed that allows for custom user-agent strings in requests to work with sites that filter these

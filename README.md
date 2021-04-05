@@ -26,7 +26,7 @@ Table of Contents
 
 # du-discordbot
 
-A Dual Universe bot being developed for the [unofficial Dual Universe discord](https://discord.me/dualuniverse).
+A Dual Universe bot being developed for the [Official Dual Universe Discord](https://discord.me/dualuniverse).
 
 ## Features
 

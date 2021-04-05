@@ -125,7 +125,7 @@ func (h *RSSHandler) ParseCommand(command []string, s *discordgo.Session, m *dis
 
 	if command[1] == "list" && len(command) == 2 {
 		formatted := h.GetRSSList(m.ChannelID)
-		s.ChannelMessageSend(m.ChannelID, "RSS Feeds for this channel: " +formatted)
+		s.ChannelMessageSend(m.ChannelID, "RSS Feeds for this channel: "+formatted)
 		return
 	}
 
@@ -241,7 +241,7 @@ func (h *RSSHandler) FormatRSSItem(url string, rssitem RSSItem, feedtitle string
 		//formatted = "Latest update from " + rssitem.Author + "\n"
 		feedtitle = strings.TrimSuffix(feedtitle, " Latest Topics")
 		formatted = ":postbox: New unread post in " + Bold(feedtitle) + "\n"
-		formatted = formatted + ":newspaper: || " + UnderlineBold(rssitem.Title) + " || \n" //+"<"+rssitem.Link+">\n\n"
+		formatted = formatted + ":newspaper: | " + UnderlineBold(rssitem.Title) + " | \n" //+"<"+rssitem.Link+">\n\n"
 		username, comment, commenturl, err := h.foruminteg.GetLatestCommentForThread(rssitem.Link)
 		//fmt.Println("RSS debug: " + username + " " + comment + " " + commenturl)
 		if err == nil {

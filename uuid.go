@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/satori/go.uuid"
+	"github.com/gofrs/uuid"
 )
 
 // GetUUID function

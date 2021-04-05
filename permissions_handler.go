@@ -447,6 +447,26 @@ func (h *PermissionsHandler) ReadDemote(commands []string, s *discordgo.Session,
 		return
 
 	}
+	if group == "citizen" {
+
+		if !user.Moderator {
+			s.ChannelMessageSend(m.ChannelID, "You do not have permission to assign this group")
+			h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run demote to citizen"
+			return
+		}
+
+		err = h.Demote(target, group)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
+			h.logchan <- "Permissions " + m.Author.Mention() + " attempted to run demote to citizen || " +
+				target + "||" + group + "||" + err.Error()
+			return
+		}
+		s.ChannelMessageSend(m.ChannelID, m.Mentions[0].Mention()+" has been removed from all moderator groups.")
+		h.logchan <- "Permissions " + m.Mentions[0].Mention() + " has been demoted from all moderator groups by " + m.Author.Mention()
+		return
+
+	}
 	s.ChannelMessageSend(m.ChannelID, group+" is not a valid group!")
 	h.logchan <- "Permissions " + m.Author.Mention() + " attempted to demote " + m.Mentions[0].Mention() +
 		" to " + group + " which does not exist"
@@ -490,6 +510,12 @@ func (h *PermissionsHandler) Demote(userid string, group string) (err error) {
 
 	if group == "editor" {
 		userobject.Editor = false
+	}
+
+	if group == "citizen" {
+		userobject.Admin = false
+		userobject.SModerator = false
+		userobject.Moderator = false
 	}
 
 	err = db.DeleteStruct(&userobject)

@@ -7,7 +7,11 @@ admin_id = "the bot owner user id goes here"
 
 [database]
 filename = "database.db"
-
+mongohost = "localhost:27017"
+mongodb = "dbname"
+backerrecordcolumn = "columnname"
+mongouser = "username"
+mongopass = "password"
 
 [du-bot]
 default_now_playing = "InDev"
@@ -24,6 +28,12 @@ per_page_count = 5
 
 # Minutes between updating notifications
 notifications_update_timeout = 5
+
+# Minutes between running the Giveaway Timer
+giveaway_timer = 1
+
+# Giveaway Announcements Channel ID
+giveaway_channel = ""
 
 # Max number of seconds to run a lua script before terminating
 lua_timeout = 10
@@ -61,3 +71,56 @@ casino_pin = ""
 reset_casino = false
 
 starting_casino_wallet_value = 10000000
+
+# For the auto roles system
+[roles]
+# Time between reading role timers on users in minutes, recommended 10 or higher
+roles_timer = 15
+# Time between sending requests to the discord api to update roles
+roles_updater_timer = 1
+
+# These are used with the forum authorization roles system
+contributor_role = ""
+sponsor_role = ""
+patron_role = ""
+atv_role = ""
+iron_role = ""
+bronze_role = ""
+silver_role = ""
+gold_role = ""
+sapphire_role = ""
+ruby_role = ""
+emerald_role = ""
+diamond_role = ""
+kyrium_role = ""
+forumlinked_role = ""
+atvforumlinked_role = ""
+prealpha_role = ""
+nda_channel_id = ""
+
+
+[api]
+
+strawpoll_api = "https://www.strawpoll.me/api/v2/polls"
+openweather_key = ""
+
+
+[recruitment]
+
+recruitment_channel = ""
+recruitment_timeout = 120
+recruitment_reminder_timeout = 4320
+recruitment_expiration_timeout = 30240
+recruitment_shuffle_count = 25
+recruitment_wait_on_startup = true
+
+[reactions]
+
+reactions_timeout = 60
+
+[rabbit]
+
+rabbit_random = 100000
+rabbit_count = 1
+rabbit_timer = 5
+rabbit_expiration = 5

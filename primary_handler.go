@@ -9,17 +9,21 @@ import (
 
 // PrimaryHandler struct
 type PrimaryHandler struct {
-	db          *DBHandler
-	conf        *Config
-	dg          *discordgo.Session
-	callback    *CallbackHandler
-	perm        *PermissionsHandler
-	user        *UserHandler
-	command     *CommandHandler
-	registry    *CommandRegistry
-	logchan     chan string
-	bankhandler *BankHandler
-	channel     *ChannelHandler
+	db            *DBHandler
+	conf          *Config
+	dg            *discordgo.Session
+	callback      *CallbackHandler
+	perm          *PermissionsHandler
+	user          *UserHandler
+	command       *CommandHandler
+	registry      *CommandRegistry
+	logchan       chan string
+	bankhandler   *BankHandler
+	channel       *ChannelHandler
+	globalstate   *StateDB
+	reactions     *ReactionsHandler
+	inforeactions *InfoReactionsHandler
+	infocallback  *InfoCallbackHandler
 }
 
 // Init function
@@ -28,6 +32,9 @@ func (h *PrimaryHandler) Init() error {
 	// Add our main handler -
 	h.dg.AddHandler(h.Read)
 	h.registry = h.command.registry
+
+	// Create our global state interface
+	h.globalstate = &StateDB{db: h.db}
 
 	// Add new handlers below this line //
 	// Create our RSS handler
@@ -71,20 +78,31 @@ func (h *PrimaryHandler) Init() error {
 	//memes := MemeHandler{}
 	//h.dg.AddHandler(memes.Read)
 
-	fmt.Println("Adding Backer Handler")
-	backer := BackerHandler{db: h.db, callback: h.callback, conf: h.conf}
-	backer.Init()
-	h.dg.AddHandler(backer.Read)
-
 	fmt.Println("Adding Notifications Handler")
 	notifications := NotificationsHandler{db: h.db, callback: h.callback, conf: h.conf, registry: h.command.registry}
 	notifications.Init()
 	h.dg.AddHandler(notifications.Read)
 	go notifications.CheckNotifications(h.dg)
 
+	fmt.Println("Adding Config Handler")
+	confighandler := ConfigHandler{conf: h.conf, registry: h.command.registry, callback: h.callback, db: h.db}
+	confighandler.Init()
+	h.dg.AddHandler(confighandler.Read)
+	h.reactions.configdb = confighandler.configdb
+	go h.reactions.Cleaner()
+	h.inforeactions.configdb = confighandler.configdb
+	go h.inforeactions.Cleaner()
+
+	fmt.Println("Adding Backer Handler")
+	backer := BackerHandler{db: h.db, callback: h.callback, conf: h.conf}
+	backer.configdb = confighandler.configdb
+	backer.Init()
+	h.dg.AddHandler(backer.Read)
+
 	fmt.Println("Adding Lander Handler")
-	landingzone := LanderHandler{}
+	landingzone := LanderHandler{configdb: confighandler.configdb, user: h.user}
 	h.dg.AddHandler(landingzone.Read)
+	h.dg.AddHandler(landingzone.ReadRemove)
 
 	fmt.Println("Adding Stats Handler")
 	stats := StatsHandler{registry: h.command.registry, db: h.db, conf: h.conf}
@@ -93,6 +111,90 @@ func (h *PrimaryHandler) Init() error {
 	h.dg.AddHandler(stats.Tracker)
 	go stats.StatsWriter(h.dg)
 
+	fmt.Println("Adding Giveaway Handler")
+	giveaway := GiveawayHandler{db: h.db, callback: h.callback, conf: h.conf, registry: h.command.registry}
+	giveaway.Init()
+	h.dg.AddHandler(giveaway.Read)
+	go giveaway.GiveawayWatcher(h.dg)
+
+	fmt.Println("Adding Role Handler")
+	roles := RoleHandler{conf: h.conf, registry: h.command.registry, callback: h.callback, db: h.db, user: h.user}
+	roles.Init()
+	h.dg.AddHandler(roles.Read)
+	go roles.RoleSynchronizer(h.dg)
+	go roles.RoleUpdater(h.dg)
+
+	fmt.Println("Adding Strawpoll Handler")
+	strawpoll := StrawpollHandler{db: h.db, conf: h.conf, registry: h.command.registry}
+	strawpoll.Init()
+	h.dg.AddHandler(strawpoll.Read)
+
+	fmt.Println("Adding Recruitment Handler")
+	recruitment := RecruitmentHandler{conf: h.conf, registry: h.command.registry, callback: h.callback,
+		db: h.db, userdb: h.user, globalstate: h.globalstate, configdb: confighandler.configdb, reactions: h.reactions}
+	recruitment.Init()
+	h.dg.AddHandler(recruitment.Read)
+	go recruitment.RunListings(h.dg)
+	go recruitment.CheckValidity(h.dg)
+
+	fmt.Println("Adding Wiki Handler")
+	wikihandler := WikiHandler{conf: h.conf, registry: h.command.registry, callback: h.callback,
+		db: h.db, userdb: h.user, configdb: confighandler.configdb, reactions: h.reactions}
+	wikihandler.Init()
+	h.dg.AddHandler(wikihandler.Read)
+
+	// Disabling Rabbit Handler Indefinitely
+	/*
+		fmt.Println("Adding Rabbit Handler")
+		rabbithandler := RabbitHandler{conf: h.conf, userdb: h.user, registry: h.command.registry, db: h.db, globalstate: h.globalstate,
+			configdb: confighandler.configdb, backerdb: backer.backerInterface}
+		rabbithandler.Init()
+		h.dg.AddHandler(rabbithandler.Read)
+		h.dg.AddHandler(rabbithandler.Catch)
+		h.dg.AddHandler(rabbithandler.CarrotFinder)
+		go rabbithandler.Release(h.dg)
+	*/
+
+	fmt.Println("Adding SUTime Handler")
+	sutimehandler := SUTimeHandler{conf: h.conf, registry: h.command.registry, db: h.db, userdb: h.user}
+	sutimehandler.Init()
+	h.dg.AddHandler(sutimehandler.Read)
+
+	fmt.Println("Adding Joy Handler")
+	joyhandler := JoyHandler{conf: h.conf, registry: h.command.registry, db: h.db, userdb: h.user}
+	joyhandler.Init()
+	h.dg.AddHandler(joyhandler.React)
+	h.dg.AddHandler(joyhandler.Read)
+
+	fmt.Println("Adding Server Status Handler")
+	statushandler := ServerStatusHandler{conf: h.conf, registry: h.command.registry, db: h.db, userdb: h.user}
+	statushandler.Init()
+	h.dg.AddHandler(statushandler.Read)
+
+	fmt.Println("Adding Admin Handler")
+	adminhandler := AdminHandler{conf: h.conf, db: h.db, registry: h.command.registry, reactions: h.reactions,
+		configdb: confighandler.configdb, globalstate: h.globalstate, userdb: h.user}
+	adminhandler.Init()
+	h.dg.AddHandler(adminhandler.Read)
+	h.dg.AddHandler(adminhandler.Flush)
+
+	fmt.Println("Adding Info Handler")
+	infohandler := InfoHandler{conf: h.conf, registry: h.command.registry, db: h.db, userdb: h.user, reactions: h.inforeactions,
+		infocallback: h.infocallback}
+	infohandler.Init()
+	h.dg.AddHandler(infohandler.Read)
+
+	fmt.Println("Adding Gallery Manager")
+	gallerymanager := GalleryManager{conf: h.conf, registry: h.command.registry, db: h.db, userdb: h.user}
+	gallerymanager.Init()
+	h.dg.AddHandler(gallerymanager.Read)
+	h.dg.AddHandler(gallerymanager.Watch)
+
+	fmt.Println("Adding NDA Voice Manager")
+	ndavoicemanager := NDAAudioHandler{conf: h.conf}
+	ndavoicemanager.Init()
+	h.dg.AddHandler(ndavoicemanager.NDAWatch)
+	go ndavoicemanager.WatchChannels(h.dg)
 
 	//fmt.Println("Adding Music Handler")
 	//musichandler := MusicHandler{db: h.db, user: h.user, registry: h.command.registry,
@@ -103,6 +205,12 @@ func (h *PrimaryHandler) Init() error {
 	// Open a websocket connection to Discord and begin listening.
 	fmt.Println("Opening Connection to Discord")
 	err := h.dg.Open()
+	h.dg.State.TrackMembers = true
+	h.dg.State.TrackChannels = true
+	h.dg.State.TrackEmojis = true
+	h.dg.State.TrackPresences = true
+	h.dg.State.TrackRoles = true
+	h.dg.State.TrackVoice = true
 	if err != nil {
 		fmt.Println("Error Opening Connection: ", err)
 		return err
@@ -126,7 +234,7 @@ func (h *PrimaryHandler) PostInit(dg *discordgo.Session) error {
 
 	// Update our default playing status
 	fmt.Println("Updating Discord Status")
-	err := h.dg.UpdateStatus(0, h.conf.DUBotConfig.Playing)
+	err := h.dg.UpdateGameStatus(0, h.conf.DUBotConfig.Playing)
 	if err != nil {
 		fmt.Println("error updating now playing,", err)
 		return err

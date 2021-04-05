@@ -6,14 +6,14 @@ import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"github.com/lunixbochs/vtclean"
+	"io"
 	"io/ioutil"
 	"net/http"
+	"os"
+	"strconv"
 	//"strconv"
 	"strings"
 	"time"
-	"strconv"
-	"os"
-	"io"
 )
 
 // UtilitiesHandler struct
@@ -79,10 +79,12 @@ func (h *UtilitiesHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate
 		return
 
 	}
-	if command == "countdown" {
-		s.ChannelMessageSend(m.ChannelID, h.GetCountdownStatus())
-		return
-	}
+	/*
+		if command == "countdown" {
+			s.ChannelMessageSend(m.ChannelID, h.GetCountdownStatus())
+			return
+		}
+	*/
 	if command == "pledging" || command == "pledges" || command == "crowdfunding" || command == "founderspacks" {
 
 		s.ChannelMessageSend(m.ChannelID, h.GetPledgingStatus())
@@ -104,23 +106,25 @@ func (h *UtilitiesHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate
 		s.ChannelMessageSend(m.ChannelID, h.Events())
 		return
 	}
-	if command == "estimatesutime" || command == "sutime" || command == "su-convert" {
-		if VerifyNDAChannel(m.ChannelID, h.conf){
-			if len(payload) < 1 {
-				s.ChannelMessageSend(m.ChannelID, command + " expects an argument: <su>")
+	/*
+		if command == "estimatesutime" || command == "sutime" || command == "su-convert" {
+			if VerifyNDAChannel(m.ChannelID, h.conf){
+				if len(payload) < 2 {
+					s.ChannelMessageSend(m.ChannelID, command + " expects two arguments: <su> <speed>")
+					return
+				}
+				estimate, err := h.SUToMinutes(payload[0], payload[1])
+				if err != nil {
+					s.ChannelMessageSend(m.ChannelID, "Error: " + err.Error())
+					return
+				}
+				s.ChannelMessageSend(m.ChannelID, "Estimated travel time: " + estimate)
 				return
 			}
-			estimate, err := h.SUToMinutes(payload[0])
-			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, "argument must be a number value")
-				return
-			}
-			s.ChannelMessageSend(m.ChannelID, "Estimated travel time: " + estimate)
-			return
 		}
-	}
+	*/
 	if command == "profilemosaic" {
-		if !user.Owner {
+		if !user.Owner || user.ID != h.conf.DiscordConfig.DevID {
 			return
 		}
 		s.ChannelMessageSend(m.ChannelID, "Storing profile images cache")
@@ -133,7 +137,41 @@ func (h *UtilitiesHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate
 		s.ChannelMessageSend(m.ChannelID, "Images stored")
 		return
 	}
+	if command == "say" {
+		if !user.Moderator {
+			return
+		}
+		if len(payload) < 2 {
+			s.ChannelMessageSend(m.ChannelID, "Command say requires two arguments: <channel> <message>")
+			return
+		}
+		channelID := payload[0]
 
+		message := ""
+		for i, word := range payload {
+			if i > 0 {
+				message = message + word + " "
+			}
+		}
+		h.Say(channelID, message, s, m)
+		return
+	}
+}
+
+// UnfoldURL function
+func (h *UtilitiesHandler) Say(channelID string, message string, s *discordgo.Session, m *discordgo.MessageCreate) {
+	channelID = CleanChannel(channelID)
+	if strings.Contains(strings.ToLower(message), "🐰") || strings.Contains(strings.ToLower(message), "🐇") {
+		s.ChannelMessageSend(m.ChannelID, "https://www.tenor.co/zBGa.gif")
+		return
+	}
+	_, err := s.ChannelMessageSend(channelID, message)
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error())
+		return
+	}
+	s.ChannelMessageSend(m.ChannelID, "Message sent to <#"+channelID+">")
+	return
 }
 
 // UnfoldURL function
@@ -202,7 +240,7 @@ func (h *UtilitiesHandler) GetMoon() (output string, err error) {
 	output = "\n```\n"
 	for i, line := range payload {
 		if i < 25 {
-			fmt.Println(line)
+			//fmt.Println(line)
 			output = output + line + "\n"
 		}
 	}
@@ -313,22 +351,38 @@ func (h *UtilitiesHandler) Events() (output string) {
 	return output
 }
 
-func (h *UtilitiesHandler) SUToMinutes(distance string) (conversion string, err error){
-	distanceInt, err := strconv.Atoi(distance)
+func (h *UtilitiesHandler) SUToMinutes(distance string, speed string) (conversion string, err error) {
+
+	distanceFloat, err := strconv.ParseFloat(distance, 64)
 	if err != nil {
-		distanceFloat, err := strconv.ParseFloat(distance, 64)
+		return "", err
+	}
+	if distanceFloat > 100000000 || distanceFloat <= 0 {
+		return "", errors.New("Distance value out of bounds")
+	}
+
+	speedFloat := 0.0
+	if speed == "max" {
+		speedFloat = 30000
+	} else {
+		speedFloat, err = strconv.ParseFloat(speed, 64)
 		if err != nil {
 			return "", err
 		}
-		distanceInt = int(distanceFloat + 0.5)
 	}
-	secondsInt := distanceInt * 36
+
+	if speedFloat > 100000 || speedFloat <= 0 {
+		return "", errors.New("Speed value out of bounds")
+	}
+	distanceFloat = distanceFloat * 200.00
+	secondsInt := (distanceFloat / speedFloat) * 3600.00
+
 	duration := time.Duration(time.Second * time.Duration(secondsInt))
 	return duration.String(), nil
 }
 
 // GenerateImageCache function
-func (h * UtilitiesHandler) GenerateImageCache(s *discordgo.Session, m *discordgo.MessageCreate) (err error){
+func (h *UtilitiesHandler) GenerateImageCache(s *discordgo.Session, m *discordgo.MessageCreate) (err error) {
 
 	// Create directory if not exists
 	profile_pics_dir := "./profile_pics"
@@ -338,7 +392,7 @@ func (h * UtilitiesHandler) GenerateImageCache(s *discordgo.Session, m *discordg
 	}
 
 	guild, err := s.Guild(s.State.Guilds[0].ID)
-	for i, member := range guild.Members{
+	for i, member := range guild.Members {
 		photourl := member.User.AvatarURL("")
 		response, err := http.Get(photourl)
 		if err != nil {
@@ -352,11 +406,13 @@ func (h * UtilitiesHandler) GenerateImageCache(s *discordgo.Session, m *discordg
 			filetype := strings.Split(photourl, ".")
 
 			username := strings.Replace(member.User.Username, "/", "_", -1)
-			picpath := profile_pics_dir+"/"+username+"."+filetype[len(filetype)-1]
+			picpath := profile_pics_dir + "/" + username + "." + filetype[len(filetype)-1]
 
 			if _, err := os.Stat(picpath); os.IsNotExist(err) {
-				if 50 % i == 0 {
-					time.Sleep(time.Duration(time.Second*10))
+				if i != 0 {
+					if 50%i == 0 {
+						time.Sleep(time.Duration(time.Second * 10))
+					}
 				}
 				//open a file for writing
 				file, err := os.Create(picpath)

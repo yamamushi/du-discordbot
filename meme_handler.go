@@ -3,7 +3,9 @@ package main
 import (
 	"github.com/bwmarrin/discordgo"
 	"strings"
-	//"fmt"
+
+	"fmt"
+	"strconv"
 )
 
 // MemeHandler struct -> This operates without relying on a command string.
@@ -30,6 +32,31 @@ func (h *MemeHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 		s.ChannelMessageSend(m.ChannelID, "Yes, my child? \n http://i.imgur.com/DYq8TNe.jpg")
 		return
 	}
+	if strings.Contains(message, "scp-") {
+		payload := strings.Split(message, " ")
+		for _, word := range payload {
+			if strings.HasPrefix(word, "scp-") {
+				scpnum := strings.TrimPrefix(word, "scp-")
+				val, err := strconv.Atoi(scpnum)
+				if err == nil && val > 0 {
+					s.ChannelMessageSend(m.ChannelID, "http://www.scp-wiki.net/"+word)
+					return
+				}
+			}
+		}
+	}
+	if strings.Contains(message, "/r/") {
+		words := strings.Split(message, " ")
+		for _, word := range words {
+			if strings.HasPrefix(word, "/r/") {
+				s.ChannelMessageSend(m.ChannelID, "https://reddit.com"+word)
+				return
+			}
+		}
+	}
+	if strings.Contains(message, "@everyone") {
+		s.MessageReactionAdd(m.ChannelID, m.Message.ID, "a:everyone:480218065196417046")
+	}
 	if MessageHasMeme(message, "jc") {
 		s.MessageReactionAdd(m.ChannelID, m.Message.ID, ":jc:236526936573214720")
 	}
@@ -42,12 +69,19 @@ func (h *MemeHandler) Read(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if MessageHasMeme(message, "vape") {
 		s.MessageReactionAdd(m.ChannelID, m.Message.ID, ":vapenation:360989703215775754")
 	}
-	/*
-	if MessageHasMeme(message, "thanks") || MessageHasMeme(message, "thank you") ||
-		MessageHasMeme(message, "danke") || MessageHasMeme(message, "gracias") ||
-			MessageHasMeme(message, "tom hanks"){
-		s.MessageReactionAdd(m.ChannelID, m.Message.ID, ":thanks:297438919165739019")
+	if MessageHasMeme(message, "diesel") {
+		s.MessageReactionAdd(m.ChannelID, m.Message.ID, ":diesel:442400293972475904")
 	}
+	if MessageHasMeme(message, "nomad") {
+		fmt.Println(message)
+		s.MessageReactionAdd(m.ChannelID, m.Message.ID, ":nomad:477252497002594315")
+	}
+	/*
+		if MessageHasMeme(message, "thanks") || MessageHasMeme(message, "thank you") ||
+			MessageHasMeme(message, "danke") || MessageHasMeme(message, "gracias") ||
+				MessageHasMeme(message, "tom hanks"){
+			s.MessageReactionAdd(m.ChannelID, m.Message.ID, ":thanks:297438919165739019")
+		}
 	*/
 	return
 }

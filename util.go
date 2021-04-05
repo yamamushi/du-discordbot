@@ -3,13 +3,16 @@ package main
 // Utility Functions
 
 import (
+	"errors"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
+	"net/http"
+	"net/url"
+	"os"
 	"strings"
 	"time"
-	"os"
-	"errors"
 	//"strconv"
+	"strconv"
 )
 
 // minDuration and maxDuration const for rounding
@@ -20,6 +23,16 @@ const (
 
 // RemoveStringFromSlice function
 func RemoveStringFromSlice(s []string, r string) []string {
+	for i, v := range s {
+		if v == r {
+			return append(s[:i], s[i+1:]...)
+		}
+	}
+	return s
+}
+
+// RemoveStringFromSlice function
+func RemoveIntFromSlice(s []int, r int) []int {
 	for i, v := range s {
 		if v == r {
 			return append(s[:i], s[i+1:]...)
@@ -80,6 +93,19 @@ func SplitPayload(input []string) (command string, message []string) {
 
 }
 
+// SplitCommandFromArg function
+func SplitCommandFromArgs(input []string) (command string, message string) {
+
+	// Remove the prefix from our command
+	command = input[0]
+	payload := RemoveStringFromSlice(input, command)
+
+	for _, value := range payload {
+		message = message + value + " "
+	}
+	return command, message
+}
+
 // RemoveFromString function
 func RemoveFromString(s []string, i int) []string {
 	s[len(s)-1], s[i] = s[i], s[len(s)-1]
@@ -91,7 +117,8 @@ func CleanChannel(mention string) string {
 
 	mention = strings.TrimPrefix(mention, "<#")
 	mention = strings.TrimSuffix(mention, ">")
-	return mention
+	mentionSplit := strings.Split(mention, "-")
+	return mentionSplit[0]
 
 }
 
@@ -279,22 +306,22 @@ func MessageHasMeme(message string, meme string) bool {
 	if strings.Contains(message, " "+meme+" ") {
 		return true
 	}
-	if strings.Contains(message, " "+meme+"-")||strings.Contains(message, " "+meme+",")||strings.Contains(message, " "+meme+".") {
+	if strings.Contains(message, " "+meme+"-") || strings.Contains(message, " "+meme+",") || strings.Contains(message, " "+meme+".") {
 		return true
 	}
-	if strings.Contains(message, " "+meme+":")|| strings.Contains(message, " "+meme+";")||strings.Contains(message, " "+meme+"+"){
+	if strings.Contains(message, " "+meme+":") || strings.Contains(message, " "+meme+";") || strings.Contains(message, " "+meme+"+") {
 		return true
 	}
-	if strings.Contains(message, " "+meme+"=")||strings.Contains(message, " "+meme+"?")||strings.Contains(message, " "+meme+"/"){
+	if strings.Contains(message, " "+meme+"=") || strings.Contains(message, " "+meme+"?") || strings.Contains(message, " "+meme+"/") {
 		return true
 	}
-	if strings.Contains(message, " "+meme+"!")||strings.Contains(message, " "+meme+"'")||strings.Contains(message, " "+meme+"\""){
+	if strings.Contains(message, " "+meme+"!") || strings.Contains(message, " "+meme+"'") || strings.Contains(message, " "+meme+"\"") {
 		return true
 	}
 	return false
 }
 
-func VerifyNDAChannel(channelID string, conf *Config) (bool) {
+func VerifyNDAChannel(channelID string, conf *Config) bool {
 	if channelID == conf.RolesConfig.NDAChannelID {
 		return true
 	}
@@ -302,7 +329,7 @@ func VerifyNDAChannel(channelID string, conf *Config) (bool) {
 	return false
 }
 
-func CreateDirIfNotExist(dir string) (err error){
+func CreateDirIfNotExist(dir string) (err error) {
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		err = os.MkdirAll(dir, 0755)
 		if err != nil {
@@ -327,7 +354,6 @@ func getRoleIDByName(s *discordgo.Session, guildID string, name string) (roleid 
 	return "", errors.New("Role ID Not Found: " + name)
 }
 
-
 // getChannelIDByName function
 func getChannelIDByName(s *discordgo.Session, guildID string, name string) (roleid string, err error) {
 	//name = strings.Title(name)
@@ -343,29 +369,15 @@ func getChannelIDByName(s *discordgo.Session, guildID string, name string) (role
 	return "", errors.New("Channel ID Not Found: " + name)
 }
 
-func GetMemberList(s *discordgo.Session) ([]*discordgo.Member, error){
+func GetMemberList(s *discordgo.Session, conf *Config) ([]*discordgo.Member, error) {
 
-	guild := s.State.Guilds[0]
-	var users []*discordgo.Member
-	i := 0
-	for i < guild.MemberCount {
-		var id string
-		if i == 0 {
-			id = "0"
-		} else {
-			id = users[len(users)-1].User.ID
-		}
-		retrieved, err := s.GuildMembers(guild.ID, id, 500)
-		if err != nil {
-			return nil, err
-		}
-		users = append(users, retrieved...)
-		i = len(users)
-		time.Sleep(time.Duration(time.Second * 5))
+	guild, err := s.Guild(conf.DiscordConfig.GuildID)
+	if err != nil {
+		return nil, err
 	}
-	return users , nil
-}
+	return guild.Members, nil
 
+}
 
 func SendFileToChannel(path string, message string, s *discordgo.Session, m *discordgo.MessageCreate) (err error) {
 
@@ -397,4 +409,167 @@ func SendFileToChannel(path string, message string, s *discordgo.Session, m *dis
 		return err
 	}
 	return nil
+}
+
+func ParseDuration(duration string) (convertedTime time.Duration, totalminutes int64, err error) {
+
+	daysstring := "0"
+	hoursstring := "0"
+	minutesstring := "0"
+	var days, hours, minutes int64
+
+	separated := strings.Split(duration, " ")
+
+	for _, field := range separated {
+
+		for _, value := range field {
+			switch {
+			case value >= '0' && value <= '9':
+				if strings.Contains(field, "d") {
+					daysstring = strings.TrimSuffix(field, "d")
+					days, err = strconv.ParseInt(daysstring, 10, 64)
+					if err != nil {
+						return 0, 0, errors.New("Could not parse days")
+					}
+				} else if strings.Contains(field, "h") {
+					hoursstring = strings.TrimSuffix(field, "h")
+					hours, err = strconv.ParseInt(hoursstring, 10, 64)
+					if err != nil {
+						return 0, 0, errors.New("Could not parse hours")
+					}
+				} else if strings.Contains(field, "m") {
+					minutesstring = strings.TrimSuffix(field, "m")
+					minutes, err = strconv.ParseInt(minutesstring, 10, 64)
+					if err != nil {
+						return 0, 0, errors.New("Could not parse minutes")
+					}
+				} else {
+					return 0, 0, errors.New("Invalid time interval format")
+				}
+				break
+			default:
+				return 0, 0, errors.New("Invalid time interval format")
+			}
+			break
+		}
+	}
+
+	if days == 0 && hours == 0 && minutes == 0 {
+		return 0, 0, errors.New("Invalid interval specified")
+	}
+
+	totalminutes = (days * 24 * 60) + (hours * 60) + minutes
+	convertedTime = time.Duration(totalminutes * 60 * 1000 * 1000 * 1000)
+	return convertedTime, totalminutes, nil
+}
+
+// getRoleNameByID function
+func getRoleNameByID(roleID string, guildID string, s *discordgo.Session) (rolename string, err error) {
+
+	roles, err := s.GuildRoles(guildID)
+	if err != nil {
+		return "", err
+	}
+
+	for _, role := range roles {
+
+		if role.ID == roleID {
+			return role.Name, nil
+		}
+	}
+
+	return "", errors.New("Role " + roleID + " not found in guild " + guildID)
+}
+
+// FlushMessages function
+func FlushMessages(s *discordgo.Session, channelID string, count int) (err error) {
+
+	if count <= 0 {
+		return errors.New(":rotating_light: Invalid message count supplied")
+	}
+
+	if count > 100 {
+		return errors.New(":rotating_light: Count must be less than or equal to 100")
+
+	}
+
+	_, err = s.Channel(channelID)
+	if err != nil {
+		return err
+	}
+
+	messages, err := s.ChannelMessages(channelID, count, "", "", "")
+	if err != nil {
+		return err
+	}
+
+	if count > len(messages) {
+		count = len(messages)
+	}
+
+	var flushmessages []string
+
+	for i := 0; i < count; i++ {
+		flushmessages = append(flushmessages, messages[i].ID)
+	}
+
+	err = s.ChannelMessagesBulkDelete(channelID, flushmessages)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func fmtDuration(d time.Duration) string {
+	d = d.Round(time.Minute)
+	h := d / time.Hour
+	d -= h * time.Hour
+	m := d / time.Minute
+	if m > 0 {
+		return fmt.Sprintf("%02d hours %02d minutes", h, m)
+	} else {
+		return fmt.Sprintf("%02d hours", h)
+	}
+}
+
+func AppendStringIfMissing(slice []string, i string) []string {
+	for _, ele := range slice {
+		if ele == i {
+			return slice
+		}
+	}
+	return append(slice, i)
+}
+
+// Contains tells whether a contains x.
+func StringSliceContains(a []string, x string) bool {
+	for _, n := range a {
+		if x == n {
+			return true
+		}
+	}
+	return false
+}
+
+func IsValidUrl(toTest string) bool {
+	_, err := url.ParseRequestURI(toTest)
+	if err != nil {
+		return false
+	} else {
+		return true
+	}
+}
+
+func IsReachableURL(toTest string) bool {
+	timeout := time.Duration(1 * time.Second)
+	client := http.Client{
+		Timeout: timeout,
+	}
+	_, err := client.Get(toTest)
+	if err != nil {
+		return false
+	} else {
+		return true
+	}
 }
